@@ -1,6 +1,6 @@
---- logwatch-2.6/scripts/logwatch.pl.sopwith	Sun Mar 31 17:27:05 2002
-+++ logwatch-2.6/scripts/logwatch.pl	Sun Mar 31 17:28:06 2002
-@@ -415,48 +415,13 @@
+--- logwatch-2.7/scripts/logwatch.pl	Fri Apr  5 07:06:17 2002
++++ logwatch-2.7/scripts/logwatch.pl.orig	Fri Apr  5 16:51:23 2002
+@@ -410,52 +410,13 @@
  #############################################################################
  
  my $TempDir;
@@ -11,7 +11,7 @@
 -      die "Failed to create $Config{'tmpdir'}/logwatch.XXXXXXXX with mktemp!!\n";
 -   }
 -   if ($Config{'debug'}>7) {
--       print "\nMade Temp Dir: " . $TempDir . " with mktemp\n";
+-      print "\nMade Temp Dir: " . $TempDir . " with mktemp\n";
 -   }
 -} else {
 -   my $uid = `id -u`;
@@ -23,7 +23,7 @@
 -   $TempDir = $Config{'tmpdir'} . "logwatch." . $$;
 -
 -   if ($Config{'debug'}>7) {
--       print "\nMaking Temp Dir: " . $TempDir . "\n";
+-      print "\nMaking Temp Dir: " . $TempDir . "\n";
 -   }
 -
 -   `rm -rf $TempDir`;
@@ -42,6 +42,10 @@
 -   unless (((stat($TempDir))[2] & 07777) == 0700) {
 -      die "$TempDir permissions not 0700 (somebody is attempting a root exploit!)\n";
 -   }
+-   # Check to make sure nothing changed after we checked the ownership
+-   unless (-d $TempDir and (not -l $TempDir)) {
+-      die "$TempDir not a directory (somebody is attempting a root exploit!)\n";
+-   }
 -   `rm -rf $TempDir/*`;
 -   unless (`ls $TempDir | wc -l` == 0) {
 -      die "$TempDir not empty (somebody is attempting a root exploit!)\n";
@@ -54,5 +58,5 @@
 +if ($Config{'debug'}>7) {
 +    print "\nMade Temp Dir: " . $TempDir . " with mktemp\n";
  }
+ 
  unless ($TempDir =~ m=/$=) {
-     $TempDir .= "/";
