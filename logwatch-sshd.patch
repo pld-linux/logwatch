@@ -1,0 +1,31 @@
+Index: scripts/services/sshd
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/sshd,v
+retrieving revision 1.41
+diff -u -r1.41 sshd
+--- scripts/services/sshd	24 Feb 2005 17:08:05 -0000	1.41
++++ scripts/services/sshd	24 Feb 2005 22:33:59 -0000
+@@ -116,18 +116,17 @@
+       if ( $Debug >= 5 ) {
+          print STDERR "DEBUG: Found -Failed login- line\n";
+       }
+-      $BadLogins{"$3/$1 from $4"}++;
+-   } elsif ( $ThisLine =~ m/^Failed (\S+) for illegal user (.*) from ([^ ]+) port (\d+)/ ) { #openssh
+-      $Temp = "$2/$1 from $3";
++      $BadLogins{"$2/$1 from $3"}++;
++   } elsif ( ($Method, undef,$User,$Host,$Port) = ($ThisLine =~ m/^Failed (\S+) for (illegal|invalid) user (.*) from ([^ ]+) port (\d+)/ ) ) { #openssh
++      $Temp = "$User/$Method from $Host";
+       $BadLogins{$Temp}++;
+       $IllegalUsers{$Temp}++;
+    } elsif ( ($User) = ( $ThisLine =~ /Disconnecting: Too many authentication failures for ([^ ]+)/)) {
+       $TooManyFailures{$User}++;
+    } elsif ( (undef,$User) = ($ThisLine =~ /^input_userauth_request: (illegal|invalid) user (.*)$/ )) {
+       $IllegalUsers{"$User/none from unknown"}++;
+-   } elsif ( $ThisLine =~ m/^Illegal user (.*) from ([^ ]+)/ ||
+-             $ThisLine =~ m/^Invalid user (.*) from ([^ ]+)/ ) { #redhat thing
+-      $IllegalUsers{"$1/none from $2"}++;
++   } elsif ( (undef,$User,$Host) =($ThisLine =~ m/^(Illegal|Invalid) user (.*) from ([^ ]+)/ ) ) { #redhat thing
++      $IllegalUsers{"$User/none from $Host"}++;
+    } elsif ( $ThisLine =~ m/^(fatal: )?Did not receive ident(ification)? string from (.+)/ ) { # ssh/openssh
+       $name = LookupIP($3);
+       $NoIdent{$name}++;
