@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/samba,v
 retrieving revision 1.17
 diff -u -r1.17 samba
 --- scripts/services/samba	15 Dec 2003 22:03:55 -0000	1.17
-+++ scripts/services/samba	17 Jan 2004 21:58:44 -0000
++++ scripts/services/samba	26 Jan 2004 15:18:33 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -14,7 +14,7 @@ diff -u -r1.17 samba
  
  ########################################################
  # This was written and is maintained by:
-@@ -13,46 +15,51 @@
+@@ -13,46 +15,52 @@
  
  $Debug = $ENV{'LOGWATCH_DEBUG'};
  $Detail = $ENV{'LOGWATCH_DETAIL_LEVEL'} || 0;
@@ -90,6 +90,7 @@ diff -u -r1.17 samba
 +      ($ThisLine =~ /get_socket_addr\(\d+\)  getpeername failed. Error was Transport endpoint is not connected$/) or
 +      ($ThisLine =~ /lib\/access.c:check_access\(\d+\)$/) or
 +      ($ThisLine =~ /smbd\/process.c:process_smb\(\d+\)$/) or
++      ($ThisLine =~ /nmbd\/nmbd_incomingdgrams.c:process_local_master_announce\(\d+\)$/) or
  		($ThisLine =~ /===============================================================/)
 -	) {
 -		#Don't care about these...
@@ -98,7 +99,7 @@ diff -u -r1.17 samba
  	} elsif ( ($Host, $Service, $User) = ( $ThisLine =~ /([^ ]+ \([^ ]+\)) connect to service ([^ ]+) as user ([^ ]+)/ ) ) {
  		$Connect{$Service}{$User}{$Host}++;
  	} elsif ( ($NoService) = ( $ThisLine =~ /couldn't find service (\S+)/ ) ) {
-@@ -65,7 +72,7 @@
+@@ -65,7 +73,7 @@
        $Temp = "$Where  ($Ip)";
        $Denied{$Temp}++;
        $CantGetGroup{$Browser}++;
@@ -107,7 +108,7 @@ diff -u -r1.17 samba
        $Temp = "$Where  ($Ip)";
        $Denied{$Temp}++;
        $BeLocalMaster{$Subnet}{$Group}{$Name}++;
-@@ -75,9 +82,16 @@
+@@ -75,9 +83,16 @@
  		$NotFoundUser{$User}++;
  	} elsif (($User) = $ThisLine =~ /Rejecting user '([^ ]+)'/) {
  		$RejectedUser{$User}++;
@@ -125,7 +126,7 @@ diff -u -r1.17 samba
  	} elsif ( ( $ThisLine =~ /unable to open passdb database.$/ ) ) {
  		$DbOpenFail++;
  	} elsif ( ($Server,$Ip,$Group) = ($ThisLine =~ /Server ([^ ]+) at IP ([^ ]+) is announcing itself as a local master browser for workgroup ([^ ]+) and we think we are master. Forcing election.$/ ) ) {
-@@ -107,15 +121,41 @@
+@@ -107,15 +122,40 @@
  		$RootLoggedIn{$user}++;
  	} elsif ( ($file,$function) = ($ThisLine =~ /([a-zA-Z_\/():\.0-9-]+)  ([a-zA-Z0-9_-]+): Not yet implemented.$/)) {
  		$NotImplemented{$file}{$function}++;
@@ -164,7 +165,6 @@ diff -u -r1.17 samba
 -      #lib/util_sock.c:write_socket(524)  write_socket: Error writing 4 bytes to socket 5: ERRNO = Broken pipe
 -      #lib/util_sock.c:write_socket_data(499)  write_socket_data: write failure. Error = Broken pipe
 +      #smbd/oplock.c:process_local_message(418)  process_local_message: unknown UDP message command code (424d) - ignoring.
-+      #nmbd/nmbd_incomingdgrams.c:process_local_master_announce(314)
 +      #smbd/process.c:switch_message(662)  Non-SMB packet of length 156. Terminating server
 +      #smbd/process.c:switch_message(662)  Non-SMB packet of length 133. Terminating server
 +      #libsmb/nmblib.c:send_udp(756)  Packet send failed to 153.19.207.127(138) ERRNO=Invalid argument
