@@ -1,0 +1,28 @@
+Index: scripts/services/http
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/http,v
+retrieving revision 1.8
+diff -u -r1.8 http
+--- scripts/services/http	15 Dec 2003 19:01:19 -0000	1.8
++++ scripts/services/http	18 Dec 2003 08:27:14 -0000
+@@ -56,17 +56,17 @@
+ 	my $other_count = 0;
+ 	my $other_bytes = 0;
+ 	my $total_hack_count = 0;
+-	my $image_types = '(\.bmp|\.gif|\.ico|\.jpg|\.png|\.swf)';
++	my $image_types = '(\.bmp|\.gif|\.ico|\.jpeg|\.jpg|\.png|\.swf|\.wmf|\.xdm)';
+ 	my $content_types = '(';
+ 		$content_types = $content_types.'\/server-status|\/server-info';
+       $content_types = $content_types.'|\.htm|\.html|\.phtml|\.shtml|\/';
+       $content_types = $content_types.'|\.php|\.php3|\.asp|\.pl|\.wml|\/';
+       $content_types = $content_types.'|\.css|\.js|\.cgi|\.txt|\/';
+       $content_types = $content_types.'|\.class|\.jsp|\.jar|\.java)';
+-   my $docs_types = '(\.doc|\.dvi|\.gnumeric|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.tex|\.xls)';
++   my $docs_types = '(\.doc|\.dvi|\.gnumeric|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.tex|\.xls|\.xml)';
+    my $archive_types = '(\.ace|\.bz2|\.deb|\.gz|\.rar|\.rpm|\.zip)';
+    my $sound_types = '(\.mp3|\.wav|\.wma|\.mid)';
+-   my $movie_types = '(\.avi|\.mid|\.mpg|\.mpeg|\.mov)';
++   my $movie_types = '(\.asf|\.avi|\.mid|\.mpg|\.mpeg|\.mov)';
+    my $winexec_types = '(\.com|\.exe)';
+ 
+ #
