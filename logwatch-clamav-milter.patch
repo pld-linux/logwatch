@@ -1,0 +1,49 @@
+Index: scripts/services/clamav-milter
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/clamav-milter,v
+retrieving revision 1.5
+diff -u -r1.5 clamav-milter
+--- scripts/services/clamav-milter	15 Feb 2005 14:15:26 -0000	1.5
++++ scripts/services/clamav-milter	1 Mar 2005 08:38:42 -0000
+@@ -23,14 +23,20 @@
+ 
+ while (defined($ThisLine = <STDIN>)) {
+ 
+-   if (( $ThisLine =~ /^clamfi_abort/ ) or 
+-       ( $ThisLine =~ /^clamfi_connect: not scanning outgoing messages/ ) or
+-       ( $ThisLine =~ /^Quarantined infected mail as/ ) or
+-       ( $ThisLine =~ /^Intercepted virus/)) {
+-          # We do not care about these.
++   if (
++      ( $ThisLine =~ /^clamfi_abort/ ) or
++      ( $ThisLine =~ /^clamfi_connect: not scanning outgoing messages/ ) or
++      ( $ThisLine =~ /^Quarantined infected mail as/ ) or
++      ( $ThisLine =~ /^Intercepted virus/)
++   ) {
++      # We do not care about these.
+    } elsif (($ThisLine =~ /clean message from/)) {
+       $CleanMessage++;
+-   } elsif ((($Virus) = ($ThisLine =~ /stream: (.*?) FOUND/i )) or (($Virus) = ($ThisLine =~ /^.+?msg\.\w+?: (.*?) FOUND/i ))) {
++   } elsif (
++	   (($Virus) = ($ThisLine =~ /stream: (.*?) FOUND/i )) or
++	   (($Virus) = ($ThisLine =~ /^.+?msg\.\w+?: (.*?) FOUND/i )) or
++      (($Virus) = ($ThisLine =~ /stream: (.*?) Intercepted virus from/i ))
++   ) {
+       $VirusList{$Virus}++;
+    } elsif (($MailHost) = ($ThisLine =~ /^clamfi_connect: connection from (.*?)\n/i )) {
+       $MailHostList{$MailHost}++;
+@@ -46,6 +52,8 @@
+    }
+ }
+ 
++#############################################################
++
+ if ($CleanMessage) {
+    print "\nClean messages: ". $CleanMessage." Message(s)\n";
+ }
+@@ -77,3 +85,5 @@
+ }
+ 
+ exit(0);
++
++# vi: shiftwidth=3 tabstop=3 syntax=perl et
