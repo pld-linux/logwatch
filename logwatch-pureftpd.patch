@@ -1,0 +1,170 @@
+Index: scripts/services/pureftpd
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/pureftpd,v
+retrieving revision 1.2
+diff -u -r1.2 pureftpd
+--- scripts/services/pureftpd	15 Dec 2003 18:09:23 -0000	1.2
++++ scripts/services/pureftpd	23 Dec 2003 23:45:32 -0000
+@@ -2,6 +2,10 @@
+ ##########################################################################
+ # $Id$
+ ##########################################################################
++# $Log$
++##########################################################################
++
++##########################################################################
+ # Written & Maintained by Chris Smith (csmith@squiz.net)
+ ##########################################################################
+ 
+@@ -11,87 +15,102 @@
+ $ShowDataTransfers = $ENV{'show_data_transfers'};
+ $ShowNewConnections = $ENV{'show_new_connections'};
+ 
++$PureShutdown = 0;
++
+ while (defined($ThisLine = <STDIN>)) {
+    if (
+-         ( $ThisLine =~ /last message repeated/ ) or
+-		( $ThisLine =~ /Timeout/) or
+-		( $ThisLine =~ /Can't change directory/)
+-      # We don't care about these
+-      ) {
++      ( $ThisLine =~ /last message repeated/ ) or
++      ( $ThisLine =~ /Timeout/) or
++      ( $ThisLine =~ /Can't change directory/) or
++      ( $ThisLine =~ /pure-ftpd startup( |) succeeded/)
++   ) {
++      #We don't care about these
+    } elsif (($IP,$j) = ($ThisLine =~ /\@(.*?)\)(.*?)new connection/i )) {
+-		$NewConnections{$IP}++;
++      $NewConnections{$IP}++;
+    } elsif (($IP,$j) = ($ThisLine =~ /\@(.*?)\)(.*?)logout/i )) {
+-		$Logouts{$IP}++;
++      $Logouts{$IP}++;
+    } elsif (($IP,$j) = ($ThisLine =~ /\@(.*?)\)(.*?)unable to set up secure anonymous ftp/i )) {
+-		$SecureAnon{$IP}++;
++      $SecureAnon{$IP}++;
+    } elsif (($IP,$User) = ($ThisLine =~ /\@(.*?)\)\s*\[info\]\s*(.*?) is now logged in/i )) {
+-		$Logins->{$IP}->{$User}++;
++      $Logins->{$IP}->{$User}++;
+    } elsif (($j,$ConnectionCount,$IP) = ($ThisLine =~ /(.*?)too many connections \((.*?)\) from this ip\: \[(.*?)\]/i )) {
+-		$TooManyConnections->{$ConnectionCount}->{$IP}++;
+-	} elsif (($User,$Location,$File,$Direction) = ($ThisLine =~ /\((.*?)\@(.*?)\)\s+\[\w+\]\s+(.*?)\s+(\w+)\s+/)) {
+-		$Direction->{$User}->{$Location}->{$File}++;
++      $TooManyConnections->{$ConnectionCount}->{$IP}++;
++   } elsif (($User,$Location,$File,$Direction) = ($ThisLine =~ /\((.*?)\@(.*?)\)\s+\[\w+\]\s+(.*?)\s+(\w+)\s+/)) {
++      $Direction->{$User}->{$Location}->{$File}++;
++   } elsif (($User,$Location,$File) = ($ThisLine =~ /\((.*?)\@(.*?)\)\s+\[\w+\]\s+ Deleted ([^ ]+)/)) {
++      $Direction = "Deleted";
++      $Direction->{$User}->{$Location}->{$File}++;
++   } elsif ($ThisLine =~ m/pure-ftpd shutdown( |) succeeded/) {
++      $PureShutdown++;
+    } else {
+       # Report any unmatched entries...
+       push @OtherList,$ThisLine;
+    }
+ }
+ 
++##########################
++#
++
++if ($PureShutdown > 0) {
++   print "\nPure-ftpd shutdown $PureShutdown Time(s)\n";
++}
++
+ if ($ShowNewConnections) {
+-	if ( (keys %NewConnections) ) {
+-	   print "\nNew Connections:\n";
+-	   foreach $Line (sort {$a cmp $b} keys %NewConnections) {
+-		  print "\t" . $Line . " - ". $NewConnections{$Line} . " Time(s)\n";
+-	   }
+-	}
++   if (keys %NewConnections) {
++      print "\nNew Connections:\n";
++      foreach $Line (sort {$a cmp $b} keys %NewConnections) {
++         print "\t" . $Line . " - ". $NewConnections{$Line} . " Time(s)\n";
++      }
++   }
+ }
+ 
+ if ($ShowLogins) {
+-	if ( (keys %{$Logins}) ) {
+-	   print "\nSuccessful Logins:\n";
+-	   foreach $Line (sort {$a cmp $b} keys %{$Logins}) {
+-		   foreach $Detail (sort {$a cmp $b} keys %{$Logins->{$Line}}) {
+-			print "\t" . $Detail. " (" . $Line . ") - ". $Logins->{$Line}->{$Detail} . " Time(s)\n";
+-		   }
+-		}
+-	}
++   if (keys %{$Logins}) {
++      print "\nSuccessful Logins:\n";
++      foreach $Line (sort {$a cmp $b} keys %{$Logins}) {
++         foreach $Detail (sort {$a cmp $b} keys %{$Logins->{$Line}}) {
++            print "\t" . $Detail. " (" . $Line . ") - ". $Logins->{$Line}->{$Detail} . " Time(s)\n";
++         }
++      }
++   }
+ }
+ 
+-if ( (keys %{$TooManyConnections}) ) {
++if (keys %{$TooManyConnections}) {
+    print "\nToo Many Connections:\n";
+    foreach $Line (sort {$a cmp $b} keys %{$TooManyConnections}) {
+-	   foreach $Detail (sort {$a cmp $b} keys %{$TooManyConnections->{$Line}}) {
+-		print "\t" . $Detail. " (" . $Line . " connections) - ". $TooManyConnections->{$Line}->{$Detail} . " Time(s)\n";
+-	   }
+-	}
++      foreach $Detail (sort {$a cmp $b} keys %{$TooManyConnections->{$Line}}) {
++         print "\t" . $Detail. " (" . $Line . " connections) - ". $TooManyConnections->{$Line}->{$Detail} . " Time(s)\n";
++      }
++   }
+ }
+ 
+ if ($ShowDataTransfers) {
+-	if ( (keys %{$Direction}) ) {
+-	   print "\nData Transferred:\n";
+-	   foreach $User (sort {$a cmp $b} keys %{$Direction}) {
+-		   foreach $Location (sort {$a cmp $b} keys %{$Direction->{$User}}) {
+-			   foreach $Filename (sort {$a cmp $b} keys %{$Direction->{$User}->{$Location}}) {
+-					print "\tUser " . $User . " " . $Direction . " " . $Filename . " from " . $Location . " - ". $Direction->{$User}->{$Location}->{$Filename} . " Time(s)\n";
+-			   }
+-		   }
+-		}
+-	}
++   if (keys %{$Direction}) {
++      print "\nData Transferred:\n";
++      foreach $User (sort {$a cmp $b} keys %{$Direction}) {
++         foreach $Location (sort {$a cmp $b} keys %{$Direction->{$User}}) {
++            foreach $Filename (sort {$a cmp $b} keys %{$Direction->{$User}->{$Location}}) {
++               print "\tUser " . $User . " " . $Direction . " " . $Filename . " from " . $Location . " - ". $Direction->{$User}->{$Location}->{$Filename} . " Time(s)\n";
++            }
++         }
++      }
++   }
+ }
+ 
+-if ( (keys %SecureAnon) ) {
++if (keys %SecureAnon) {
+    print "\nUnsuccessful Secure Anonymous Connections:\n";
+    foreach $Line (sort {$a cmp $b} keys %SecureAnon) {
+-	  print "\t" . $Line . " - ". $SecureAnon{$Line} . " Time(s)\n";
++      print "\t" . $Line . " - ". $SecureAnon{$Line} . " Time(s)\n";
+    }
+ }
+ 
+ if ($ShowLogouts) {
+-	if ( (keys %Logouts) ) {
+-	   print "\nLogouts:\n";
+-	   foreach $Line (sort {$a cmp $b} keys %Logouts) {
+-		  print "\t" . $Line . " - ". $Logouts{$Line} . " Time(s)\n";
+-	   }
+-	}
++   if (keys %Logouts) {
++      print "\nLogouts:\n";
++      foreach $Line (sort {$a cmp $b} keys %Logouts) {
++         print "\t" . $Line . " - ". $Logouts{$Line} . " Time(s)\n";
++      }
++   }
+ }
+ 
+ if (($#OtherList >= 0) and (not $IngoreUnmatched)){

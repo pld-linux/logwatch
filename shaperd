@@ -1,0 +1,90 @@
+#!/usr/bin/perl -w
+##########################################################################
+# $Id$
+##########################################################################
+# $Log$
+##########################################################################
+
+########################################################
+# This was written and is maintained by:
+#    Pawe³ Go³aszewski <blues@pld-linux.org>
+#
+# Please send all comments, suggestions, bug reports,
+#    etc, to kirk@kaybee.org and blues@pld-linux.org
+########################################################
+
+## Initial initialization:
+$DelayIncCount = 0;
+$MaxDelay = 0;
+$TooOldSoft = 0;
+
+while (defined($ThisLine = <STDIN>)) {
+   chomp($ThisLine);
+   if (
+      ($ThisLine =~ m/^upload ip: /) or
+      ($ThisLine =~ m/^download ip: /) or
+      ($ThisLine =~ m/^Delay parameter has too low amount for this number of IP's or possibility of server.$/)
+   ) {
+      #ignore these
+   } elsif ( ($Direction,$Ip) = ($ThisLine =~ /^Can't control ([^ ]*) bandwidth of IP ([^ ]*)$/)) {
+      $BandwidthControl{$Direction}{$Ip}++;
+   } elsif ( ($Direction,$Ip) = ( $ThisLine =~ /^Removing ([^ ]*) class of IP ([^ ]*)$/ ) ) {
+      $RemovingClass{$Direction}{$Ip}++;
+   } elsif ( ($Delay) = ( $ThisLine =~ /^Increasing delay to ([0-9]*) seconds$/) ) {
+      $IncreasingDelay{$Delay}++;
+      $DelayIncCount++;
+   } elsif ( $ThisLine =~ m/^It seems that iproute2 did'nt work correctly. Please upgrade your iproute2 and\/or kernel./) {
+      $TooOldSoft++;
+   } else {
+      $OtherList{$ThisLine}++;
+   }
+}
+
+###########################
+# Print report:
+
+if ($TooOldSoft > 0) {
+   print "\nWarning:\n";
+   print "Too old or broken iproute2/kernel reported $TooOldSoft Time(s)\n";
+}
+
+if (keys %IncreasingDelay) {
+   foreach $Delay (keys %IncreasingDelay) {
+      if ($Delay > $MaxDelay) {
+         $MaxDelay = $Delay;
+      }
+   }
+   print "\nDelay increased $DelayIncCount Time(s) up to $MaxDelay seconds.\n";
+}
+
+if (keys %BandwidthControl) {
+   print "\nCan't control bandwidth:\n";
+   foreach $Direction (sort {$a cmp $b} keys %BandwidthControl) {
+      print "   $Direction:\n";
+      foreach $Ip (sort {$a cmp $b} keys %{$BandwidthControl{$Direction}}) {
+         print "      $Ip : $BandwidthControl{$Direction}{$Ip} Time(s)\n";
+      }
+   }
+}
+
+if (keys %RemovingClass) {
+   print "\nRemoving class for:\n";
+   foreach $Direction (sort {$a cmp $b} keys %RemovingClass) {
+      print "   $Direction:\n";
+      foreach $Ip (sort {$a cmp $b} keys %{$RemovingClass{$Direction}}) {
+         print "      $Ip : $RemovingClass{$Direction}{$Ip} Time(s)\n";
+      }
+   }
+}
+
+if (keys %OtherList) {
+   print "\n**Unmatched Entries**\n";
+   foreach $line (sort {$a cmp $b} keys %OtherList) {
+      print "$line: $OtherList{$line} Time(s)\n";
+   }
+}
+
+exit(0);
+
+# vi: shiftwidth=3 tabstop=3 et
+

@@ -1,0 +1,260 @@
+Index: scripts/services/named
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/named,v
+retrieving revision 1.30
+diff -u -r1.30 named
+--- scripts/services/named	15 Dec 2003 18:09:23 -0000	1.30
++++ scripts/services/named	26 Dec 2003 00:41:08 -0000
+@@ -2,6 +2,8 @@
+ ##########################################################################
+ # $Id$
+ ##########################################################################
++# $Log$
++##########################################################################
+ 
+ ########################################################
+ # This was written and is maintained by:
+@@ -22,61 +24,65 @@
+ }
+ 
+ while (defined($ThisLine = <STDIN>)) {
+-   if ( ($ThisLine =~ /RR negative cache entry/) or
+-         ($ThisLine =~ /^ns_....: .* NS points to CNAME/) or
+-         ($ThisLine =~ /^accept: connection reset by peer/) or
+-         ($ThisLine =~ /Connection reset by peer/) or
+-         ($ThisLine =~ /^There may be a name server already running/) or
+-         ($ThisLine =~ /^exiting/) or
+-         ($ThisLine =~ /^NSTATS /) or
+-         ($ThisLine =~ /Cleaned cache of \d+ RRs/) or
+-         ($ThisLine =~ /USAGE \d+ \d+ CPU=\d+.*/) or
+-         ($ThisLine =~ /^XSTATS /) or
+-         ($ThisLine =~ /^Ready to answer queries/) or
+-         ($ThisLine =~ /^Forwarding source address is/) or
+-         ($ThisLine =~ /^bad referral/) or
+-         ($ThisLine =~ /prerequisite not satisfied/) or
+-         ($ThisLine =~ /^rcvd NOTIFY/) or
+-         ($ThisLine =~ /^Sent NOTIFY/) or
+-         ($ThisLine =~ /^ns_resp: TCP truncated/) or
+-         ($ThisLine =~ /No possible A RRs/) or
+-         ($ThisLine =~ /NS points to CNAME/) or
+-         ($ThisLine =~ /points to a CNAME/) or
+-         ($ThisLine =~ /^dangling CNAME pointer/) or
+-         ($ThisLine =~ /^listening on/) or
+-         ($ThisLine =~ /^unrelated additional info/) or
+-         ($ThisLine =~ /^Response from unexpected source/) or
+-         ($ThisLine =~ /^No root nameservers for class IN/) or
+-         ($ThisLine =~ /^recvfrom: No route to host/) or
+-         ($ThisLine =~ /Connection refused/) or
+-         ($ThisLine =~ /lame server resolving/) or
+-         ($ThisLine =~ /transfer of/) or
+-         ($ThisLine =~ /^using \d+ CPU/) or
+-         ($ThisLine =~ /^starting BIND/) or
+-         ($ThisLine =~ /^loading configuration/) or
+-         ($ThisLine =~ /^command channel listening/) or
+-         ($ThisLine =~ /^no IPv6 interfaces found/) or
+-         ($ThisLine =~ /^running/) or
+-         ($ThisLine =~ /^exiting/) or
+-         ($ThisLine =~ /^no longer listening/) or
+-         ($ThisLine =~ /^shutting down/) or
+-         ($ThisLine =~ /^the default for the .* option is now/) or
+-         ($ThisLine =~ /^Malformed response from/) or
+-         ($ThisLine =~ /client .+#\d+: query:/) or
+-         # Do we really want to ignore these?
+-         #($ThisLine =~ /unknown logging category/) or
+-         #($ThisLine =~ /^couldn't add command channel/) or
+-         ($ThisLine =~ /^could not open entropy source/) or
+-         ($ThisLine =~ /\/etc\/rndc.key: file not found/)
+-         ) {
+-            # Don't care about these...
+-   } elsif ( ( $ThisLine =~ /^starting\..*named/) or
+-         ($ThisLine =~ /^named startup succeeded/) ) {
++   if (
++      ($ThisLine =~ /RR negative cache entry/) or
++      ($ThisLine =~ /^ns_....: .* NS points to CNAME/) or
++      ($ThisLine =~ /^accept: connection reset by peer/) or
++      ($ThisLine =~ /Connection reset by peer/) or
++      ($ThisLine =~ /^There may be a name server already running/) or
++      ($ThisLine =~ /^exiting/) or
++      ($ThisLine =~ /^NSTATS /) or
++      ($ThisLine =~ /Cleaned cache of \d+ RRs/) or
++      ($ThisLine =~ /USAGE \d+ \d+ CPU=\d+.*/) or
++      ($ThisLine =~ /^XSTATS /) or
++      ($ThisLine =~ /^Ready to answer queries/) or
++      ($ThisLine =~ /^Forwarding source address is/) or
++      ($ThisLine =~ /^bad referral/) or
++      ($ThisLine =~ /prerequisite not satisfied/) or
++      ($ThisLine =~ /^rcvd NOTIFY/) or
++      ($ThisLine =~ /^Sent NOTIFY/) or
++      ($ThisLine =~ /^ns_resp: TCP truncated/) or
++      ($ThisLine =~ /No possible A RRs/) or
++      ($ThisLine =~ /NS points to CNAME/) or
++      ($ThisLine =~ /points to a CNAME/) or
++      ($ThisLine =~ /^dangling CNAME pointer/) or
++      ($ThisLine =~ /^listening on/) or
++      ($ThisLine =~ /^unrelated additional info/) or
++      ($ThisLine =~ /^Response from unexpected source/) or
++      ($ThisLine =~ /^No root nameservers for class IN/) or
++      ($ThisLine =~ /^recvfrom: No route to host/) or
++      ($ThisLine =~ /Connection refused/) or
++      ($ThisLine =~ /lame server resolving/) or
++      ($ThisLine =~ /transfer of/) or
++      ($ThisLine =~ /^using \d+ CPU/) or
++      ($ThisLine =~ /^loading configuration/) or
++      ($ThisLine =~ /^command channel listening/) or
++      ($ThisLine =~ /^no IPv6 interfaces found/) or
++      ($ThisLine =~ /^running/) or
++      ($ThisLine =~ /^exiting/) or
++      ($ThisLine =~ /^no longer listening/) or
++      ($ThisLine =~ /^the default for the .* option is now/) or
++      ($ThisLine =~ /^Malformed response from/) or
++      ($ThisLine =~ /client .+#\d+: query:/) or
++      # Do we really want to ignore these?
++      #($ThisLine =~ /unknown logging category/) or
++      ($ThisLine =~ /^could not open entropy source/) or
++      ($ThisLine =~ /\/etc\/rndc.key: file not found/)
++   ) {
++      # Don't care about these...
++   } elsif (
++      ($ThisLine =~ /^starting\..*named/) or
++      ($ThisLine =~ /^starting BIND/) or
++      ($ThisLine =~ /^named startup succeeded/)
++   ) {
+       $StartNamed++;
+    } elsif ( $ThisLine =~ /^reloading nameserver/ ) {
+       $ReloadNamed++;
+-   } elsif ( ( $ThisLine =~ /^named shutting down/ ) or
+-         ( $ThisLine =~ /^named shutdown succeeded/ ) ) {
++   } elsif (
++      ($ThisLine =~ /^shutting down/) or
++      ($ThisLine =~ /^named shutting down/ ) or
++      ($ThisLine =~ /^named shutdown succeeded/ )
++   ) {
+       $ShutdownNamed++;
+    } elsif ( ($Host, $Zone) = ( $ThisLine =~ /client ([^\#]+)#[^\:]+: zone transfer '(.+)' denied/ ) ) {
+       $DeniedZoneTransfers{$Host}{$Zone}++;
+@@ -113,6 +119,10 @@
+       $DeniedQuery{$FullClient}++;
+    } elsif ( ($Rhost, $Ldom) = ($ThisLine =~ /^client ([\d\.]+)#\d+: update '(.*)' denied/)) {
+       $UpdateDenied{"$Rhost ($Ldom)"}++;
++   } elsif ( ($Channel,$Reason) = ($ThisLine =~ /^couldn't add command channel (.+#\d+): (.*)$/)) {
++      $ChannelAddFail{$Channel}{$Reason}++;
++   } elsif ( ($Zone,$Host,$Reason) = ($ThisLine =~ /^zone ([^ ]*)\/IN: refresh: failure trying master ([^ ]*)#\d+: (.*)/) ) {
++      $MasterFailure{"$Zone from $Host"}{$Reason}++;
+    } else {
+       # Report any unmatched entries...
+       # remove PID from named messages
+@@ -122,6 +132,8 @@
+    }
+ }
+ 
++#######################################
++
+ if ( ( $Detail >= 5 ) and ($StartNamed) ) {
+    print "Named started: $StartNamed Time(s)\n";
+ }
+@@ -137,7 +149,27 @@
+ if ( ( $Detail >= 5 ) and (keys %ZoneLoaded) ) {
+    print "\nLoaded Zones:\n";
+    foreach $ThisOne (sort {$a cmp $b} keys %ZoneLoaded) {
+-      print "   " . $ThisOne . ": " . $ZoneLoaded{$ThisOne} . " Time(s)\n";
++      print "   $ThisOne: $ZoneLoaded{$ThisOne} Time(s)\n";
++   }
++}
++
++if ( ($Detail >= 5) and (keys %ChannelAddFail) ) {
++   print "\nCan't add command channel:\n";
++   foreach $Channel (sort {$a cmp $b} keys %ChannelAddFail) {
++      print "   $Channel:\n";
++      foreach $Reason (sort {$a cmp $b} keys %{$ChannelAddFail{$Channel}}) {
++         print "      $Reason: $ChannelAddFail{$Channel}{$Reason} Time(s)\n";
++      }
++   }
++}
++
++if ( ($Detail >= 5) and (keys %MasterFailure) ) {
++   print "\nFailure trying to refresh zone:\n";
++   foreach $Zone (sort {$a cmp $b} keys %MasterFailure) {
++      print "   $Zone:\n";
++      foreach $Reason (sort {$a cmp $b} keys %{$MasterFailure{$Zone}}) {
++         print "      $Reason: $MasterFailure{$Zone}{$Reason}++ Time(s)\n";
++      }
+    }
+ }
+ 
+@@ -155,16 +187,16 @@
+ if ( ( $Detail >= 5 ) and (keys %ZoneRemoved) ) {
+    print "\nRemoved Zones:\n";
+    foreach $ThisOne (sort {$a cmp $b} keys %ZoneRemoved) {
+-      print "   " . $ThisOne . ": " . $ZoneRemoved{$ThisOne} . " Time(s)\n";
++      print "   $ThisOne: $ZoneRemoved{$ThisOne} Time(s)\n";
+    }
+ }
+ 
+ if ( ( $Detail >= 5 ) and (keys %AXFR) ) {
+    print "\nZone Transfers:\n";
+    foreach $ThisOne (keys %AXFR) {
+-      print "   Zone: " . $ThisOne . "\n";
++      print "   Zone: $ThisOne\n";
+       foreach $Temp (keys %{$AXFR{$ThisOne}}) {
+-         print "      by " . $Temp . ": " . $AXFR{$ThisOne}{$Temp} . " Time(s)\n";
++         print "      by $Temp: $AXFR{$ThisOne}{$Temp} Time(s)\n";
+       }
+    }
+ }
+@@ -172,30 +204,30 @@
+ if ( ( $Detail >= 5 ) and (keys %DeniedQuery) ) {
+    print "\nQueries (cache) that were denied:\n";
+    foreach $ThisOne (keys %DeniedQuery) {
+-      print "   from " . $ThisOne . ": " . $DeniedQuery{$ThisOne} . " Time(s)\n";
++      print "   from $ThisOne: $DeniedQuery{$ThisOne} Time(s)\n";
+    }
+ }
+ 
+ if ( ( $Detail >= 10 ) and (@CNAMEAndOther) ) {
+    print "\nThese hosts have CNAME and other data (invalid):\n";
+    foreach $ThisOne (@CNAMEAndOther) {
+-      print "   " . $ThisOne . "\n";
++      print "   $ThisOne\n";
+    }
+ }
+ 
+ if ( ( $Detail >= 10 ) and (keys %LameServer) ) {
+    print "\nThese addresses had lame server references:\n";
+    foreach $ThisOne (keys %LameServer) {
+-      print "   " . $ThisOne . ": " . $LameServer{$ThisOne} . " Time(s)\n";
++      print "   $ThisOne: $LameServer{$ThisOne} Time(s)\n";
+    }
+ }
+ 
+ if ( ( $Detail >= 10 ) and (keys %NetworkUnreachable) ) {
+    print "\nNetwork is unreachable for:\n";
+    foreach $ThisOne (sort {$a cmp $b} keys %NetworkUnreachable) {
+-      print "   " . $ThisOne . ":\n";
++      print "   $ThisOne:\n";
+       foreach $Host (sort {$a cmp $b} keys %{$NetworkUnreachable{$ThisOne}}) {
+-         print "      " . $Host . ": $NetworkUnreachable{$ThisOne}{$Host} Time(s)\n";
++         print "      $Host: $NetworkUnreachable{$ThisOne}{$Host} Time(s)\n";
+       } 
+    }
+ }
+@@ -203,9 +235,9 @@
+ if ( ( $Detail >= 5 ) and (keys %ZoneUpdates) ) {
+    print "\nZone Updates:\n";
+    foreach $ThisOne (sort {$a cmp $b} keys %ZoneUpdates) {
+-      print "   " . $ThisOne . ":\n";
++      print "   $ThisOne:\n";
+       foreach $Message (sort {$a cmp $b} keys %{$ZoneUpdates{$ThisOne}}) {
+-         print "      " . $Message . ": $ZoneUpdates{$ThisOne}{$Message} Time(s)\n";
++         print "      $Message: $ZoneUpdates{$ThisOne}{$Message} Time(s)\n";
+       } 
+    }
+ }
+@@ -213,7 +245,7 @@
+ if ( keys %UpdateDenied ) {
+    print "\nZone update refused:\n";
+    foreach $ThisOne (sort {$a cmp $b} keys %UpdateDenied) {
+-      print "   " . $ThisOne . ": " . $UpdateDenied{$ThisOne} . " Time(s)\n";
++      print "   $ThisOne: $UpdateDenied{$ThisOne} Time(s)\n";
+    }
+ }
+ 

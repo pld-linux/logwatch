@@ -1,0 +1,185 @@
+Index: scripts/services/samba
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/samba,v
+retrieving revision 1.17
+diff -u -r1.17 samba
+--- scripts/services/samba	15 Dec 2003 22:03:55 -0000	1.17
++++ scripts/services/samba	31 Dec 2003 22:33:55 -0000
+@@ -2,6 +2,8 @@
+ ##########################################################################
+ # $Id$
+ ##########################################################################
++# $Log$
++##########################################################################
+ 
+ ########################################################
+ # This was written and is maintained by:
+@@ -13,9 +15,10 @@
+ 
+ $Debug = $ENV{'LOGWATCH_DEBUG'};
+ $Detail = $ENV{'LOGWATCH_DETAIL_LEVEL'} || 0;
+-$SocketReadError=0;
+-$DbOpenFail=0;
+-$GetDomainMasterStatusFail=0;
++$SocketReadError = 0;
++$SocketWriteError = 0;
++$DbOpenFail = 0;
++$GetDomainMasterStatusFail = 0;
+ 
+ if ( $Debug >= 5 ) {
+ 	print STDERR "\n\nDEBUG: Inside Samba Filter \n\n";
+@@ -28,7 +31,6 @@
+ 		($ThisLine =~ /version .+ started/) or
+ 		($ThisLine =~ /oplock[_ ]break/) or
+ 		($ThisLine =~ /No route to host/) or
+-		($ThisLine =~ /SIGTERM: going down/) or
+ 		($ThisLine =~ /response packet id \d+ received with no matching record/) or
+ 		($ThisLine =~ /matchname/i) or
+ 		# Ignore entries in smbmount logfile
+@@ -45,11 +47,14 @@
+ 		($ThisLine =~ /Multiple .+ responses received for a query/) or
+ 		($ThisLine =~ /Connection timed out/) or
+ 		($ThisLine =~ /closed connection to/) or
+-		($ThisLine =~ /Got SIGHUP/) or
+ 		($ThisLine =~ /current master browser/) or
+ 		($ThisLine =~ /debug_message/) or
+       ($ThisLine =~ /process_name_refresh_request\(184\)  Error - should be sent to WINS server$/) or
+       ($ThisLine =~ /cli_connect\(783\)  Error connecting to [^ ]+ \(Operation already in progress\)$/) or
++      ($ThisLine =~ /nmbd_incomingrequests\.c:process_name_refresh_request\([0-9]+\)$/) or
++      ($ThisLine =~ /Got SIGHUP dumping debug info.$/) or
++      ($ThisLine =~ /Got SIGTERM: going down/) or
++      ($ThisLine =~ /get_socket_addr\(\d+\)  getpeername failed. Error was Transport endpoint is not connected$/) or
+ 		($ThisLine =~ /===============================================================/)
+ 	) {
+ 		#Don't care about these...
+@@ -78,6 +83,13 @@
+ 	} elsif ( ( $ThisLine =~ /^\[[^\]]+\] lib\/util_sock.c:read_data\(436\)/ ) ) {
+ 		# This is due to a nasty bug in samba which causes it to drop connections :-(
+ 		$SocketReadError++;
++   } elsif (
++      ( $ThisLine =~ /lib\/util_sock.c:write_socket\(\d+\)  write_socket: Error writing \d bytes to socket/ ) or
++      ( $ThisLine =~ /lib\/util_sock.c:write_socket_data\(\d+\)  write_socket_data: write failure./ ) or 
++      ( $ThisLine =~ /lib\/util_sock.c:send_smb\(\d+\)  Error writing \d bytes to client. / )
++   ) {
++      # Something more generic should be here
++      $SocketWriteError++;
+ 	} elsif ( ( $ThisLine =~ /unable to open passdb database.$/ ) ) {
+ 		$DbOpenFail++;
+ 	} elsif ( ($Server,$Ip,$Group) = ($ThisLine =~ /Server ([^ ]+) at IP ([^ ]+) is announcing itself as a local master browser for workgroup ([^ ]+) and we think we are master. Forcing election.$/ ) ) {
+@@ -107,16 +119,27 @@
+ 		$RootLoggedIn{$user}++;
+ 	} elsif ( ($file,$function) = ($ThisLine =~ /([a-zA-Z_\/():\.0-9-]+)  ([a-zA-Z0-9_-]+): Not yet implemented.$/)) {
+ 		$NotImplemented{$file}{$function}++;
++   } elsif ( ($User,$Ip,$Directory,$Reason) = ($ThisLine =~ /service.c:make_connection\([0-9]+\)  ([^ ]+) \(([^ ]+)\) Can't change directory to ([^ ]+) \((.*)\)/)) {
++      $Temp = "Netbios name $User on $Ip";
++      $CantChangeDir{$Directory}{$Reason}{$Temp}++;
++   } elsif ( ($Signal) = ($ThisLine =~ /open_sockets\([0-9]+\)  Reloading services after ([^ ]+)/)) {
++      $ReloadAfter{$Signal}++;
++   } elsif ( ($Signal) = ($ThisLine =~ /open_sockets\([0-9]+\)  Got ([^ ]+)/)) {
++      $ReloadAfter{$Signal}++;
++   } elsif ( ($Share) = ($ThisLine =~ /cups_printername_ok\([0-9]+\)  Unable to get printer status for ([^ ]+) - client-error-not-found/)) {
++      $PrinterStatus{$Share}++;
++   } elsif ( $ThisLine =~ m/main\([0-9]+\)  ERROR: Failed when creating subnet lists. Exiting./) {
++      $SubnetFail{"Failed when creating subnet lists"}++;
++   } elsif ( $ThisLine =~ m/create_subnets\([0-9]+\)  create_subnets: No local interfaces !/) {
++      $SubnetFail{"No local interfaces"}++;
++   } elsif ( $ThisLine =~ s/process_get_backup_list_request\([0-9]+\)  process_get_backup_list_request: (.*)/$1/) {
++      $GetBacupList{$ThisLine}++;
+ 	} else {
+ 		# Report any unmatched entries...
+ 		$OtherList{$ThisLine}++;
+ 
+       #TODO:
+-      #lib/util_sock.c:get_socket_addr(1012)  getpeername failed. Error was Transport endpoint is not connected
+-      #lib/util_sock.c:send_smb(704)  Error writing 4 bytes to client. -1. (Broken pipe)
+-      #lib/util_sock.c:write_socket(524)  write_socket: Error writing 4 bytes to socket 5: ERRNO = Broken pipe
+-      #lib/util_sock.c:write_socket_data(499)  write_socket_data: write failure. Error = Broken pipe
+-      #lib/util_sock.c:read_data(436)  read_data: read failure for 4. Error = Brak drogi do systemu
++      #lib/util_sock.c:read_data(436)  read_data: read failure for 4. Error = No route to host
+ 	}
+ }
+ 
+@@ -131,6 +154,21 @@
+ 	}
+ }
+ 
++if (keys %SubnetFail) {
++   print "\nWARNING!!!!!!\n";
++   print "Errors when creating subnets:\n";
++   foreach $Error (sort {$a cmp $b} keys %SubnetFail) {
++      print "   $Error : $SubnetFail{$Error} Time(s)\n";
++   }
++}
++
++if (keys %ReloadAfter) {
++   print "\nReloaded services after signal:\n";
++   foreach $Signal (sort {$a cmp $b} keys %ReloadAfter) {
++      print "   $Signal : $ReloadAfter{$Signal} Time(s)\n";
++   }
++}
++
+ if (keys %DiscardWins) {
+    print "\nDiscarded invalid wins.dat file with version:\n";
+    foreach $Version (sort {$a cmp $b} keys %DiscardWins) {
+@@ -169,6 +207,13 @@
+    }
+ }
+ 
++if (keys %PrinterStatus) {
++   print "\nUnable to get printer status for:\n";
++   foreach $Share (sort {$a cmp $b} keys %PrinterStatus) {
++      print "   $Share : $PrinterStatus{$Share} Time(s)\n";
++   }
++}
++
+ if (($Detail >= 5) and (keys %RootLoggedIn)) {
+    print "\nAdmin logins (root privileges):\n";
+    foreach $user (sort {$a cmp $b} keys %RootLoggedIn) {
+@@ -186,13 +231,6 @@
+ }
+      
+ 
+-if (keys %Denied) {
+-   print "\nConnections Denied:\n";
+-   foreach $Line (sort {$a cmp $b} keys %Denied) {
+-      print "   $Line : $Denied{$Line} Time(s)\n";
+-   }
+-}
+-
+ if (keys %ForceElection) {
+ 	print "\nForced Election:\n";
+ 	foreach $Group (sort {$a cmp $b} keys %ForceElection) {
+@@ -227,6 +265,13 @@
+ 	print "\nFailed to get Domain Master node name: $GetDomainMasterStatusFail Time(s)\n";
+ }
+ 
++if (keys %GetBacupList) {
++   print "\nBackup list requests:\n";
++   foreach $Request (sort {$a cmp $b} keys %GetBacupList) {
++      print "   $Request : $GetBacupList{$Request} Time(s)\n";
++   }
++}
++
+ if (($Detail >= 5) and (keys %NoServ)) {
+    print "\nCouldn't find services:\n";
+    foreach $ThisOne (sort {$a cmp $b} keys %NoServ) {
+@@ -291,6 +336,19 @@
+     foreach $User (sort {$a cmp $b} keys %AccountDisabled) {
+         print "   $User : $AccountDisabled{$User} Time(s)\n";
+     }
++}
++
++if (keys %CantChangeDir) {
++   print "\nCan't change directory while browsing:\n";
++   foreach $Directory (sort {$a cmp $b} keys %CantChangeDir) {
++      print "   $Directory:\n";
++      foreach $Reason (sort {$a cmp $b} keys %{$CantChangeDir{$Directory}}) {
++         print "      $Reason:\n";
++         foreach $Entry (sort {$a cmp $b} keys %{$CantChangeDir{$Directory}{$Reason}}) {
++            print "         $Entry : $CantChangeDir{$Directory}{$Reason}{$Entry} Time(s)\n";
++         }
++      }
++   }
+ }
+ 
+ if ($SocketReadError > 0) {
