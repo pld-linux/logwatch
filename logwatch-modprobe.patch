@@ -4,8 +4,8 @@ RCS file: /var/cvs/logwatch/scripts/services/modprobe,v
 retrieving revision 1.8
 diff -u -r1.8 modprobe
 --- scripts/services/modprobe	3 Nov 2003 05:07:25 -0000	1.8
-+++ scripts/services/modprobe	3 Dec 2003 14:02:21 -0000
-@@ -14,29 +14,42 @@
++++ scripts/services/modprobe	7 Dec 2003 14:56:35 -0000
+@@ -14,29 +14,51 @@
  #$Detail = $ENV{'LOGWATCH_DETAIL_LEVEL'} || 0;
  
  while (defined($ThisLine = <STDIN>)) {
@@ -24,6 +24,8 @@ diff -u -r1.8 modprobe
 +		$Modules{$ThisLine}++;
 +	} elsif ( ($Module,$Reason) = ( $ThisLine =~ /WARNING: Error inserting ([^ ]* \([^ ]*\)): (.*)$/ ) ) {
 +		$ErrorInsert{$Module}{$Reason}++;
++	} elsif ( ($Module) = ( $ThisLine =~ /WARNING: Error running install command for scsi_mod$/ ) ) {
++		$ErrorInstall{$Module}++;
 +	} else {
 +		$OtherList{$ThisLine}++;
 +	}
@@ -47,6 +49,13 @@ diff -u -r1.8 modprobe
 +		foreach $Reason (sort {$a cmp $b} keys %{$ErrorInsert{$Module}}) {
 +			print "      $Reason : $ErrorInsert{$Module}{$Reason} Time(s)\n";
 +		}
++	}
++}
++
++if (keys %ErrorInstall) {
++	print "\nErrors running install command:\n";
++	foreach $Module (sort {$a cmp $b} keys %ErrorInstall) {
++		print "   $Module : $ErrorInstall{$Module} Time(s)\n";
 +	}
  }
  
