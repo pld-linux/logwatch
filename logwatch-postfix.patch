@@ -1,7 +1,27 @@
---- ./scripts/services/postfix.org	Mon Dec  1 08:46:21 2003
-+++ ./scripts/services/postfix	Tue Dec  2 09:41:53 2003
-@@ -72,16 +72,13 @@
- 		( $ThisLine =~ m/^terminating on signal 15$/ )
+Index: scripts/services/postfix
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/postfix,v
+retrieving revision 1.4
+diff -u -r1.4 postfix
+--- scripts/services/postfix	26 Nov 2003 14:36:30 -0000	1.4
++++ scripts/services/postfix	7 Dec 2003 14:50:57 -0000
+@@ -55,6 +55,8 @@
+ $BytesTransferred = 0;
+ $FourHourReturns = 0;
+ $ReturnedToSender = 0;
++$ResentMessages = 0;
++$RemovedFromQueue = 0;
+ 
+ while (defined($ThisLine = <STDIN>)) {
+ 	if ( ( $ThisLine =~ m/^connect/ ) or 
+@@ -69,19 +71,18 @@
+ 		( $ThisLine =~ m/^warning: no MX host for .* has a valid A record$/ ) or
+ 		( $ThisLine =~ m/^warning: numeric domain name in resource data of MX record for .*$/ ) or
+ 		( $ThisLine =~ m/^daemon started$/ ) or
+-		( $ThisLine =~ m/^terminating on signal 15$/ )
++		( $ThisLine =~ m/^terminating on signal 15$/ ) or
++		( $ThisLine =~ m/^warning: Mail system is down -- accessing queue directly$/ ) or
++		( $ThisLine =~ m/^Deleted: \d message$/ )
  	) {
  		# We don't care about these
 -	}
@@ -20,7 +40,7 @@
  		# unknown user
  		# $Msg = " hello "
  		# print "bounce message from " . $Dest . " msg : " . $Relay . "\n";
-@@ -92,46 +89,31 @@
+@@ -92,54 +93,65 @@
  			$Temp = "To " . $Dest . " Msg=\"" . $Msg . "\"";
  			$ForeignBounce{$Temp}++;
  		}
@@ -43,6 +63,8 @@
  		$ReturnedToSender++;
 -	}
 -	elsif ( ($Command,$Host) = ($ThisLine =~ /^lost connection after ([^ ]*) from ([^ ]*)$/)) {
++	} elsif ( (undef) = ($ThisLine =~ /^[a-zA-Z0-9]+: resent-message-id=<([^ ]*)>$/)) {
++		$ResentMessages++;
 +	} elsif ( ($Command,$Host) = ($ThisLine =~ /^lost connection after ([^ ]*) from ([^ ]*)$/)) {
  		# Make some better summary with hosts
  		$ConnectionLost{$Command}++;
@@ -53,7 +75,7 @@
  		$ConnectionLost{$Command}++;
 -	}
 -	elsif ( ($Rejected,undef,undef) = ($ThisLine =~ /^^[a-zA-Z0-9]+: reject: header (.*); from=<([^ ]*)> to=<([^ ]*)>: Message content rejected$/)) {
-+	} elsif ( ($Rejected,undef,undef) = ($ThisLine =~ /^^[a-zA-Z0-9]+: reject: header (.*); from=<([^ ]*)> to=<([^ ]*)>: Message content rejected$/)) {
++	} elsif ( ($Rejected,undef,undef) = ($ThisLine =~ /^[a-zA-Z0-9]+: reject: header (.*); from=<([^ ]*)> to=<([^ ]*)>: Message content rejected$/)) {
  		$HeaderReject{$Rejected}++;
 -	}
 -#    elsif ( ($Warning)  = ($ThisLine =~ /^[a-zA-Z0-9]+: Authentication-Warning: [^ ]+: ([^ ]+ set sender to [^ ]+ using -f)/) ) {
@@ -70,16 +92,60 @@
 -#        $FourHourReturns++;
 -#    }
 -    else {
+-	push @OtherList,$ThisLine;
 +	} elsif ( ($Host,undef) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 450 <([^ ]*)>: Sender address rejected: Domain not found;/)) {
 +		$RejectDomain{$Host}++;
 +	} elsif ( ($Host,$Site,$Reason) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 554 Service unavailable; \[[^ ]*\] blocked using ([^ ]*), reason: (.*);/)) {
 +		$Temp = "$Host : $Reason";
 +		$RejectRBL{$Site}{$Temp}++;
++	} elsif ( (undef,undef,$Error) = ($ThisLine =~ /^warning: ([^ ]*): hostname ([^ ]*) verification failed: ([^ ]*)$/)) {
++		$HostnameVerification{$Error}++;
++	} elsif ( $ThisLine =~ /^[a-zA-Z0-9]+: removed$/) {
++		$RemovedFromQueue++;
 +	} else {
- 	push @OtherList,$ThisLine;
++		push @OtherList,$ThisLine;
++		#
++		# TODO:
++		#warning: host 127.0.1.50[127.0.1.50] greeted me with my own hostname jol.task.gda.pl
++		#warning: host 127.0.1.50[127.0.1.50] replied to HELO/EHLO with my own hostname jol.task.gda.pl
++		#warning: mailer loop: best MX host for pager.icq.com is local
++		#warning: smtp_connect_addr: socket: Address family not supported by protocol
++		#warning: smtp_addr_one: unknown address family 1 for localhost
++		#warning: bad size limit "(5120000)" in EHLO reply from relay.hwk-aachen.de[212.117.75.130]
++		#299721B69E: enabling PIX <CRLF>.<CRLF> workaround for mx2.ps.net[160.109.70.71]
++		#warning: valid_hostname: empty hostname
++		#warning: malformed domain name in resource data of MX record for sfol.com:
++		#warning: unknown[203.197.217.137] sent message header instead of SMTP command: From:"Bailey" <sanchez_24@canada.com>
++		#warning: Illegal address syntax from f133.ds.univ.gda.pl[153.19.197.133] in MAIL command: <sseeds_pg@teamaffiliate.com onMouseOver=>
++		#warning: premature end-of-input from cleanup socket while reading input attribute name
++		#warning: open active EA67A1B840: No such file or directory
++		#warning: valid_hostname: invalid character 92(decimal): \254\184\194\008
++		#warning: malformed domain name in resource data of MX record for kiri.com: \254\184\194\008
++		#
      }
  }
-@@ -157,7 +139,7 @@
+ 
+ if ((@OtherList) or
+ 	($MsgsSent > 0) or
+ 	($FourHourReturns > 0) or
+-	($ReturnedToSender >0) or
++	($ReturnedToSender > 0) or
++	($ResentMessages > 0) or
++	($$RemovedFromQueue > 0) or
+ 	(keys %UnknownUsers) or
+ 	(keys %RelayDenied) or
+ 	(keys %$HeaderReject) or
+@@ -148,7 +160,8 @@
+ 	(keys %AuthWarns) or
+ 	(keys %ForwardErrors) or
+ 	(keys %SentBy) or
+-	(keys %ConnectionLost)
++	(keys %ConnectionLost) or
++	(keys %HostnameVerification)
+ ) {
+ 	print "\n\n --------------------- postfix Begin ------------------------ ";
+ 	
+@@ -157,7 +170,7 @@
          print "\n" . $MsgsSent . " messages sent";
      }
  
@@ -88,8 +154,18 @@
          print "\n\n" . $FourHourReturns . " messages returned after 4 hours";
      }
  
-@@ -167,63 +149,80 @@
+@@ -165,66 +178,98 @@
+ 		print "\n\n" . $ReturnedToSender . " messages expired and returned to sender";
+ 	}
  
++	if ($ResentMessages > 0) {
++		print "\n\n$ResentMessages resent messages";
++	}
++
++	if ($RemovedFromQueue > 0) {
++		print "\n\n$RemovedFromQueue messages removed from queue";
++	}
++
  	if (keys %SentBy) {
  		print "\n\nMessages sent by:\n";
 -		foreach $ThisOne (keys %SentBy) {
@@ -158,23 +234,34 @@
      if (keys %AuthWarns) {
  		print "\n\nAuthentication warnings:\n";
 -		foreach $ThisOne (keys %AuthWarns) {
+-			print "    " . $ThisOne . ": " . $AuthWarns{$ThisOne} . " Times(s)\n";
 +		foreach $ThisOne (sort {$a cmp $b} keys %AuthWarns) {
- 			print "    " . $ThisOne . ": " . $AuthWarns{$ThisOne} . " Times(s)\n";
++			print "    $ThisOne : $AuthWarns{$ThisOne} Times(s)\n";
  		}
      }
  
      if (keys %ForwardErrors) {
  		print "\n\nForwarding errors:\n";
 -		foreach $ThisOne (keys %ForwardErrors) {
+-			print "    " . $ThisOne . ": " . $ForwardErrors{$ThisOne} . " Times(s)\n";
 +		foreach $ThisOne (sort {$a cmp $b} keys %ForwardErrors) {
- 			print "    " . $ThisOne . ": " . $ForwardErrors{$ThisOne} . " Times(s)\n";
++			print "    $ThisOne : $ForwardErrors{$ThisOne} Times(s)\n";
  		}
  	}
  
  	if (keys %ConnectionLost) {
  		print "\n\nConnections lost:\n";
 -		foreach $ThisOne (keys %ConnectionLost) {
+-			print "    Connection lost after command " . $ThisOne . ": " . $ConnectionLost{$ThisOne} . " Times(s)\n";
 +		foreach $ThisOne (sort {$a cmp $b} keys %ConnectionLost) {
- 			print "    Connection lost after command " . $ThisOne . ": " . $ConnectionLost{$ThisOne} . " Times(s)\n";
++			print "    Connection lost after command $ThisOne : $ConnectionLost{$ThisOne} Times(s)\n";
++		}
++	}
++
++	if (keys %HostnameVerification) {
++		print "\n\nHostname verification errors:\n";
++		foreach $Error (sort {$a cmp $b} keys %HostnameVerification) {
++			print "    $Error : $HostnameVerification{$Error} Times(s)\n";
  		}
  	}
+ 	
