@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/samba,v
 retrieving revision 1.17
 diff -u -r1.17 samba
 --- scripts/services/samba	15 Dec 2003 22:03:55 -0000	1.17
-+++ scripts/services/samba	18 Dec 2003 07:30:44 -0000
++++ scripts/services/samba	18 Dec 2003 07:35:08 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -18,7 +18,7 @@ diff -u -r1.17 samba
  		$RootLoggedIn{$user}++;
  	} elsif ( ($file,$function) = ($ThisLine =~ /([a-zA-Z_\/():\.0-9-]+)  ([a-zA-Z0-9_-]+): Not yet implemented.$/)) {
  		$NotImplemented{$file}{$function}++;
-+   } elsif ( ($User,$Ip,$Directory,$Reason) = ($ThisLine =~ /service.c:make_connection\(599\)  ([^ ]+) \(([^ ]+)\) Can't change directory to ([^ ]+) \(([^ ]+)\)/)) {
++   } elsif ( ($User,$Ip,$Directory,$Reason) = ($ThisLine =~ /service.c:make_connection\([0-9]+\)  ([^ ]+) \(([^ ]+)\) Can't change directory to ([^ ]+) \((.*)\)/)) {
 +      $Temp = "Netbios name $User on $Ip";
 +      $CantChangeDir{$Directory}{$Reason}{$Temp}++;
  	} else {
