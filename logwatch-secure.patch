@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/secure,v
 retrieving revision 1.49
 diff -u -r1.49 secure
 --- scripts/services/secure	24 Feb 2005 17:08:05 -0000	1.49
-+++ scripts/services/secure	24 Feb 2005 22:47:40 -0000
++++ scripts/services/secure	25 Feb 2005 08:39:52 -0000
 @@ -49,6 +49,7 @@
  $ConsoleLock = 0;
  $spop3d_opened=0;
@@ -32,7 +32,7 @@ diff -u -r1.49 secure
 +      ( $ThisLine =~ /^sudo:/) or
        ( $ThisLine =~ /^xinetd\[\d+\]: USERID: ([^ ]+) (.+)$/ ) or
 +      ( $ThisLine =~ /pam_succeed_if: requirement "uid < 100" not met by user /) or
-+      ( $ThisLine =~ /warning: can.t get client address: Connection refused/)
++      ( $ThisLine =~ /warning: can.t get client address: Connection refused/) or
        ( $ThisLine =~ /^(xinetd|xinetd-ipv6)\[\d+\]: EXIT: /) or
        ( $ThisLine =~ /^crond\(\w+\)\[\d+\]: session /) or
        ( $ThisLine =~ /^sshd\(\w+\)\[\d+\]: authentication failure/) or
@@ -42,7 +42,7 @@ diff -u -r1.49 secure
     } elsif ( ($PID) = ($ThisLine =~ /^checkpassword-pam\[(\d+)\]: Exiting with status 0/)) {
 +   } elsif ( ($User) = ($ThisLine =~ /^pam_tally\[\d+\]: pam_tally: pam_get_uid; no such user ([^ ]+)/)) {
 +      $UnknownUser{$User}++;
-+   } elsif ( ($User) = ($ThisLine =~ /^pam_pwdfile\[\d+\]: user not found in password database/) {
++   } elsif ( ($User) = ($ThisLine =~ /^pam_pwdfile\[\d+\]: user not found in password database/) ) {
 +      $pwd_file_unknown++;
 +   } elsif ( ($User) = ($ThisLine =~ /^pam_pwdfile\[\d+\]: wrong password for user ([^ ]+)/)) {
 +      $UnknownUser{$User}++;
