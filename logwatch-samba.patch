@@ -1,0 +1,59 @@
+Index: scripts/services/samba
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/samba,v
+retrieving revision 1.12
+diff -u -r1.12 samba
+--- scripts/services/samba	26 Nov 2003 14:36:30 -0000	1.12
++++ scripts/services/samba	2 Dec 2003 08:13:00 -0000
+@@ -88,6 +88,8 @@
+ 		$Crash{$Temp}++;
+ 	} elsif ( ( $ThisLine =~ /get_domain_master_name_node_status_fail\(([^ ]+)\)/ ) ) {
+ 		$GetDomainMasterStatusFail++;
++	} elsif ( ($User) = ($ThisLine =~ /pass_check_smb\(552\)  Account for user '([^ ]+)' was disabled.$/) ) {
++		$AccountDisabled{$User}++;
+ 	} else {
+ 		# Report any unmatched entries...
+ 		$OtherList{$ThisLine}++;
+@@ -120,7 +122,7 @@
+ 
+ if (keys %Denied) {
+    print "\nConnections Denied:\n";
+-   foreach $Line (keys %Denied) {
++   foreach $Line (sort {$a cmp $b} keys %Denied) {
+       print "   $Line : $Denied{$Line} Time(s)\n";
+    }
+ }
+@@ -199,23 +201,30 @@
+ 
+ if (keys %InvalidUser) {
+    print "\nInvalid Users:\n";
+-   foreach $Line (keys %InvalidUser) {
++   foreach $Line (sort {$a cmp $b} keys %InvalidUser) {
+       print "   $Line : $InvalidUser{$Line} Time(s)\n";
+    }
+ }
+ 
+ if (keys %NotFoundUser) {
+    print "\nUsers not found in UNIX Database:\n";
+-   foreach $Line (keys %NotFoundUser) {
++   foreach $Line (sort {$a cmp $b} keys %NotFoundUser) {
+       print "   $Line : $NotFoundUser{$Line} Time(s)\n";
+    }
+ }
+ 
+ if (keys %RejectedUser) {
+    print "\nRejected Users:\n";
+-   foreach $Line (keys %RejectedUser) {
++   foreach $Line (sort {$a cmp $b} keys %RejectedUser) {
+       print "   $Line : $RejectedUser{$Line} Time(s)\n";
+    }
++}
++
++if (keys %AccountDisabled) {
++	print "\nAccounts disabled:\n";
++	foreach $User (sort {$a cmp $b} keys %AccountDisabled) {
++		print "   $User : $AccountDisabled{$User} Time(s)\n";
++	}
+ }
+ 
+ if ($SocketReadError > 0) {
