@@ -4,8 +4,8 @@ RCS file: /var/cvs/logwatch/scripts/services/http,v
 retrieving revision 1.9
 diff -u -r1.9 http
 --- scripts/services/http	3 Feb 2004 02:45:26 -0000	1.9
-+++ scripts/services/http	19 Apr 2004 06:57:45 -0000
-@@ -79,40 +79,55 @@
++++ scripts/services/http	3 May 2004 20:19:46 -0000
+@@ -79,40 +79,56 @@
  my $wpad_bytes =     0;
  my $src_count =      0;
  my $src_bytes =      0;
@@ -20,7 +20,7 @@ diff -u -r1.9 http
 +my $host =           "";
 +
 +######################
-+my $image_types =    '(\.bmp|\.emz|\.gif|\.ico|\.jpeg|\.jpg|\.png|\.swf|\.sxd|\.tif|\.tiff|\.wbmp|\.wmf|\.wmz|\.xdm)';
++my $image_types =    '(\.bmp|\.cdr|\.emz|\.gif|\.ico|\.jpeg|\.jpg|\.png|\.swf|\.sxd|\.tif|\.tiff|\.wbmp|\.wmf|\.wmz|\.xdm)';
  my $content_types =  '(';
     $content_types =  $content_types.'\/server-status|\/server-info';
     $content_types =  $content_types.'|\.htm|\.html|\.jhtml|\.phtml|\.shtml|\/';
@@ -39,7 +39,7 @@ diff -u -r1.9 http
  my $wpad_files =     '(wpad\.dat|wspad\.dat|proxy\.pac)';
 -my $program_src =    '(\.bas|\.c|\.diff|\.f|\.h|\.patch|\.cpp)';
 -my $images_types =   '(\.bin|\.cue|\.iso|\.run)';
-+my $program_src =    '(\.bas|\.c|\.cfg|\.conf|\.config|\.cpp|\.diff|\.f|\.h|\.init|\.patch|\.spec)';
++my $program_src =    '(\.bas|\.c|\.cfg|\.conf|\.config|\.cpp|\.diff|\.f|\.h|\.init|\.pas|\.patch|\.spec)';
 +my $images_types =   '(\.bin|\.cue|\.img|\.iso|\.run)';
 +my $logs_types =     '(\.log|\.logs)';
  
@@ -52,11 +52,12 @@ diff -u -r1.9 http
 -   '\\x90\\x90\\x90\\x90',
 -   '\\x04\\x01',
 -   '\\x05\\x01',
-+   '\\\x90\\\x02\\\xb1\\\x02\\\xb1',
 +   '\\\x02\\\xb1',
-+   '\\\x90\\\x90\\\x90\\\x90',
 +   '\\\x04\\\x01',
 +   '\\\x05\\\x01',
++   '\\\x90\\\x02\\\xb1\\\x02\\\xb1',
++   '\\\x90\\\x90\\\x90\\\x90',
++   '\\\xff\\\xff\\\xff\\\xff',
     '\/c\+dir',
 +   'author.exe',
     'cmd.exe',
@@ -74,7 +75,7 @@ diff -u -r1.9 http
  );
  
  #
-@@ -238,9 +253,16 @@
+@@ -238,9 +254,16 @@
     } elsif ($field{base_url} =~ /$images_types$/) {
        $images_count += 1;
        $images_bytes += $field{bytes_transfered};
@@ -91,7 +92,7 @@ diff -u -r1.9 http
     } else {
        $other_count += 1;
        $other_bytes += $field{bytes_transfered};
-@@ -282,7 +304,7 @@
+@@ -282,7 +305,7 @@
     
  } ## End of while loop
  
@@ -100,7 +101,7 @@ diff -u -r1.9 http
  ##   output the results 
  ##
  
-@@ -293,18 +315,20 @@
+@@ -293,18 +316,20 @@
     print " responses ";
     print " (1xx $a1xx_resp, 2xx $a2xx_resp, 3xx $a3xx_resp,";
     print " 4xx $a4xx_resp, 5xx $a5xx_resp) \n";
@@ -133,7 +134,7 @@ diff -u -r1.9 http
  }
  
  #
-@@ -335,6 +359,12 @@
+@@ -335,6 +360,12 @@
     }	
  }
  
@@ -146,27 +147,3 @@ diff -u -r1.9 http
  #
  #  List (wannabe) blackhat sites
  #
-Index: conf/logfiles/http.conf
-===================================================================
-RCS file: /var/cvs/logwatch/conf/logfiles/http.conf,v
-retrieving revision 1.2
-diff -u -r1.2 http.conf
---- conf/logfiles/http.conf	15 Dec 2003 18:35:01 -0000	1.2
-+++ conf/logfiles/http.conf	19 Apr 2004 06:57:46 -0000
-@@ -4,13 +4,16 @@
- 
- # What actual file?  Defaults to LogPath if not absolute path....
- LogFile = httpd/access_log
-+LogFile = httpd/*access_log
- 
- # If the archives are searched, here is one or more line
- # (optionally containing wildcards) that tell where they are...
- # Note: if these are gzipped, you need to end with a .gz even if
- #       you use wildcards...
- Archive = archiv/httpd/access_log.*
-+Archive = archiv/httpd/*access_log.*
- Archive = archiv/httpd/access_log.*.gz
-+Archive = archiv/httpd/*access_log.*.gz
- 
- # Expand the repeats (actually just removes them now)
- *ExpandRepeats
