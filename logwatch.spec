@@ -3,8 +3,10 @@ Summary(pl): 	Logwatch - analizator logów systemowych
 Name:        	logwatch
 Version:     	2.1.1
 Release:     	0.1
-Copyright:   	GPL
+License:   	GPL
 Group:       	Utilities/System
+Group(pl):	Narzêdzia/System
+Group(de):      Applikationen/System
 Source:      	ftp://ftp.kaybee.org/pub/linux/%{name}-%{version}.tar.gz
 Requires:    	perl
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
