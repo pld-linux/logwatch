@@ -1,0 +1,13 @@
+# Set priority when cleating report:
+NICE_LEVEL="0"
+
+# Select output.
+#  - unformated - traditional text form (default)
+#  - html - html output - if you try to mail it'll be encoded as uuencode
+#  - html-embed - html embeded output - if you try to mail it'll be encoded as mail-content
+#  - mail - email with full headers
+OUTPUT="unformated"
+
+# Where to save file?
+# If commented - simply run logwatch
+#OUTPUT_LOCATION=/srv/logwatch/
