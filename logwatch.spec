@@ -21,6 +21,7 @@ URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	perl-modules
 Requires:	smtpdaemon
+Requires:	crondaemon
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Buildarch:	noarch
 
