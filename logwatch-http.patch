@@ -1,0 +1,192 @@
+Index: conf/logfiles/http.conf
+===================================================================
+RCS file: /var/cvs/logwatch/conf/logfiles/http.conf,v
+retrieving revision 1.2
+diff -u -r1.2 http.conf
+--- conf/logfiles/http.conf	15 Dec 2003 18:35:01 -0000	1.2
++++ conf/logfiles/http.conf	9 Jun 2004 07:53:38 -0000
+@@ -4,13 +4,16 @@
+ 
+ # What actual file?  Defaults to LogPath if not absolute path....
+ LogFile = httpd/access_log
++LogFile = httpd/*access_log
+ 
+ # If the archives are searched, here is one or more line
+ # (optionally containing wildcards) that tell where they are...
+ # Note: if these are gzipped, you need to end with a .gz even if
+ #       you use wildcards...
+ Archive = archiv/httpd/access_log.*
++Archive = archiv/httpd/*access_log.*
+ Archive = archiv/httpd/access_log.*.gz
++Archive = archiv/httpd/*access_log.*.gz
+ 
+ # Expand the repeats (actually just removes them now)
+ *ExpandRepeats
+Index: scripts/services/http
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/http,v
+retrieving revision 1.9
+diff -u -r1.9 http
+--- scripts/services/http	3 Feb 2004 02:45:26 -0000	1.9
++++ scripts/services/http	9 Jun 2004 07:53:38 -0000
+@@ -79,40 +79,67 @@
+ my $wpad_bytes =     0;
+ my $src_count =      0;
+ my $src_bytes =      0;
++my $logs_count =     0;
++my $logs_bytes =     0;
+ my $images_count =   0;
+ my $images_bytes =   0;
+-my $image_types =    '(\.bmp|\.emz|\.gif|\.ico|\.jpeg|\.jpg|\.png|\.swf|\.tif|\.tiff|\.wmf|\.wmz|\.xdm)';
++my $fonts_count =    0;
++my $fonts_bytes =    0;
++my $proxy_count =    0;
++my $proxy_bytes =    0;
++my %proxy_host =     ();
++my $host =           "";
++
++######################
++my $image_types =    '(\.bmp|\.cdr|\.emz|\.gif|\.ico|\.jpeg|\.jpg|\.png|\.swf|\.sxd|\.tif|\.tiff|\.wbmp|\.wmf|\.wmz|\.xdm)';
+ my $content_types =  '(';
+    $content_types =  $content_types.'\/server-status|\/server-info';
+    $content_types =  $content_types.'|\.htm|\.html|\.jhtml|\.phtml|\.shtml|\/';
+-   $content_types =  $content_types.'|\.php|\.php3|\.asp|\.pl|\.wml|\/';
+-   $content_types =  $content_types.'|\.css|\.js|\.cgi|\.txt|\/';
+-   $content_types =  $content_types.'|\.class|\.jsp|\.jar|\.java)';
+-my $docs_types =     '(\.doc|\.dvi|\.gnumeric|\.mcd|\.mso|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.tex|\.text|\.xls|\.xml)';
+-my $archive_types =  '(\.ace|\.bz2|\.cab|\.deb|\.gz|\.hqx|\.rar|\.rpm|\.tbz2|\.zip)';
+-my $sound_types =    '(\.mp3|\.ram|\.raw|\.rm|\.wav|\.wma|\.mid)';
+-my $movie_types =    '(\.asf|\.avi|\.mid|\.mpg|\.mpeg|\.mov)';
+-my $winexec_types =  '(\.com|\.exe|\.dll)';
++   $content_types =  $content_types.'|\.inc|\.php|\.php3|\.asp|\.pl|\.wml|\/';
++   $content_types =  $content_types.'|\.css|\.js|\.cgi|\/';
++   $content_types =  $content_types.'|\.class|\.jsp|\.jar|\.java|\/';
++   $content_types =  $content_types.'|COPYRIGHT|readme|README|FAQ|INSTALL|\.txt)';
++my $docs_types =     '(\.asc|\.doc|\.dot|\.dvi|\.gnumeric|\.mcd|\.mso|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.sxi|\.tex|\.text|\.xls|\.xml)';
++my $archive_types =  '(\.ace|\.bz2|\.cab|\.deb|\.dsc|\.ed2k|\.gz|\.hqx|\.md5|\.rar|\.rpm|\.sig|\.sign|\.tar|\.tbz2|\.tgz|\.Z|\.zip)';
++my $sound_types =    '(\.au|\.mid|\.mp3|\.ram|\.raw|\.rm|\.wav|\.wma|\.wmv|\.xsm)';
++my $movie_types =    '(\.asf|\.ass|\.avi|\.idx|\.mid|\.mpg|\.mpeg|\.mov|\.qt|\.psb|\.srt|\.ssa|\.smi|\.sub)';
++my $winexec_types =  '(\.bat|\.com|\.exe|\.dll)';
+ my $wpad_files =     '(wpad\.dat|wspad\.dat|proxy\.pac)';
+-my $program_src =    '(\.bas|\.c|\.diff|\.f|\.h|\.patch|\.cpp)';
+-my $images_types =   '(\.bin|\.cue|\.iso|\.run)';
++my $program_src =    '(\.bas|\.c|\.cfg|\.conf|\.config|\.cpp|\.diff|\.f|\.h|\.init|\.m|\.pas|\.patch|\.spec)';
++my $images_types =   '(\.bin|\.cue|\.img|\.iso|\.run)';
++my $logs_types =     '(\.log|_log|-log|\.logs|\.out|\.wyniki)';
++my $fonts_types =    '(\.aft)';
+ 
+ #
+ #   what to look for as an attack  USE LOWER CASE!!!!!!
+ #
+ my @exploits = (
+-   '\\x90\\x02\\xb1\\x02\\xb1',
+-   '\\x02\\xb1\\x02\\xb1',
+-   '\\x90\\x90\\x90\\x90',
+-   '\\x04\\x01',
+-   '\\x05\\x01',
++   '/../../../',
++   '../../config.sys',
++   '/../../../autoexec.bat',
++   '/../../windows/user.dat',
++   '\\\x02\\\xb1',
++   '\\\x04\\\x01',
++   '\\\x05\\\x01',
++   '\\\x90\\\x02\\\xb1\\\x02\\\xb1',
++   '\\\x90\\\x90\\\x90\\\x90',
++   '\\\xff\\\xff\\\xff\\\xff',
+    '\/c\+dir',
++   '\/c\+dir\+c',
++   'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
++   'author.exe',
+    'cmd.exe',
++   'cltreq.asp',
++   'c%20dir%20C',
+    'default.ida',
++   'httpodbc.dll',
+    'nsiislog.dll',
++   'owssvr.dll',
+    'phpmyadmin',
+    'root.exe',
+-   'win.ini'
++   'shtml.exe',
++   'win.ini',
++   'XXXXXXXXXXXXXXXXXXXXXX'
+ );
+ 
+ #
+@@ -238,9 +265,19 @@
+    } elsif ($field{base_url} =~ /$images_types$/) {
+       $images_count += 1;
+       $images_bytes += $field{bytes_transfered};
++   } elsif ($field{base_url} =~ /$logs_types$/) {
++      $logs_count += 1;
++      $logs_bytes += $field{bytes_transfered};
++   } elsif ($field{base_url} =~ /$fonts_types$/) {
++      $fonts_count += 1;
++      $fonts_bytes += $field{bytes_transfered};
+    } elsif ($field{http_rc} =~ /3\d\d/) {
+       $redirect_count += 1;
+       $redirect_bytes += $field{bytes_transfered};
++   } elsif ($field{method} =~ /CONNECT/) {
++      $proxy_count += 1;
++      $proxy_bytes += $field{bytes_transfered};
++      $proxy_host{"$field{client_ip} -> $field{base_url}"}++;
+    } else {
+       $other_count += 1;
+       $other_bytes += $field{bytes_transfered};
+@@ -282,7 +319,7 @@
+    
+ } ## End of while loop
+ 
+-##
++#############################################
+ ##   output the results 
+ ##
+ 
+@@ -293,18 +330,21 @@
+    print " responses ";
+    print " (1xx $a1xx_resp, 2xx $a2xx_resp, 3xx $a3xx_resp,";
+    print " 4xx $a4xx_resp, 5xx $a5xx_resp) \n";
+-   print	  " $image_count Images ($image_bytes bytes),\n";
+-   print   " $docs_count Documents ($docs_bytes bytes),\n";
+-   print   " $archive_count Archives ($archive_bytes bytes),\n";
+-   print   " $sound_count Sound files ($sound_bytes bytes),\n";
+-   print   " $movie_count Movies files ($movie_bytes bytes),\n";
+-   print   " $winexec_count Windows executable files ($winexec_bytes bytes),\n";
+-   print	  " $content_count Content pages ($content_bytes bytes),\n";
+-   print	  " $redirect_count Redirects ($redirect_bytes bytes),\n";
+-   print   " $wpad_count Proxy Configuration Files ($wpad_bytes bytes),\n";
+-   print   " $src_count Program source files ($src_bytes bytes),\n";
+-   print   " $images_count CD Images ($images_bytes bytes),\n"; 
+-   print	  " $other_count Other ($other_bytes bytes) \n";
++   if ($image_count > 0)      { printf " $image_count Images (%.2f MB),\n" , $image_bytes/(1024*1024); }
++   if ($docs_count > 0)       { printf " $docs_count Documents (%.2f MB),\n" , $docs_bytes/(1024*1024); }
++   if ($archive_count > 0)    { printf " $archive_count Archives (%.2f MB),\n" , $archive_bytes/(1024*1024); }
++   if ($sound_count > 0)      { printf " $sound_count Sound files (%.2f MB),\n" , $sound_bytes/(1024*1024); }
++   if ($movie_count > 0)      { printf " $movie_count Movies files (%.2f MB),\n" , $movie_bytes/(1024*1024); }
++   if ($winexec_count > 0)    { printf " $winexec_count Windows executable files (%.2f MB),\n" , $winexec_bytes/(1024*1024); }
++   if ($content_count > 0)    { printf " $content_count Content pages (%.2f MB),\n" , $content_bytes/(1024*1024); }
++   if ($redirect_count > 0)   { printf " $redirect_count Redirects (%.2f MB),\n" , $redirect_bytes/(1024*1024); }
++   if ($wpad_count > 0)       { printf " $wpad_count Proxy Configuration Files (%.2f MB),\n" , $wpad_bytes/(1024*1024); }
++   if ($src_count > 0)        { printf " $src_count Program source files (%.2f MB),\n" , $src_bytes/(1024*1024); }
++   if ($images_count > 0)     { printf " $images_count CD Images (%.2f MB),\n" , $images_bytes/(1024*1024); }
++   if ($logs_count > 0)       { printf " $logs_count various Logs (%.2f MB),\n" , $logs_bytes/(1024*1024); }
++   if ($fonts_count > 0)      { printf " $fonts_count Fonts (%.2f MB),\n" , $fonts_bytes/(1024*1024); }
++   if ($proxy_count > 0)      { printf " $proxy_count mod_proxy connection attempts (%.2f MB),\n" , $proxy_bytes/(1024*1024); }
++   if ($other_count > 0)      { printf " $other_count Other (%.2f MB) \n" , $other_bytes/(1024*1024); }
+ }
+ 
+ #
+@@ -335,6 +375,12 @@
+    }	
+ }
+ 
++if (keys %proxy_host) {
++   print "\nConnection attempts using mod_proxy:\n";
++   foreach $host (sort {$a cmp $b} keys %proxy_host) {
++      print "   $host : $proxy_host{$host} Time(s)\n";
++   }
++}
+ #
+ #  List (wannabe) blackhat sites
+ #
