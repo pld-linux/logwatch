@@ -4,8 +4,27 @@ RCS file: /var/cvs/logwatch/scripts/services/samba,v
 retrieving revision 1.19
 diff -u -r1.19 samba
 --- scripts/services/samba	23 Jun 2004 15:01:17 -0000	1.19
-+++ scripts/services/samba	1 Jul 2004 10:35:21 -0000
-@@ -106,6 +106,10 @@
++++ scripts/services/samba	15 Jul 2004 10:25:14 -0000
+@@ -25,6 +25,7 @@
+ $SocketReadError = 0;
+ $SocketWriteError = 0;
+ $DbOpenFail = 0;
++$DbCorrupt = 0;
+ $GetDomainMasterStatusFail = 0;
+ 
+ if ( $Debug >= 5 ) {
+@@ -92,6 +93,10 @@
+ 		$InvalidUser{$User}++;
+ 	} elsif (($User) = $ThisLine =~ /Couldn't find user '([^ ]+)'/) {
+ 		$NotFoundUser{$User}++;
++   } elsif (($User) = $ThisLine =~ /pdb_smbpasswd\.c:build_sam_account\(\d+\)  build_sam_account: smbpasswd database is corrupt!  username ([^ ]+) not in unix passwd database!/ ) {
++      $NotFoundUser{$User}++;
++      $DbOpenFail++;
++      $DbCorrupt++;
+ 	} elsif (($User) = $ThisLine =~ /Rejecting user '([^ ]+)'/) {
+ 		$RejectedUser{$User}++;
+ 	} elsif ( ( $ThisLine =~ /lib\/util_sock.c:read_data\(436\)/ ) ) {
+@@ -106,6 +111,10 @@
        $SocketWriteError++;
  	} elsif ( ( $ThisLine =~ /unable to open passdb database.$/ ) ) {
  		$DbOpenFail++;
@@ -16,3 +35,14 @@ diff -u -r1.19 samba
  	} elsif ( ($Server,$Ip,$Group) = ($ThisLine =~ /Server ([^ ]+) at IP ([^ ]+) is announcing itself as a local master browser for workgroup ([^ ]+) and we think we are master. Forcing election.$/ ) ) {
  		$Temp = $Server . "(" . $Ip . ")";
  		$ForceElection{$Group}{$Temp}++;
+@@ -343,6 +352,10 @@
+ 	print "\nFailed to open passwd database: $DbOpenFail Time(s)\n";
+ }
+ 
++if ($DbCorrupt > 0) {
++	print "smbpasswd database corrupt: $DbOpenFail Time(s)\n";
++}
++
+ if (keys %InvalidUser) {
+    print "\nInvalid Users:\n";
+    foreach $Line (sort {$a cmp $b} keys %InvalidUser) {
