@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/amavis,v
 retrieving revision 1.10
 diff -u -r1.10 amavis
 --- scripts/services/amavis	3 Feb 2004 19:13:13 -0000	1.10
-+++ scripts/services/amavis	26 Apr 2004 07:06:44 -0000
++++ scripts/services/amavis	26 Apr 2004 07:11:54 -0000
 @@ -17,6 +17,7 @@
  $SpamMsgs = 0;
  $BannedNames = 0;
@@ -94,7 +94,7 @@ diff -u -r1.10 amavis
        $SpamMsgs++;
  
        if ($Detail >= 5) {
-@@ -91,16 +93,29 @@
+@@ -91,16 +93,32 @@
          $Spams{$Towards}{$Fromspam}++;
        }; # if
  
@@ -112,6 +112,9 @@ diff -u -r1.10 amavis
 +   } elsif ( $ThisLine =~ /^NOTICE: DSN contains VIRUS; bounce is not bouncable, mail intentionally dropped/ ) {
 +      $IntentionallyDrop++;
 +      $InfectedMsgs++;
++   } elsif ( $ThisLine =~ /^NOTICE: DSN contains BANNED NAME; bounce is not bouncable, mail intentionally dropped/ ) {
++      $IntentionallyDrop++;
++      $BannedNames++;
 +   } elsif ( $ThisLine =~ /^NOTICE: DSN contains VIRUS & BANNED NAME; bounce is not bouncable, mail intentionally dropped/ ) {
 +      $IntentionallyDrop++;
 +      $BannedNames++;
@@ -129,7 +132,7 @@ diff -u -r1.10 amavis
        # Report any unmatched entries...
        chomp($ThisLine);
        $OtherList{$ThisLine}++;        
-@@ -108,7 +123,9 @@
+@@ -108,7 +126,9 @@
  } # while
  
  
@@ -139,7 +142,7 @@ diff -u -r1.10 amavis
  if ($CleanMsgs > 0) {
     print "\n$CleanMsgs messages checked and passed.\n";
  }; # if 
-@@ -128,6 +145,10 @@
+@@ -128,6 +148,10 @@
  if ($BadHeaders > 0) {
     print "$BadHeaders messages with bad headers were found.\n"; 
  }; # if
