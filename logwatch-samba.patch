@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/samba,v
 retrieving revision 1.17
 diff -u -r1.17 samba
 --- scripts/services/samba	15 Dec 2003 22:03:55 -0000	1.17
-+++ scripts/services/samba	23 Dec 2003 21:41:53 -0000
++++ scripts/services/samba	23 Dec 2003 21:46:50 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -81,7 +81,7 @@ diff -u -r1.17 samba
 +
 +if (keys %ReloadAfter) {
 +   print "\nReloaded services after signal:\n";
-+   foreach $Signal (sort {$a cmp $b} keys %Signal) {
++   foreach $Signal (sort {$a cmp $b} keys %ReloadAfter) {
 +      print "   $Signal : $ReloadAfter{$Signal} Time(s)\n";
 +   }
 +}
