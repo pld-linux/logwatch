@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/secure,v
 retrieving revision 1.49
 diff -u -r1.49 secure
 --- scripts/services/secure	24 Feb 2005 17:08:05 -0000	1.49
-+++ scripts/services/secure	25 Feb 2005 12:12:54 -0000
++++ scripts/services/secure	28 Feb 2005 10:06:55 -0000
 @@ -49,6 +49,8 @@
  $ConsoleLock = 0;
  $spop3d_opened=0;
@@ -41,7 +41,7 @@ diff -u -r1.49 secure
        $Error{$Service}{$Err}++;
     } elsif ( ($Service,$Err) = ($ThisLine =~ /^([^ ]+): (password mismatch for [^ ]+ in [^ ]+):.*$/ ) ) {
        $Error{$Service}{$Err}++;
-+   } elsif ( ($Service,$Err) = ($ThisLine =~ /^([^ ]+)\[\d+\]: (changed POP3 password for wojtek)$/ ) ) {
++   } elsif ( ($Service,$Err) = ($ThisLine =~ /^([^ ]+)\[\d+\]: (changed POP3 password for .*)$/ ) ) {
 +      $Error{$Service}{$Err}++;
     } elsif ( $ThisLine =~ /^login: ROOT LOGIN ON tty[0-9]+/) {
        $RootLoginTTY++
