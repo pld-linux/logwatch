@@ -1,10 +1,34 @@
+Index: conf/logfiles/http.conf
+===================================================================
+RCS file: /var/cvs/logwatch/conf/logfiles/http.conf,v
+retrieving revision 1.2
+diff -u -r1.2 http.conf
+--- conf/logfiles/http.conf	15 Dec 2003 18:35:01 -0000	1.2
++++ conf/logfiles/http.conf	9 Jun 2004 07:53:38 -0000
+@@ -4,13 +4,16 @@
+ 
+ # What actual file?  Defaults to LogPath if not absolute path....
+ LogFile = httpd/access_log
++LogFile = httpd/*access_log
+ 
+ # If the archives are searched, here is one or more line
+ # (optionally containing wildcards) that tell where they are...
+ # Note: if these are gzipped, you need to end with a .gz even if
+ #       you use wildcards...
+ Archive = archiv/httpd/access_log.*
++Archive = archiv/httpd/*access_log.*
+ Archive = archiv/httpd/access_log.*.gz
++Archive = archiv/httpd/*access_log.*.gz
+ 
+ # Expand the repeats (actually just removes them now)
+ *ExpandRepeats
 Index: scripts/services/http
 ===================================================================
 RCS file: /var/cvs/logwatch/scripts/services/http,v
 retrieving revision 1.9
 diff -u -r1.9 http
 --- scripts/services/http	3 Feb 2004 02:45:26 -0000	1.9
-+++ scripts/services/http	1 Jun 2004 06:54:48 -0000
++++ scripts/services/http	9 Jun 2004 07:53:38 -0000
 @@ -79,40 +79,67 @@
  my $wpad_bytes =     0;
  my $src_count =      0;
@@ -40,7 +64,7 @@ diff -u -r1.9 http
 +   $content_types =  $content_types.'|COPYRIGHT|readme|README|FAQ|INSTALL|\.txt)';
 +my $docs_types =     '(\.asc|\.doc|\.dot|\.dvi|\.gnumeric|\.mcd|\.mso|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.sxi|\.tex|\.text|\.xls|\.xml)';
 +my $archive_types =  '(\.ace|\.bz2|\.cab|\.deb|\.dsc|\.ed2k|\.gz|\.hqx|\.md5|\.rar|\.rpm|\.sig|\.sign|\.tar|\.tbz2|\.tgz|\.Z|\.zip)';
-+my $sound_types =    '(\.au|\.mp3|\.ram|\.raw|\.rm|\.wav|\.wma|\.mid)';
++my $sound_types =    '(\.au|\.mid|\.mp3|\.ram|\.raw|\.rm|\.wav|\.wma|\.wmv|\.xsm)';
 +my $movie_types =    '(\.asf|\.ass|\.avi|\.idx|\.mid|\.mpg|\.mpeg|\.mov|\.qt|\.psb|\.srt|\.ssa|\.smi|\.sub)';
 +my $winexec_types =  '(\.bat|\.com|\.exe|\.dll)';
  my $wpad_files =     '(wpad\.dat|wspad\.dat|proxy\.pac)';
@@ -48,7 +72,7 @@ diff -u -r1.9 http
 -my $images_types =   '(\.bin|\.cue|\.iso|\.run)';
 +my $program_src =    '(\.bas|\.c|\.cfg|\.conf|\.config|\.cpp|\.diff|\.f|\.h|\.init|\.m|\.pas|\.patch|\.spec)';
 +my $images_types =   '(\.bin|\.cue|\.img|\.iso|\.run)';
-+my $logs_types =     '(\.log|_log|-log|\.logs|\.out)';
++my $logs_types =     '(\.log|_log|-log|\.logs|\.out|\.wyniki)';
 +my $fonts_types =    '(\.aft)';
  
  #
@@ -166,27 +190,3 @@ diff -u -r1.9 http
  #
  #  List (wannabe) blackhat sites
  #
-Index: conf/logfiles/http.conf
-===================================================================
-RCS file: /var/cvs/logwatch/conf/logfiles/http.conf,v
-retrieving revision 1.2
-diff -u -r1.2 http.conf
---- conf/logfiles/http.conf	15 Dec 2003 18:35:01 -0000	1.2
-+++ conf/logfiles/http.conf	1 Jun 2004 06:54:48 -0000
-@@ -4,13 +4,16 @@
- 
- # What actual file?  Defaults to LogPath if not absolute path....
- LogFile = httpd/access_log
-+LogFile = httpd/*access_log
- 
- # If the archives are searched, here is one or more line
- # (optionally containing wildcards) that tell where they are...
- # Note: if these are gzipped, you need to end with a .gz even if
- #       you use wildcards...
- Archive = archiv/httpd/access_log.*
-+Archive = archiv/httpd/*access_log.*
- Archive = archiv/httpd/access_log.*.gz
-+Archive = archiv/httpd/*access_log.*.gz
- 
- # Expand the repeats (actually just removes them now)
- *ExpandRepeats
