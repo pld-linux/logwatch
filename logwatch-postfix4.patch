@@ -1,6 +1,10 @@
+Index: scripts/services/postfix
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/postfix,v
+retrieving revision 1.3
 diff -u -r1.3 postfix
 --- scripts/services/postfix	18 Nov 2003 14:04:05 -0000	1.3
-+++ scripts/services/postfix	24 Nov 2003 08:21:27 -0000
++++ scripts/services/postfix	24 Nov 2003 08:23:39 -0000
 @@ -51,52 +45,70 @@
  $MsgsSent = 0;
  $BytesTransferred = 0;
