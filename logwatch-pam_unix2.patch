@@ -1,5 +1,5 @@
 --- ./scripts/services/pam_unix.org	Wed Apr  2 21:10:16 2003
-+++ ./scripts/services/pam_unix	Thu Apr 17 09:33:31 2003
++++ ./scripts/services/pam_unix	Mon May 12 14:39:39 2003
 @@ -33,10 +33,18 @@
           # ignore this line
        } elsif ($line =~ s/^authentication failure; .*rhost=(.+)\s+user=(.+)$/$2 ($1)/) {
@@ -62,7 +62,14 @@
  	   } else {
  		   $data{$service}{'Unknown Entries'}{$line}++;
  	   }
-@@ -87,17 +111,17 @@
+@@ -84,20 +108,24 @@
+ 	   } else {
+ 		   $data{$service}{'Unknown Entries'}{$line}++;
+ 	   }
++   } elsif ($service eq 'cyrus') {
++	   if ($line =~ s/^authentication failure; .*user=(.+)$/$1/) {
++		   $data{$service}{'Authentication Failures'}{$line}++;
++	   }
     } elsif ($service eq 'pure-ftpd') {
  	   if ($line =~ s/^session opened for user (.+)/$1/) {
  		   $data{$service}{'Sessions Opened'}{$line}++;
@@ -77,7 +84,7 @@
 -	   } elsif ($line =~ /session closed for user/) {
 -		   # ignore this line
 +   } elsif ($service eq 'xscreensaver') {
-+	   if ($line =~ s/^authentication failure; .*uid=(\d+) euid=(\d+) tty=(.+) .*user=(.+)$/$4($1,$2) on display $3/) {
++	   if ($line =~ s/^authentication failure; .*uid=(\d+) euid=(\d+) tty=(.+) ruser= rhost=  user=(.+)$/$4($1,$2) on display $3/) {
 +		   $data{$service}{'Authentication Failures'}{$line}++;
  	   }
     } else {
