@@ -3,7 +3,7 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	5.2.2
-Release:	1
+Release:	2
 License:	MIT
 Group:		Applications/System
 #Path for pre-versions:
@@ -12,6 +12,9 @@ Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
 # Source0-md5:	d3b676fd15e51a00027ee13b4a5ce486
 Patch0:		%{name}-config.patch
 Patch1:		%{name}-log_conf.patch
+Patch2:		%{name}-clam-update.patch
+Patch3:		%{name}-postfix.patch
+Patch4:		%{name}-samba.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	crondaemon
@@ -40,6 +43,9 @@ u¿yciu i moze pracowaæ na wiêkszo¶ci systemów.
 %setup -q
 %patch0 -p1
 %patch1 -p1
+%patch2 -p0
+%patch3 -p0
+%patch4 -p0
 
 %install
 rm -rf $RPM_BUILD_ROOT
