@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sshd,v
 retrieving revision 1.33
 diff -u -r1.33 sshd
 --- scripts/services/sshd	15 Dec 2003 19:01:19 -0000	1.33
-+++ scripts/services/sshd	23 Dec 2003 22:41:08 -0000
++++ scripts/services/sshd	23 Dec 2003 22:47:34 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
