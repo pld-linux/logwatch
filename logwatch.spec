@@ -2,27 +2,38 @@
 Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
-Version:	4.3.2
-Release:	6
+Version:	5.1
+Release:	0.pre.12
 License:	MIT
 Group:		Applications/System
-Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
-# Source0-md5:	fdd2edb48c17f52ace9e2b00a3ac17f9
-Source1:	http://www.jimohalloran.com/archives/files/patches030325.tar.gz
-# Source1-md5:	20f356691c4bf48280f1a623b8b7d8a5
-Patch0:		%{name}-more_features.patch
-Patch1:		%{name}-dirs.patch
-Patch2:		%{name}-init.patch
-Patch3:		%{name}-sendmail_warning.patch
-Patch4:		%{name}-pam_unix2.patch
-Patch5:		%{name}-modprobe.patch
-Patch6:		http://piorun.ds.pg.gda.pl/~blues/patches/%{name}-sendmail_detail.patch
+#Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
+Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
+# Source0-md5:	7939ffc153261984d028bb3e56882412
+Source1:	shaperd
+Source2:	shaperd.conf
+Patch0:		%{name}-config.patch
+Patch1:		%{name}-log_conf.patch
+Patch2:		%{name}-sshd.patch
+Patch3:		%{name}-sendmail.patch
+Patch4:		%{name}-secure.patch
+Patch5:		%{name}-samba.patch
+Patch6:		%{name}-postfix.patch
+Patch7:		%{name}-http.patch
+Patch8:		%{name}-pam_unix.patch
+Patch9:		%{name}-modprobe.patch
+Patch10:	%{name}-pureftpd.patch
+Patch11:	%{name}-cron.patch
+Patch12:	%{name}-named.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	perl-modules
 Requires:	smtpdaemon
+Requires:	crondaemon
+BuildArch:	noarch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
-Buildarch:	noarch
+
+%define		_logwatchdir	%{_datadir}/logwatch
+%define		_logwatchconf	%{_sysconfdir}/log.d
 
 %description
 LogWatch is a customizable, pluggable log-monitoring system. It will
@@ -36,49 +47,48 @@ analizowania logów systemowych i przesy³aniu ich po wstêpnjej obróbce
 poczt± elektroniczn± do administratora systemu. Logwatch jest ³atwy w
 u¿yciu i moze pracowaæ na wiêkszo¶ci systemów.
 
-%prep 
-%setup -q -a1
+%prep
+%setup -q -n %{name}-pre%{version}
 %patch0 -p1
 %patch1 -p1
-%patch2 -p1
-%patch3 -p1
-%patch4 -p1
-%patch5 -p1
-%patch6 -p1
-
-cat in.qpopper.patch030319 | patch -p3
-cat sendmail.conf.patch030319 | patch -p3
-cat sendmail.patch030325 | patch -p3
-
-%build
-mv amavis.conf conf/services/
-mv amavis scripts/services/
-for i in scripts/{shared/{onlycontains,remove},services/zz-fortune}; do
-	mv -f $i $i.
-	sed -e s/bash/sh/ $i. > $i
-	rm -f $i.
-done
+%patch2 -p0
+%patch3 -p0
+%patch4 -p0
+%patch5 -p0
+%patch6 -p0
+%patch7 -p0
+%patch8 -p0
+%patch9 -p0
+%patch10 -p0
+%patch11 -p0
+%patch12 -p0
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT%{_sysconfdir}/log.d/ \
-	$RPM_BUILD_ROOT{%{_sbindir},%{_mandir}/man8,%{_datadir}/logwatch} \
-	$RPM_BUILD_ROOT/etc/cron.daily
+install -d $RPM_BUILD_ROOT{%{_logwatchconf},/etc/cron.daily} \
+	$RPM_BUILD_ROOT{%{_sbindir},%{_mandir}/man8,%{_logwatchdir}/lib}
 
-install conf/logwatch.conf $RPM_BUILD_ROOT%{_sysconfdir}/log.d/
+install conf/logwatch.conf $RPM_BUILD_ROOT%{_logwatchconf}
+# Where to put it The Right Way(TM)?
+install lib/Logwatch.pm $RPM_BUILD_ROOT%{_logwatchdir}/lib
 
-cp -a conf/services $RPM_BUILD_ROOT%{_sysconfdir}/log.d/
-cp -a conf/logfiles $RPM_BUILD_ROOT%{_sysconfdir}/log.d/
-cp -a scripts $RPM_BUILD_ROOT/%{_datadir}/logwatch
+cp -a conf/services $RPM_BUILD_ROOT%{_logwatchconf}
+cp -a conf/logfiles $RPM_BUILD_ROOT%{_logwatchconf}
+cp -a scripts $RPM_BUILD_ROOT%{_logwatchdir}
 
-mv $RPM_BUILD_ROOT%{_datadir}/logwatch/scripts/logwatch.pl $RPM_BUILD_ROOT%{_sbindir}/logwatch
+mv $RPM_BUILD_ROOT%{_logwatchdir}/scripts/logwatch.pl $RPM_BUILD_ROOT%{_sbindir}/logwatch
 
-ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT%{_datadir}/logwatch/scripts/logwatch.pl
-
-ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT%{_sysconfdir}/log.d/logwatch
+ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT%{_logwatchdir}/scripts/logwatch.pl
+ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT%{_logwatchconf}/logwatch
 ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT/etc/cron.daily/00-logwatch
 
 install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
+
+install %{SOURCE1} $RPM_BUILD_ROOT%{_logwatchdir}/scripts/services/
+install %{SOURCE2} $RPM_BUILD_ROOT%{_logwatchconf}/services/
+
+%clean
+rm -rf $RPM_BUILD_ROOT
 
 %pre
 # needed for smooth upgrade from < 4.3.2 package
@@ -92,36 +102,36 @@ fi
 echo "You should take a look at /etc/log.d/logwatch.conf..."
 echo "Especially the Detail entry..."
 
-%clean
-rm -rf $RPM_BUILD_ROOT
-
 %files
 %defattr(644,root,root,755)
 %doc README HOWTO-Make-Filter project/{CHANGES,TODO}
-%attr(700,root,root) %dir %{_sysconfdir}/log.d
-%attr(700,root,root) %dir %{_datadir}/logwatch/
-%attr(700,root,root) %dir %{_datadir}/logwatch/scripts
+%attr(700,root,root) %dir %{_logwatchconf}
+%attr(700,root,root) %dir %{_logwatchdir}
+%attr(700,root,root) %dir %{_logwatchdir}/scripts
 
-%attr(700,root,root) %dir %{_sysconfdir}/log.d/logfiles
-%attr(700,root,root) %dir %{_sysconfdir}/log.d/services
+%attr(700,root,root) %dir %{_logwatchconf}/logfiles
+%attr(700,root,root) %dir %{_logwatchconf}/services
 
-%attr(700,root,root) %dir %{_datadir}/logwatch/scripts/services
-%attr(700,root,root) %dir %{_datadir}/logwatch/scripts/shared
-%attr(700,root,root) %dir %{_datadir}/logwatch/scripts/logfiles
-%attr(700,root,root) %dir %{_datadir}/logwatch/scripts/logfiles/autorpm
-%attr(700,root,root) %dir %{_datadir}/logwatch/scripts/logfiles/cron
-%attr(700,root,root) %dir %{_datadir}/logwatch/scripts/logfiles/samba
-%attr(700,root,root) %dir %{_datadir}/logwatch/scripts/logfiles/up2date
-%attr(700,root,root) %dir %{_datadir}/logwatch/scripts/logfiles/xferlog
+%attr(700,root,root) %dir %{_logwatchdir}/scripts/services
+%attr(700,root,root) %dir %{_logwatchdir}/scripts/shared
+%attr(700,root,root) %dir %{_logwatchdir}/scripts/logfiles
+%attr(700,root,root) %dir %{_logwatchdir}/scripts/logfiles/autorpm
+%attr(700,root,root) %dir %{_logwatchdir}/scripts/logfiles/cron
+%attr(700,root,root) %dir %{_logwatchdir}/scripts/logfiles/samba
+%attr(700,root,root) %dir %{_logwatchdir}/scripts/logfiles/up2date
+%attr(700,root,root) %dir %{_logwatchdir}/scripts/logfiles/xferlog
+%attr(700,root,root) %dir %{_logwatchdir}/lib
 
-%attr(700,root,root) %{_datadir}/logwatch/scripts/shared/*
-%attr(700,root,root) %{_datadir}/logwatch/scripts/services/*
-%attr(700,root,root) %{_datadir}/logwatch/scripts/logfiles/*/*
-%attr(700,root,root) %{_datadir}/logwatch/scripts/logwatch.pl
+%attr(700,root,root) %{_logwatchdir}/scripts/shared/*
+%attr(700,root,root) %{_logwatchdir}/scripts/services/*
+%attr(700,root,root) %{_logwatchdir}/scripts/logfiles/*/*
+%attr(700,root,root) %{_logwatchdir}/scripts/logwatch.pl
 
-%attr(600,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/log.d/logwatch.conf
-%attr(600,root,root) %config %verify(not size mtime md5) %{_sysconfdir}/log.d/services/*.conf
-%attr(600,root,root) %config %verify(not size mtime md5) %{_sysconfdir}/log.d/logfiles/*.conf
+%attr(600,root,root) %{_logwatchdir}/lib/*.pm
+
+%attr(600,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/logwatch.conf
+%attr(600,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/services/*.conf
+%attr(600,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/logfiles/*.conf
 
 %attr(700,root,root) %{_sbindir}/logwatch
 %attr(700,root,root) /etc/cron.daily/00-logwatch
