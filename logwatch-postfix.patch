@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.7
 diff -u -r1.7 postfix
 --- scripts/services/postfix	15 Dec 2003 18:35:03 -0000	1.7
-+++ scripts/services/postfix	31 Dec 2003 16:10:37 -0000
++++ scripts/services/postfix	5 Jan 2004 10:26:55 -0000
 @@ -61,12 +61,18 @@
  #
  ########################################################
@@ -59,7 +59,7 @@ diff -u -r1.7 postfix
        $HeloError{$Temp}++;
     } elsif ( ($Host,$Reason) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 504 <[^ ]*>: Helo command rejected: (.*);/)) {
        $Temp = "$Host : Helo command rejected \($Reason\)";
-@@ -155,17 +163,27 @@
+@@ -155,17 +163,29 @@
        $MailerLoop{$Error}++;
     } elsif ( ($Host) = ($ThisLine =~ /^warning: ([^ ]*\[[^ ]*\]): SASL LOGIN authentication failed/)) {
        $SaslAuthenticationFail{$Host}++;
@@ -79,6 +79,8 @@ diff -u -r1.7 postfix
 +      $TooManyErrors{$Command}{$Host}++;
 +   } elsif ( (undef,undef,$To) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 552 Message size exceeds fixed limit; from=<([^ ]*)> to=<([^ ]*)>$/)) {
 +      $SizeLimit{"$From -> $To"}++;
++   } elsif ( ($File,$Source) = ($ThisLine =~ /^warning: database ([^ ]*) is older than source file ([^ ]*)$/)) {
++      $DatabaseGeneration{$Source}++;
     } else {
        push @OtherList,$ThisLine;
        # TODO:
@@ -94,7 +96,7 @@ diff -u -r1.7 postfix
     }
  }
  
-@@ -190,75 +208,94 @@
+@@ -190,75 +210,101 @@
     print "\n\n$RemovedFromQueue messages removed from queue";
  }
  
@@ -104,6 +106,13 @@ diff -u -r1.7 postfix
 +
 +if ($TableChanged > 0) {
 +   print "\n\n$TableChanged exited after table change detection";
++}
++
++if (keys %DatabaseGeneration) {
++   print "\n\nDatabase files are not up-to-date (propably rehash is needed):\n";
++   foreach $Source (sort {$a cmp $b} keys %DatabaseGeneration) {
++      print "   $Source : $DatabaseGeneration{$Source} Time(s)\n";
++   }
 +}
 +
 +if ($UnsuppertedFamily > 0) {
@@ -201,7 +210,7 @@ diff -u -r1.7 postfix
        }
     }
  }
-@@ -266,29 +303,57 @@
+@@ -266,29 +312,57 @@
  if (keys %AuthWarns) {
     print "\n\nAuthentication warnings:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %AuthWarns) {
@@ -264,7 +273,7 @@ diff -u -r1.7 postfix
        }
     }
  }
-@@ -296,28 +361,28 @@
+@@ -296,28 +370,28 @@
  if (keys %HostnameVerification) {
     print "\n\nHostname verification errors:\n";
     foreach $Error (sort {$a cmp $b} keys %HostnameVerification) {
