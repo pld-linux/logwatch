@@ -36,7 +36,7 @@ analizowania logów systemowych i przesy³aniu ich po wstêpnjej obróbce
 poczt± elektroniczn± do administratora systemu. Logwatch jest ³atwy w
 u¿yciu i moze pracowaæ na wiêkszo¶ci systemów.
 
-%prep 
+%prep
 %setup -q -a1
 %patch0 -p1
 %patch1 -p1
