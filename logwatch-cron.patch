@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/cron,v
 retrieving revision 1.12
 diff -u -r1.12 cron
 --- scripts/services/cron	15 Dec 2003 18:09:23 -0000	1.12
-+++ scripts/services/cron	25 Dec 2003 22:59:39 -0000
++++ scripts/services/cron	21 Jan 2004 16:58:46 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -14,8 +14,14 @@ diff -u -r1.12 cron
  
  ########################################################
  # This was written and is maintained by:
-@@ -15,30 +17,34 @@
+@@ -13,32 +15,50 @@
  
+ $Detail = $ENV{'LOGWATCH_DETAIL_LEVEL'} || 0;
+ 
++$Startups = 0;
++$Reloads = 0;
++$MailErrors = 0;
++
  while (defined($ThisLine = <STDIN>)) {
     chomp($ThisLine);
 -   if (($ThisLine =~ s/^([^ ]+) \([^ ]+\)\s+//) or ($ThisLine =~ s/^... .. ..:..:.. [^ ]+ \w+\[\d+\]: \((\S+)\)\s+//)) {
@@ -23,8 +29,12 @@ diff -u -r1.12 cron
 +      ($ThisLine =~ /Updated timestamp for job/)
 +   ) {
 +      # Ignore
-+   } elsif (($ThisLine =~ s/^([^ ]+) \([^ ]+\)\s+//) or ($ThisLine =~ s/^... .. ..:..:.. [^ ]+ \w+\[\d+\]: \((\S+)\)\s+//)) {
++   } elsif (
++      ($ThisLine =~ s/^([^ ]+) \([^ ]+\)\s+//) or
++      ($ThisLine =~ s/^... .. ..:..:.. [^ ]+ \w+\[\d+\]: \((\S+)\)\s+//)
++   ) {
        $User = $1;
++      
        if ($ThisLine =~ s/^CMD \((.+)\)\s*$/$1/) {
 -              $Runs->{$User}->{$ThisLine}++;
 +         $Runs->{$User}->{$ThisLine}++;
@@ -48,6 +58,12 @@ diff -u -r1.12 cron
        } elsif ( $ThisLine =~ /^RELOAD \(.+\)\s*$/ ) {
 -              $Runs->{$User}->{'personal crontab reloaded'}++;
 +         $Runs->{$User}->{'personal crontab reloaded'}++;
++      } elsif ( $ThisLine =~ /^MAIL \(mailed \d+ bytes of output but got status [^ ]+/) {
++         $MailErrors++;
++      } elsif ( $ThisLine =~ /^AUTH \(crontab command not allowed\)/) {
++         $CronDeny{$User}++;
++      } elsif ( $ThisLine =~ /^WRONG INODE INFO \([^ ]+\)/) {
++         $InodeError{$User}++;
        } else {
           # Report any unmatched entries...
           push @OtherList, "$ThisLine\n";
@@ -59,9 +75,29 @@ diff -u -r1.12 cron
     } elsif ( $User = ($ThisLine =~ /^(.*) \([^ ]+\) RELOAD \(.*\)$/ ) ) {
        $UserReloads{$User}++;
     } else {
-@@ -50,9 +56,9 @@
+@@ -47,12 +67,28 @@
+    }
+ }
+ 
++#######################################
++
++if (%CronDeny) {
++   print "Attempt to use crontab by unauthorized users:\n";
++   foreach $User (sort {$a cmp $b} keys %CronDeny) {
++      print "   $User : $CronDeny{$User} Time(s)\n";
++   }
++}
++
++if (%InodeError) {
++   print "\nInode errors in crontab files of users:\n";
++   foreach $User (sort {$a cmp $b} keys %InodeError) {
++      print "   $User : $InodeError{$User} Time(s)\n";
++   }
++}
++
  if (keys %{$Runs} and ($Detail >= 5)) {
-    print "Commands Run:\n";
+-   print "Commands Run:\n";
++   print "\n\nCommands Run:\n";
     foreach $i (sort {$a cmp $b} keys %{$Runs}) {
 -      print "   User " . $i . ":\n";
 +      print "   User $i:\n";
@@ -71,7 +107,7 @@ diff -u -r1.12 cron
        }
     }
  }
-@@ -61,16 +67,16 @@
+@@ -61,16 +97,20 @@
     if (keys %UserReloads) {
        print "   User crontabs reloaded:\n";
        foreach $i (keys %UserReloads) {
@@ -80,14 +116,20 @@ diff -u -r1.12 cron
        }
     }
  
-    if ($Startups) {
+-   if ($Startups) {
 -      print "   CRON Restarted " . $Startups . " Time(s)\n";
-+      print "   CRON Restarted $Startups Time(s)\n";
++   if ($Startups > 0) {
++      print "\nCRON Restarted $Startups Time(s)\n";
++   }
++
++   if ($Reloads > 0) {
++      print "\nCRON Reloaded system crontab $Reloads Time(s)\n";
     }
  
-    if ($Reloads) {
+-   if ($Reloads) {
 -      print "   CRON Reloaded /etc/crontab " . $Reloads . " Time(s)\n";
-+      print "   CRON Reloaded /etc/crontab $Reloads Time(s)\n";
++   if ($MailErrors > 0) {
++      print "\nMAIL sending errors $MailErrors Time(s)\n";
     }
  }
  
