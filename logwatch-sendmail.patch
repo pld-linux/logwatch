@@ -1,0 +1,54 @@
+Index: scripts/services/sendmail
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/sendmail,v
+retrieving revision 1.32
+diff -u -r1.32 sendmail
+--- scripts/services/sendmail	15 Dec 2003 18:09:23 -0000	1.32
++++ scripts/services/sendmail	16 Dec 2003 09:44:04 -0000
+@@ -2,6 +2,8 @@
+ ##########################################################################
+ # $Id$
+ ##########################################################################
++# $Log$
++##########################################################################
+ 
+ ########################################################
+ # This was written and is maintained by:
+@@ -234,6 +236,8 @@
+       # following in /etc/mail/access...
+       # From:worduphosting.com	ERROR:550 5.7.1 Relaying Denied (Spammer)
+       $KnownSpammer{$1}++;
++   } elsif (($Host) = ($ThisLine =~ /relay=([^ ]+ \[[^ ]+\]), reject=553 5\.3\.0 .*/)) {
++      $KnownSpammer{$Host}++;
+    } elsif ( ($User) = ($ThisLine =~ /^ruleset=check_rcpt, arg1=<([^ ]*)>, relay=[^,]*, reject=550\s*[\d.]*\s*<[^ ]*>\.\.\. Mailbox disabled for this recipient/) ) {
+       $DisabledMailbox{$User}{$QueueID}++;
+    # test for unknown relay users (users we would have relayed elsewhere)
+@@ -368,8 +372,10 @@
+       $ReturnReceipt++;
+    } elsif ($ThisLine=~ /Remote protocol error/) {
+       $RemoteProtocolError++;
+-  } elsif ( ($Host,$Attack) = ($ThisLine =~ /POSSIBLE ATTACK from ([^ ]+): ([^ ]+)$/) ) {
++  } elsif ( ($Host,$Attack) = ($ThisLine =~ /POSSIBLE ATTACK from ([^ ]+): (.*)$/) ) {
+ 	  $AttackAttempt{$Host}{$Attack}++;
++  } elsif ( ($File,$Error) = ($ThisLine =~ /^safesasl\(([^ ]+)\) failed: (.*)$/) ) {
++     $SaslError{$File}{$Error}++;
+   } else {
+ 	  $ThisLine =~ s/.*\: (DSN\: .*)/$1/;
+ 	  $ThisLine =~ s/.*\: (postmaster notify\: .*)/$1/;
+@@ -434,6 +440,16 @@
+ 			print "      $Attack : $AttackAttempt{$Host}{$Attack} Time(s)\n";
+ 		}
+ 	}
++}
++
++if (keys %SaslError) {
++   print "\nSASL database Errors:\n";
++   foreach $File (sort {$a cmp $b} keys %SaslError) {
++      print "   In file $File :\n";
++      foreach $Error (sort {$a cmp $b} keys %{$SaslError{$File}}) {
++         print "      $Error : $SaslError{$File}{$Error} Time(s)\n";
++      }
++   }
+ }
+ 
+ if (($Detail >= 10) and (keys %LocalDomains)) {
