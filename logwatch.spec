@@ -3,18 +3,15 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	5.1
-Release:	0.pre.18
+Release:	1
 License:	MIT
 Group:		Applications/System
-#Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
-Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
-# Source0-md5:	dfd0a097b8262046dc31eaeaaf41f32e
+Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
+# Source0-md5:	35f96e1002d081620c508216bb9a0170
+#Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
 Patch0:		%{name}-config.patch
 Patch1:		%{name}-log_conf.patch
-Patch2:		%{name}-sshd.patch
-Patch3:		%{name}-sendmail.patch
-Patch4:		%{name}-secure.patch
-Patch5:		%{name}-named.patch
+Patch2:		%{name}-secure.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	perl-modules
@@ -39,13 +36,10 @@ poczt± elektroniczn± do administratora systemu. Logwatch jest ³atwy w
 u¿yciu i moze pracowaæ na wiêkszo¶ci systemów.
 
 %prep
-%setup -q -n %{name}-pre%{version}
+%setup -q
 %patch0 -p1
 %patch1 -p1
 %patch2 -p0
-%patch3 -p0
-%patch4 -p0
-%patch5 -p0
 
 %install
 rm -rf $RPM_BUILD_ROOT
