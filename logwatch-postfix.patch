@@ -1,0 +1,180 @@
+--- ./scripts/services/postfix.org	Mon Dec  1 08:46:21 2003
++++ ./scripts/services/postfix	Tue Dec  2 09:41:53 2003
+@@ -72,16 +72,13 @@
+ 		( $ThisLine =~ m/^terminating on signal 15$/ )
+ 	) {
+ 		# We don't care about these
+-	}
+-	elsif ( ($Bytes) = ($ThisLine =~ /^[a-zA-Z0-9]+: from=.*size=([0-9]+).*$/) ) {
++	} elsif ( ($Bytes) = ($ThisLine =~ /^[a-zA-Z0-9]+: from=.*size=([0-9]+).*$/) ) {
+ 		$MsgsSent++;
+ 		$BytesTransferred += $Bytes;
+-    }
+-    elsif (($User) = ($ThisLine =~ /^[a-zA-Z0-9]+: to\=\<([^ ]*)>, relay\=local, delay\=[0-9]+, status\=bounced \(unknown user/)) {
++    } elsif (($User) = ($ThisLine =~ /^[a-zA-Z0-9]+: to\=\<([^ ]*)>, relay\=local, delay\=[0-9]+, status\=bounced \(unknown user/)) {
+ 		# unknown user
+ 		$UnknownUsers{$User}++;
+-    }
+-    elsif (($Dest, $Relay, $Msg) = ($ThisLine =~ /^[a-zA-Z0-9]+: to\=\<([^ ]*)>, relay=([^ ]*).*, delay\=[0-9]+, status\=bounced \(([^)]*)/ )) {
++    } elsif (($Dest, $Relay, $Msg) = ($ThisLine =~ /^[a-zA-Z0-9]+: to\=\<([^ ]*)>, relay=([^ ]*).*, delay\=[0-9]+, status\=bounced \(([^)]*)/ )) {
+ 		# unknown user
+ 		# $Msg = " hello "
+ 		# print "bounce message from " . $Dest . " msg : " . $Relay . "\n";
+@@ -92,46 +89,31 @@
+ 			$Temp = "To " . $Dest . " Msg=\"" . $Msg . "\"";
+ 			$ForeignBounce{$Temp}++;
+ 		}
+-	}
+-	elsif ( ($Relay,$Dest) = ($ThisLine =~ m/^reject: RCPT from ([^ ]*): 554 <([^ ]*)>.* Relay access denied.* to=([^ ]*)/) ) {
++	} elsif ( ($Relay,$Dest) = ($ThisLine =~ m/^reject: RCPT from ([^ ]*): 554 <([^ ]*)>.* Relay access denied.* to=([^ ]*)/) ) {
+ 		# print "reject: " . $ThisLine . "\n";
+ 		# print "Relay :" . $Relay . " to " . $Dest . "\n";
+ 		$Temp = "From " . $Relay . " to " . $Dest;
+ 		$RelayDenied{$Temp}++;
+-    }
+-    elsif ( ($User,$From) = ($ThisLine =~ /^[a-zA-Z0-9]+: uid=([^ ]*) from=\<([^ ]*)>/)) {
++    } elsif ( ($User,$From) = ($ThisLine =~ /^[a-zA-Z0-9]+: uid=([^ ]*) from=\<([^ ]*)>/)) {
+ 		#Messages sent by user
+ 		$Temp = $From . " (uid=" . $User . "): ";
+ 		$SentBy{$Temp}++;
+-	}
+-	elsif ( ($From) = ($ThisLine =~ /^[a-zA-Z0-9]+: from=<([^ ]*)>, status=expired, returned to sender$/)) {
++	} elsif ( ($From) = ($ThisLine =~ /^[a-zA-Z0-9]+: from=<([^ ]*)>, status=expired, returned to sender$/)) {
+ 		$ReturnedToSender++;
+-	}
+-	elsif ( ($Command,$Host) = ($ThisLine =~ /^lost connection after ([^ ]*) from ([^ ]*)$/)) {
++	} elsif ( ($Command,$Host) = ($ThisLine =~ /^lost connection after ([^ ]*) from ([^ ]*)$/)) {
+ 		# Make some better summary with hosts
+ 		$ConnectionLost{$Command}++;
+-	}
+-	elsif ( ($Command,$Host) = ($ThisLine =~ /^timeout after ([^ ]*) from ([^ ]*)$/)) {
++	} elsif ( ($Command,$Host) = ($ThisLine =~ /^timeout after ([^ ]*) from ([^ ]*)$/)) {
+ 		# Make some better summary with hosts
+ 		$ConnectionLost{$Command}++;
+-	}
+-	elsif ( ($Rejected,undef,undef) = ($ThisLine =~ /^^[a-zA-Z0-9]+: reject: header (.*); from=<([^ ]*)> to=<([^ ]*)>: Message content rejected$/)) {
++	} elsif ( ($Rejected,undef,undef) = ($ThisLine =~ /^^[a-zA-Z0-9]+: reject: header (.*); from=<([^ ]*)> to=<([^ ]*)>: Message content rejected$/)) {
+ 		$HeaderReject{$Rejected}++;
+-	}
+-#    elsif ( ($Warning)  = ($ThisLine =~ /^[a-zA-Z0-9]+: Authentication-Warning: [^ ]+: ([^ ]+ set sender to [^ ]+ using -f)/) ) {
+-#        $AuthWarns{$Warning}++;
+-#    }
+-#    elsif ( ($Forward,$Error) = ($ThisLine =~ /^[a-zA-Z0-9]+: forward ([^ ]*): transient error: (.*)$/) ) {
+-#        $Temp = $Forward . ": " . $Error;
+-#        $ForwardErrors{$Temp}++;
+-#    }
+-#    elsif ( ($Temp) = ($ThisLine =~ /^[a-zA-Z0-9]+: forward ([^ ]*: Permission denied)/) ) {
+-#        $ForwardErrors{$Temp}++;
+-#    }
+-#    elsif ( $ThisLine =~ m/^[a-zA-Z0-9]+: [a-zA-Z0-9]+: return to sender: Warning: could not send message for past 4 hours/ ) {
+-#        $FourHourReturns++;
+-#    }
+-    else {
++	} elsif ( ($Host,undef) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 450 <([^ ]*)>: Sender address rejected: Domain not found;/)) {
++		$RejectDomain{$Host}++;
++	} elsif ( ($Host,$Site,$Reason) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 554 Service unavailable; \[[^ ]*\] blocked using ([^ ]*), reason: (.*);/)) {
++		$Temp = "$Host : $Reason";
++		$RejectRBL{$Site}{$Temp}++;
++	} else {
+ 	push @OtherList,$ThisLine;
+     }
+ }
+@@ -157,7 +139,7 @@
+         print "\n" . $MsgsSent . " messages sent";
+     }
+ 
+-    if($FourHourReturns > 0) {
++    if ($FourHourReturns > 0) {
+         print "\n\n" . $FourHourReturns . " messages returned after 4 hours";
+     }
+ 
+@@ -167,63 +149,80 @@
+ 
+ 	if (keys %SentBy) {
+ 		print "\n\nMessages sent by:\n";
+-		foreach $ThisOne (keys %SentBy) {
++		foreach $ThisOne (sort {$a cmp $b} keys %SentBy) {
+ 			print "    " . $ThisOne . $SentBy{$ThisOne} . " Times(s)\n";
+ 		}
+ 	}
+ 
+     if (keys %UnknownUsers) {
+ 		print "\n\nUnknown users:\n";
+-		foreach $ThisOne (keys %UnknownUsers) {
++		foreach $ThisOne (sort {$a cmp $b} keys %UnknownUsers) {
+ 			print "    " . $ThisOne . ": " . $UnknownUsers{$ThisOne} . " Times(s)\n";
+ 		}
+ 	}
+ 
+     if (keys %RelayDenied) {
+ 		print "\n\nRelaying denied:\n";
+-		foreach $ThisOne (keys %RelayDenied) {
++		foreach $ThisOne (sort {$a cmp $b} keys %RelayDenied) {
+ 			print "    " . $ThisOne . ": " . $RelayDenied{$ThisOne} . " Times(s)\n";
+ 		}
+     }
+ 
+     if (keys %LocalBounce) {
+ 		print "\n\nLocal Bounce:\n";
+-		foreach $ThisOne (keys %LocalBounce) {
++		foreach $ThisOne (sort {$a cmp $b} keys %LocalBounce) {
+ 			print "    " . $ThisOne . ": " . $LocalBounce{$ThisOne} . " Times(s)\n";
+ 		}
+     }
+ 
+     if (keys %ForeignBounce) {
+ 		print "\n\nForeign Bounce:\n";
+-		foreach $ThisOne (keys %ForeignBounce) {
++		foreach $ThisOne (sort {$a cmp $b} keys %ForeignBounce) {
+ 			print "    " . $ThisOne . ": " . $ForeignBounce{$ThisOne} . " Times(s)\n";
+ 		}
+     }
+ 
+ 	if (keys %HeaderReject) {
+ 		print "\n\nHeader content reject:\n";
+-		foreach $ThisOne (keys %HeaderReject) {
++		foreach $ThisOne (sort {$a cmp $b} keys %HeaderReject) {
+ 			print "    " . $ThisOne . ": " . $HeaderReject{$ThisOne} . " Times(s)\n";
+ 		}
+ 	}
+ 
++	if (keys %RejectDomain) {
++		print "\n\nNot found domain in address sent by:\n";
++		foreach $Host (sort {$a cmp $b} keys %RejectDomain) {
++			print "    $Host : $RejectDomain{$Host} Times(s)\n";
++		}
++	}
++
++	if (keys %RejectRBL) {
++		print "\n\nMessages rejected using Anti-Spam site:\n";
++		foreach $Site (sort {$a cmp $b} keys %RejectRBL) {
++			print "    $Site:\n";
++			foreach $Host (sort {$a cmp $b} keys %{$RejectRBL{$Site}} ) {
++				print "        $Host : $RejectRBL{$Site}{$Host} Times(s)\n";
++			}
++		}
++	}
++
+     if (keys %AuthWarns) {
+ 		print "\n\nAuthentication warnings:\n";
+-		foreach $ThisOne (keys %AuthWarns) {
++		foreach $ThisOne (sort {$a cmp $b} keys %AuthWarns) {
+ 			print "    " . $ThisOne . ": " . $AuthWarns{$ThisOne} . " Times(s)\n";
+ 		}
+     }
+ 
+     if (keys %ForwardErrors) {
+ 		print "\n\nForwarding errors:\n";
+-		foreach $ThisOne (keys %ForwardErrors) {
++		foreach $ThisOne (sort {$a cmp $b} keys %ForwardErrors) {
+ 			print "    " . $ThisOne . ": " . $ForwardErrors{$ThisOne} . " Times(s)\n";
+ 		}
+ 	}
+ 
+ 	if (keys %ConnectionLost) {
+ 		print "\n\nConnections lost:\n";
+-		foreach $ThisOne (keys %ConnectionLost) {
++		foreach $ThisOne (sort {$a cmp $b} keys %ConnectionLost) {
+ 			print "    Connection lost after command " . $ThisOne . ": " . $ConnectionLost{$ThisOne} . " Times(s)\n";
+ 		}
+ 	}
