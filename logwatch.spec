@@ -1,10 +1,10 @@
 Summary:    	Analyzes system logs 
 Summary(pl): 	Logwatch - analizator logów systemowych
 Name:        	logwatch
-Version:     	2.5
+Version:     	2.6
 Release:     	1
 License:   	GPL
-Group:       	Utilities/System
+Group:       	Applications/System
 Source:      	ftp://ftp.kaybee.org/pub/linux/%{name}-%{version}.tar.gz
 Requires:    	perl
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -18,8 +18,8 @@ of the package on almost all systems.
 
 %description -l pl
 Pakiet zawiera logwatch - program przeznaczony do automatycznego analizowania
-logów systemowych i przesy³aniu ich po wstêpnjej obróbce poczt± elektroniczn± 
-do administratora systemu. Logwatch jest ³atwy w u¿yciu i moze pracowaæ na 
+logów systemowych i przesy³aniu ich po wstêpnjej obróbce poczt± elektroniczn±
+do administratora systemu. Logwatch jest ³atwy w u¿yciu i moze pracowaæ na
 wiêkszo¶ci systemów.
 
 %prep
@@ -28,7 +28,7 @@ wiêkszo¶ci systemów.
 %build
 
 for i in scripts/{shared/{onlycontains,remove},services/zz-fortune}; do
-	mv $i $i.
+	mv -f $i $i.
 	sed -e s/bash/sh/ $i. > $i
 	rm -f $i.
 done
