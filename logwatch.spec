@@ -3,7 +3,7 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	4.3.2
-Release:	0.12
+Release:	1
 License:	MIT
 Group:		Applications/System
 Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
@@ -57,6 +57,12 @@ ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT/etc/cron.daily/00-logwatch
 ln -sf %{_sysconfdir}/log.d/conf/logwatch.conf $RPM_BUILD_ROOT%{_sysconfdir}/log.d/logwatch.conf
 
 install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
+
+%pre
+# Workaround - rpm can't handle change from dir to link
+if [ -d /etc/log.d/scripts -a ! -L /etc/log.d/scripts ]; then
+	rm -rf /etc/log.d/scripts
+fi
 
 %post
 echo "You should take a look at /etc/log.d/logwatch.conf..."
