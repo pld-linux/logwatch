@@ -105,10 +105,6 @@ if [ -d /etc/log.d/conf ]; then
 	mv -f /etc/log.d/conf/logfiles /etc/log.d/
 fi
 
-%post
-echo "You should take a look at /etc/log.d/logwatch.conf..."
-echo "Especially the Detail entry..."
-
 %files
 %defattr(644,root,root,755)
 %doc README HOWTO-Make-Filter project/{CHANGES,TODO}
