@@ -7,7 +7,9 @@ Release:	5.4
 License:	MIT
 Group:		Applications/System
 Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
+# Source0-md5:	fdd2edb48c17f52ace9e2b00a3ac17f9
 Source1:	http://www.jimohalloran.com/archives/files/patches030325.tar.gz
+# Source1-md5:	20f356691c4bf48280f1a623b8b7d8a5
 Patch0:		%{name}-more_features.patch
 Patch1:		%{name}-dirs.patch
 Patch2:		%{name}-init.patch
