@@ -1,9 +1,12 @@
+# TODO:
+# - prepare cron-job to generate not only e-mail, but html (like calamaris) too
+# - choice in cron-jol: html, html-embed or clean text
 %include	/usr/lib/rpm/macros.perl
 Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	5.2.2
-Release:	4
+Release:	5
 License:	MIT
 Group:		Applications/System
 #Path for pre-versions:
@@ -18,6 +21,7 @@ Patch4:		%{name}-samba.patch
 Patch5:		%{name}-http.patch
 Patch6:		%{name}-zz-disk_space.patch
 Patch7:		%{name}-html_report.patch
+Patch8:		%{name}-pam_unix.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	crondaemon
@@ -51,6 +55,8 @@ u¿yciu i moze pracowaæ na wiêkszo¶ci systemów.
 %patch4 -p0
 %patch5 -p0
 %patch6 -p1
+%patch8 -p0
+
 cd scripts
 %patch7 -p0
 
