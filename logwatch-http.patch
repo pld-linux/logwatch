@@ -1,0 +1,18 @@
+Index: scripts/services/http
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/http,v
+retrieving revision 1.12
+diff -u -r1.12 http
+--- scripts/services/http	21 Jun 2004 14:59:05 -0000	1.12
++++ scripts/services/http	22 Jun 2004 07:40:30 -0000
+@@ -118,8 +118,8 @@
+ my $winexec_types =  '(\.bat|\.com|\.exe|\.dll)';
+ my $wpad_files =     '(wpad\.dat|wspad\.dat|proxy\.pac)';
+ my $program_src =    '(';
+-   $program_src =    $program_src.'(\.bas|\.c|\.cfg|\.conf|\.config|\.cpp|\.diff|\.f|\.h|\.init|\.m|\.pas|\.patch|\.spec)';
+-   $program_src =    $program_src.'(Makefile|Makefile_c|Makefile_f77)';
++   $program_src =    $program_src.'\.bas|\.c|\.cfg|\.conf|\.config|\.cpp|\.diff|\.f|\.h|\.init|\.m|\.pas|\.patch|\.spec';
++   $program_src =    $program_src.'|Makefile|Makefile_c|Makefile_f77)';
+ my $images_types =   '(\.bin|\.cue|\.img|\.iso|\.run)';
+ my $logs_types =     '(\.log|_log|-log|\.logs|\.out|\.wyniki)';
+ my $fonts_types =    '(\.aft|\.ttf)';
