@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.9
 diff -u -r1.9 postfix
 --- scripts/services/postfix	3 Feb 2004 03:25:02 -0000	1.9
-+++ scripts/services/postfix	6 Feb 2004 07:41:51 -0000
++++ scripts/services/postfix	6 Feb 2004 07:53:31 -0000
 @@ -155,7 +155,7 @@
     #   $RejectDomain{$Host}++;
     # above two lines included in generic reject sender on next condition
@@ -14,7 +14,7 @@ diff -u -r1.9 postfix
     } elsif ( ($Host,$Recip,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <([^ ]*)>: Recipient address rejected: (.*);/)) {
        $Temp = "$Host : $Reason";
        $RejectRecip{$Recip}{$Temp}++;
-@@ -362,11 +362,16 @@
+@@ -362,11 +362,14 @@
  #}
  
  if (keys %RejectSender) {
@@ -27,16 +27,14 @@ diff -u -r1.9 postfix
 +   foreach $Reason (sort {$a cmp $b} keys %RejectSender) {
 +      print "    Reason: $Reason\n";
 +      foreach $Host (sort {$a cmp $b} keys %{$RejectSender{$Reason}} ) {
-+         print "        $Host : $RejectSender{$Reason}{$Host} Time(s)\n";
-+         if ($Detail >= 5) {
-+            foreach $Sender (sort {$a cmp $b} keys %{$RejectSender{$Reason}{$Host}} ) {
-+               print "           $Sender : $RejectSender{$Reason}{$Host}{$Sender} Time(s)\n";
-+            }
++         print "        $Host:\n";
++         foreach $Sender (sort {$a cmp $b} keys %{$RejectSender{$Reason}{$Host}} ) {
++            print "           $Sender : $RejectSender{$Reason}{$Host}{$Sender} Time(s)\n";
 +         }
        }
     }
  }
-@@ -376,7 +381,7 @@
+@@ -376,7 +379,7 @@
     foreach $Recip (sort {$a cmp $b} keys %RejectRecip) {
        print "    $Recip:\n";
        foreach $Host (sort {$a cmp $b} keys %{$RejectRecip{$Recip}} ) {
@@ -45,7 +43,7 @@ diff -u -r1.9 postfix
        }
     }
  }
-@@ -508,7 +513,7 @@
+@@ -508,7 +511,7 @@
  if (keys %UnknownWarnings) {
     print "\n\nUnrecognized warning:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %UnknownWarnings) {
