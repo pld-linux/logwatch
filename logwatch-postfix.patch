@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.7
 diff -u -r1.7 postfix
 --- scripts/services/postfix	15 Dec 2003 18:35:03 -0000	1.7
-+++ scripts/services/postfix	17 Dec 2003 08:20:31 -0000
++++ scripts/services/postfix	17 Dec 2003 08:30:52 -0000
 @@ -67,6 +67,9 @@
  $ReturnedToSender = 0;
  $ResentMessages = 0;
@@ -25,13 +25,31 @@ diff -u -r1.7 postfix
        ) {
        # We don't care about these
     } elsif ( ($Bytes) = ($ThisLine =~ /^[a-zA-Z0-9]+: from=.*size=([0-9]+).*$/) ) {
+@@ -124,7 +128,7 @@
+       $ConnectionLost{$Command}++;
+    } elsif ( ($Rejected,undef,undef) = ($ThisLine =~ /^^[a-zA-Z0-9]+: reject: header (.*); from=<([^ ]*)> to=<([^ ]*)>: Message content rejected$/)) {
+       $HeaderReject{$Rejected}++;
+-   } elsif ( ($Host,undef) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 450 <([^ ]*)>: Sender address rejected: Domain not found;/)) {
++   } elsif ( ($Host,undef) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 450 <(.*)>: Sender address rejected: Domain not found;/)) {
+       $RejectDomain{$Host}++;
+    } elsif ( ($Host,$Site,$Reason) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 554 Service unavailable; \[[^ ]*\] blocked using ([^ ]*), reason: (.*);/)) {
+       $Temp = "$Host : $Reason";
+@@ -137,7 +141,7 @@
+       $PixWorkaround{$Host}++;
+    } elsif ( ($Message) = ($ThisLine =~ /^warning: valid_hostname: (.*)$/)) {
+       $ValidHostname{$Message}++;
+-   } elsif ( ($Host,$MyName) = ($ThisLine =~ /^warning: ([^ ]*\[[^ ]*\]) greeted me with my own hostname ([^ ]*)$/)) {
++   } elsif ( ($Host,$MyName) = ($ThisLine =~ /^warning: host ([^ ]*\[[^ ]*\]) greeted me with my own hostname ([^ ]*)$/)) {
+       $Temp = "$Host : greeted me with my own hostname \($MyName\)";
+       $HeloError{$Temp}++;
+    } elsif ( ($Host,$MyName) = ($ThisLine =~ /^warning: host ([^ ]*\[[^ ]*\]) replied to HELO\/EHLO with my own hostname ([^ ]*)$/)) {
 @@ -155,17 +159,25 @@
        $MailerLoop{$Error}++;
     } elsif ( ($Host) = ($ThisLine =~ /^warning: ([^ ]*\[[^ ]*\]): SASL LOGIN authentication failed/)) {
        $SaslAuthenticationFail{$Host}++;
 +   } elsif ( ($Domain) = ($ThisLine =~ /^warning: malformed domain name in resource data of MX record (.*)$/)) {
 +      $MxError{$Domain}++;
-+   } elsif ( ($Host,$Command) = ($ThisLine =~ /^warning: ([^ ]*\[[^ ]*\]) sent message header instead of ([^ ]*) command: $/)) {
++   } elsif ( ($Host,$Command) = ($ThisLine =~ /^warning: ([^ ]*\[[^ ]*\]) sent message header instead of ([^ ]*) command: /)) {
 +      $Error = "Sent message header instead of $Command command";
 +      $SmtpConversationError{$Error}{$Host}++;
 +   } elsif ( ($ThisLine =~ m/warning: smtp_connect_addr: socket: Address family not supported by protocol/) or
@@ -128,7 +146,8 @@ diff -u -r1.7 postfix
     }
  }
  
- if (keys %HeaderReject) {
+-if (keys %HeaderReject) {
++if (($Detail >= 5) and (keys %HeaderReject)) {
     print "\n\nHeader content reject:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %HeaderReject) {
 -      print "    " . $ThisOne . ": " . $HeaderReject{$ThisOne} . " Times(s)\n";
