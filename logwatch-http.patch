@@ -1,0 +1,49 @@
+Index: scripts/services/http
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/http,v
+retrieving revision 1.17
+diff -u -r1.17 http
+--- scripts/services/http	24 Feb 2005 22:51:45 -0000	1.17
++++ scripts/services/http	6 Mar 2005 11:17:48 -0000
+@@ -110,6 +110,10 @@
+ my $fonts_bytes =    0;
+ my $config_count =   0;
+ my $config_bytes =   0;
++my $xpcomext_count = 0;
++my $xpcomext_bytes = 0;
++my $mozext_count =   0;
++my $mozext_bytes =   0;
+ my $proxy_count =    0;
+ my $proxy_bytes =    0;
+ my %proxy_host =     ();
+@@ -141,6 +145,8 @@
+ my $logs_types =     '(\.log|_log|-log|\.logs|\.out|\.wyniki)';
+ my $fonts_types =    '(\.aft|\.ttf)';
+ my $config_types =   '(\.cfg|\.conf|\.config|\.ini)';
++my $xpcomext_types = '(\.xpt)';
++my $mozext_types =   '(\.xul)';
+ 
+ #
+ #   what to look for as an attack  USE LOWER CASE!!!!!!
+@@ -309,6 +315,12 @@
+    } elsif ($field{base_url} =~ /$config_types$/) {
+       $config_count += 1;
+       $config_bytes += $field{bytes_transfered};
++   } elsif ($field{base_url} =~ /$xpcomext_types$/) {
++      $xpcomext_count += 1;
++      $xpcomext_bytes += $field{bytes_transfered};
++   } elsif ($field{base_url} =~ /$mozext_types$/) {
++      $mozext_count += 1;
++      $mozext_bytes += $field{bytes_transfered};
+    } elsif ($field{http_rc} =~ /3\d\d/) {
+       $redirect_count += 1;
+       $redirect_bytes += $field{bytes_transfered};
+@@ -382,6 +394,8 @@
+    if ($logs_count > 0)       { printf " $logs_count various Logs (%.2f MB),\n" , $logs_bytes/(1024*1024); }
+    if ($fonts_count > 0)      { printf " $fonts_count Fonts (%.2f MB),\n" , $fonts_bytes/(1024*1024); }
+    if ($config_count > 0)     { printf " $config_count Configs (%.2f MB),\n" , $config_bytes/(1024*1024); }
++   if ($xpcomext_count > 0)   { printf " $xpcomext_count XPCOM Type Libraries (%.2f MB),\n" , $xpcomext_bytes/(1024*1024); }
++   if ($mozext_count > 0)     { printf " $mozext_count Mozilla extensions (%.2f MB),\n" , $mozext_bytes/(1024*1024); }
+    if ($proxy_count > 0)      { printf " $proxy_count mod_proxy connection attempts (%.2f MB),\n" , $proxy_bytes/(1024*1024); }
+    if ($other_count > 0)      { printf " $other_count Other (%.2f MB) \n" , $other_bytes/(1024*1024); }
+ }
