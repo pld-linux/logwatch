@@ -1,0 +1,29 @@
+--- /home/gotar/cvs/logwatch/scripts/services/amavis	2004-06-21 16:59:05.000000000 +0200
++++ amavis	2004-09-05 23:57:48.000000000 +0200
+@@ -60,7 +60,7 @@
+         or ($ThisLine =~ /^cached [a-zA-Z0-9]+ /)
+         or ($ThisLine =~ /^starting.  amavisd at/) ) {
+        # We don't care about these
+-   } elsif ($ThisLine =~ /^Passed, /) {
++   } elsif ($ThisLine =~ /^Passed,? /) {
+       $CleanMsgs++;
+    } elsif (($FileName, $From) = ( $ThisLine =~ /^BANNED name\/type \(([^\)]+)\)\, \<([^\>]*)\>/ )) {
+ 
+@@ -70,7 +70,7 @@
+           $Banned{$FileName}{$From}++;
+       }; # if 
+ 
+-   } elsif (($Virus, $From) = ( $ThisLine =~ /^(Virus found - quarantined|INFECTED) \(([^\)]+)\)\, [\(\<]([^\>\)]*)[\)\>]/ )) {
++   } elsif (($Virus, $From) = ( $ThisLine =~ /^(Virus found - quarantined|INFECTED|Blocked INFECTED) \(([^\)]+)\)\, [\(\<]([^\>\)]*)[\)\>]/ )[1,2]) {
+ 
+       $InfectedMsgs++;
+ 
+@@ -82,7 +82,7 @@
+         $Viruses{$Virus}{$From}++;
+       }; # if
+ 
+-   } elsif (($Fromspam, $Towards) = ( $ThisLine =~ /^SPAM, [\(\<]([^\>\)]+)[\)\>] -\> [\(\<]([^\>\)]+)[\)\>]/ )) {
++   } elsif (($Fromspam, $Towards) = ( $ThisLine =~ /^(SPAM|Blocked SPAM), [\(\<]([^\>\)]+)[\)\>] -\> [\(\<]([^\>\)]+)[\)\>]/ )[1,2]) {
+       $SpamMsgs++;
+ 
+       if ($Detail >= 5) {
