@@ -1,0 +1,93 @@
+Index: scripts/services/cron
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/cron,v
+retrieving revision 1.12
+diff -u -r1.12 cron
+--- scripts/services/cron	15 Dec 2003 18:09:23 -0000	1.12
++++ scripts/services/cron	25 Dec 2003 22:59:39 -0000
+@@ -2,6 +2,8 @@
+ ##########################################################################
+ # $Id$
+ ##########################################################################
++# $Log$
++##########################################################################
+ 
+ ########################################################
+ # This was written and is maintained by:
+@@ -15,30 +17,34 @@
+ 
+ while (defined($ThisLine = <STDIN>)) {
+    chomp($ThisLine);
+-   if (($ThisLine =~ s/^([^ ]+) \([^ ]+\)\s+//) or ($ThisLine =~ s/^... .. ..:..:.. [^ ]+ \w+\[\d+\]: \((\S+)\)\s+//)) {
++   if ( 
++      ($ThisLine =~ /Updated timestamp for job/)
++   ) {
++      # Ignore
++   } elsif (($ThisLine =~ s/^([^ ]+) \([^ ]+\)\s+//) or ($ThisLine =~ s/^... .. ..:..:.. [^ ]+ \w+\[\d+\]: \((\S+)\)\s+//)) {
+       $User = $1;
+       if ($ThisLine =~ s/^CMD \((.+)\)\s*$/$1/) {
+-              $Runs->{$User}->{$ThisLine}++;
++         $Runs->{$User}->{$ThisLine}++;
+       } elsif ($ThisLine =~ s/^(BEGIN|END) EDIT \((.+)\)\s*$/$2/) {
+-              $Runs->{$ThisLine}->{'personal crontab edited'} += 0.5;
++         $Runs->{$ThisLine}->{'personal crontab edited'} += 0.5;
+       } elsif ($ThisLine =~ s/^REPLACE \((.+)\)\s*$/$1/) {
+-              $Runs->{$ThisLine}->{'personal crontab replaced'}++;
++         $Runs->{$ThisLine}->{'personal crontab replaced'}++;
+       } elsif ($ThisLine =~ s/^LIST \((.+)\)\s*$/$1/) {
+-              $Runs->{$ThisLine}->{'personal crontab listed'}++;
++         $Runs->{$ThisLine}->{'personal crontab listed'}++;
+       } elsif ($ThisLine =~ s/^DELETE \((.+)\)\s*$/$1/) {
+-              $Runs->{$User}->{'personal crontab deleted'}++;
++         $Runs->{$User}->{'personal crontab deleted'}++;
+       } elsif ($ThisLine =~ /^STARTUP \(fork ok\)\s*$/ ) {
+-              $Startups++;
++         $Startups++;
++      } elsif ($ThisLine =~ m/^STARTUP \(\d+ jobs to catch up\)/ ) {
++         $Startups++;
+       } elsif ( $ThisLine =~ /^RELOAD \(.+\)\s*$/ ) {
+-              $Runs->{$User}->{'personal crontab reloaded'}++;
++         $Runs->{$User}->{'personal crontab reloaded'}++;
+       } else {
+          # Report any unmatched entries...
+          push @OtherList, "$ThisLine\n";
+       }
+    } elsif ( $ThisLine =~ /^RELOAD \(.+\)\s*$/ ) {
+       $Reloads++;
+-   } elsif ( $ThisLine =~ /Updated timestamp for job/ ) {
+-      # Ignore
+    } elsif ( $User = ($ThisLine =~ /^(.*) \([^ ]+\) RELOAD \(.*\)$/ ) ) {
+       $UserReloads{$User}++;
+    } else {
+@@ -50,9 +56,9 @@
+ if (keys %{$Runs} and ($Detail >= 5)) {
+    print "Commands Run:\n";
+    foreach $i (sort {$a cmp $b} keys %{$Runs}) {
+-      print "   User " . $i . ":\n";
++      print "   User $i:\n";
+       foreach $j (sort {$a cmp $b} keys %{$Runs->{$i}}) {
+-         print "      " . $j . ": " . $Runs->{$i}->{$j} . " Time(s)\n";
++         print "      $j: " . $Runs->{$i}->{$j} . " Time(s)\n";
+       }
+    }
+ }
+@@ -61,16 +67,16 @@
+    if (keys %UserReloads) {
+       print "   User crontabs reloaded:\n";
+       foreach $i (keys %UserReloads) {
+-         print '      ' . $i . ' ' . $UserReloads{$i} . " Time(s)\n";
++         print "      $i $UserReloads{$i} Time(s)\n";
+       }
+    }
+ 
+    if ($Startups) {
+-      print "   CRON Restarted " . $Startups . " Time(s)\n";
++      print "   CRON Restarted $Startups Time(s)\n";
+    }
+ 
+    if ($Reloads) {
+-      print "   CRON Reloaded /etc/crontab " . $Reloads . " Time(s)\n";
++      print "   CRON Reloaded /etc/crontab $Reloads Time(s)\n";
+    }
+ }
+ 

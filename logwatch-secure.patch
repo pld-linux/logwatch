@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/secure,v
 retrieving revision 1.40
 diff -u -r1.40 secure
 --- scripts/services/secure	15 Dec 2003 21:49:19 -0000	1.40
-+++ scripts/services/secure	16 Dec 2003 13:27:00 -0000
++++ scripts/services/secure	26 Dec 2003 00:00:36 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -23,6 +23,15 @@ diff -u -r1.40 secure
  use Logwatch ':ip';
  
  while (defined($ThisLine = <STDIN>)) {
+@@ -80,7 +82,7 @@
+       $Error{$Service}{$Err}++;
+    } elsif ( $ThisLine =~ /^login: ROOT LOGIN ON tty[0-9]+/) {
+       $RootLoginTTY++
+-   } elsif ( ($User) = ($ThisLine =~ /^login: LOGIN ON tty[0-9]+ BY ([^ ]+)$/ )) {
++   } elsif ( (undef,$User) = ($ThisLine =~ /^login: LOGIN ON (tty|pts\/)[0-9]+ BY ([^ ]+)/ )) {
+       $UserLogin{$User}++;
+    } elsif ( $ThisLine =~ s/^userdel\[\d+\]: delete user `(.+)'/$1/ ) {
+       push @DeletedUsers, "   $ThisLine\n";
 @@ -109,6 +111,10 @@
     } elsif ( ($service, $from) = ($ThisLine =~ /^xinetd\[\d+\]: FAIL: (.+) (?:address|libwrap) from=([\d.]+)/)) {
        if ($Ignore =~ /\b\Q$service\E\b/i) { next; }    
@@ -34,7 +43,24 @@ diff -u -r1.40 secure
     } else {
        # Unmatched entries...
        push @OtherList, "$ThisLine\n";
-@@ -216,6 +222,17 @@
+@@ -200,9 +206,9 @@
+ if (keys %Error) {
+ 	print "\nErrors:\n";
+ 	foreach $Service (sort {$a cmp $b} keys %Error) {
+-		print "   Service " . $Service . ":\n";
++		print "   Service $Service:\n";
+ 		foreach $Err (sort {$a cmp $b} keys %{$Error{$Service}}) {
+-			print "      " . $Err . ": " . $Error{$Service}{$Err} . " Time(s)\n";
++			print "      $Err: $Error{$Service}{$Err} Time(s)\n";
+ 		}
+ 	}
+ }
+@@ -212,10 +218,21 @@
+ }
+ 
+ if (keys %UserLogin) {
+-	print "\nUser Login's on tty\'s:\n";
++	print "\nUser Login's:\n";
  	foreach $User (sort {$a cmp $b} keys %UserLogin) {
  		print "   $User : $UserLogin{$User} Time(s)\n";
  	}
