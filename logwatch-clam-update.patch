@@ -1,0 +1,16 @@
+Index: scripts/services/clam-update
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/clam-update,v
+retrieving revision 1.7
+diff -u -r1.7 clam-update
+--- scripts/services/clam-update	23 Jun 2004 15:01:17 -0000	1.7
++++ scripts/services/clam-update	30 Jun 2004 14:05:16 -0000
+@@ -129,7 +129,7 @@
+       } elsif ($ThisLine =~ /^viruses\.db2 is up to date/) {
+          $bDB2Uptodate = 1;
+          $DB2Uptodate  = $ThisLine;
+-      } elsif ($ThisLine =~ /^Clamd successfully notified about the update./) {
++      } elsif ($ThisLine =~ /^Clamd successfully notified about the update/) {
+          $NotificationOK++;
+       } elsif (($Text) = ($ThisLine =~ /^ERROR: (.*)/)) {
+          $Errors{$Text}++;
