@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/http,v
 retrieving revision 1.9
 diff -u -r1.9 http
 --- scripts/services/http	3 Feb 2004 02:45:26 -0000	1.9
-+++ scripts/services/http	31 Mar 2004 12:51:54 -0000
++++ scripts/services/http	31 Mar 2004 13:15:20 -0000
 @@ -79,39 +79,45 @@
  my $wpad_bytes =     0;
  my $src_count =      0;
@@ -44,11 +44,11 @@ diff -u -r1.9 http
 -   '\\x90\\x90\\x90\\x90',
 -   '\\x04\\x01',
 -   '\\x05\\x01',
-+   '\x90\x02\xb1\x02\xb1',
-+   '\x02\xb1',
-+   '\x90\x90\x90\x90',
-+   '\x04\x01',
-+   '\x05\x01',
++   '\\\x90\\\x02\\\xb1\\\x02\\\xb1',
++   '\\\x02\\\xb1',
++   '\\\x90\\\x90\\\x90\\\x90',
++   '\\\x04\\\x01',
++   '\\\x05\\\x01',
     '\/c\+dir',
     'cmd.exe',
 +   'cltreq.asp',
