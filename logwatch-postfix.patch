@@ -1,0 +1,243 @@
+Index: scripts/services/postfix
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/postfix,v
+retrieving revision 1.7
+diff -u -r1.7 postfix
+--- scripts/services/postfix	15 Dec 2003 18:35:03 -0000	1.7
++++ scripts/services/postfix	17 Dec 2003 08:20:31 -0000
+@@ -67,6 +67,9 @@
+ $ReturnedToSender = 0;
+ $ResentMessages = 0;
+ $RemovedFromQueue = 0;
++$UnsuppertedFamily = 0;
++$TableChanged = 0;
++$QueueSizeExceeded = 0;
+ 
+ while (defined($ThisLine = <STDIN>)) {
+    if ( ( $ThisLine =~ m/^connect/ ) or 
+@@ -83,7 +86,8 @@
+         ( $ThisLine =~ m/^daemon started$/ ) or
+         ( $ThisLine =~ m/^terminating on signal 15$/ ) or
+         ( $ThisLine =~ m/^warning: Mail system is down -- accessing queue directly$/ ) or
+-        ( $ThisLine =~ m/^Deleted: \d message$/ )
++        ( $ThisLine =~ m/^Deleted: \d message$/ ) or
++        ( $ThisLine =~ m/^warning: [a-zA-Z0-9]+: skipping further client input$/ )
+       ) {
+       # We don't care about these
+    } elsif ( ($Bytes) = ($ThisLine =~ /^[a-zA-Z0-9]+: from=.*size=([0-9]+).*$/) ) {
+@@ -155,17 +159,25 @@
+       $MailerLoop{$Error}++;
+    } elsif ( ($Host) = ($ThisLine =~ /^warning: ([^ ]*\[[^ ]*\]): SASL LOGIN authentication failed/)) {
+       $SaslAuthenticationFail{$Host}++;
++   } elsif ( ($Domain) = ($ThisLine =~ /^warning: malformed domain name in resource data of MX record (.*)$/)) {
++      $MxError{$Domain}++;
++   } elsif ( ($Host,$Command) = ($ThisLine =~ /^warning: ([^ ]*\[[^ ]*\]) sent message header instead of ([^ ]*) command: $/)) {
++      $Error = "Sent message header instead of $Command command";
++      $SmtpConversationError{$Error}{$Host}++;
++   } elsif ( ($ThisLine =~ m/warning: smtp_connect_addr: socket: Address family not supported by protocol/) or
++      ($ThisLine =~ m/warning: smtp_addr_one: unknown address family \d for [^ ]*/)) {
++      $UnsuppertedFamily++;
++   } elsif ($ThisLine =~ m/(lookup |)table has changed -- exiting$/) {
++      $TableChanged++;
++   } elsif ($ThisLine =~ m/^warning: [a-zA-Z0-9]+: queue file size limit exceeded$/) {
++      $QueueSizeExceeded++;
+    } else {
+       push @OtherList,$ThisLine;
+       # TODO:
+       #too many errors after RCPT from ta130.internetdsl.tpnet.pl[80.55.104.130]
+-      #warning: malformed domain name in resource data of MX record for sfol.com:
+-      #warning: malformed domain name in resource data of MX record for kiri.com: \254\184\194\008
+       #warning: open active EA67A1B840: No such file or directory
+       #warning: premature end-of-input from cleanup socket while reading input attribute name
+-      #warning: smtp_connect_addr: socket: Address family not supported by protocol
+-      #warning: smtp_addr_one: unknown address family 1 for localhost
+-      #warning: unknown[203.197.217.137] sent message header instead of SMTP command: From:"Bailey" <sanchez_24@canada.com>
++      #warning: 201.251.19.153.bl.spamcop.net: RBL lookup error: Name service error for 201.251.19.153.bl.spamcop.net: Host not found, try again
+    }
+ }
+ 
+@@ -190,75 +202,87 @@
+    print "\n\n$RemovedFromQueue messages removed from queue";
+ }
+ 
++if ($QueueSizeExceeded > 0) {
++   print "\n\n$QueueSizeExceeded messages exceeded queue file size limit and removed";
++}
++
++if ($TableChanged > 0) {
++   print "\n\n$TableChanged exited after table change detection";
++}
++
++if ($UnsuppertedFamily > 0) {
++   print "\n\nUnknown address family $UnsuppertedFamily Time(s)\n";
++}
++
+ if (keys %PixWorkaround) {
+    print "\n\nEnabled PIX <CRLF>.<CRLF> workaround for:\n";
+    foreach $Host (sort {$a cmp $b} keys %PixWorkaround) {
+-      print "    $Host : $PixWorkaround{$Host}  Times(s)\n";
++      print "   $Host : $PixWorkaround{$Host} Time(s)\n";
+    }
+ }
+ 
+ if (keys %SentBy) {
+    print "\n\nMessages sent by:\n";
+    foreach $ThisOne (sort {$a cmp $b} keys %SentBy) {
+-      print "    $ThisOne : $SentBy{$ThisOne} Times(s)\n";
++      print "   $ThisOne : $SentBy{$ThisOne} Time(s)\n";
+    }
+ }
+ 
+ if (keys %UnknownUsers) {
+    print "\n\nUnknown users:\n";
+    foreach $ThisOne (sort {$a cmp $b} keys %UnknownUsers) {
+-      print "    $ThisOne : $UnknownUsers{$ThisOne} Times(s)\n";
++      print "   $ThisOne : $UnknownUsers{$ThisOne} Time(s)\n";
+    }
+ }
+ 
+ if (keys %SaslAuthenticationFail) {
+    print "\n\nSASL Authentication failed from:\n";
+    foreach $Host (sort {$a cmp $b} keys %SaslAuthenticationFail) {
+-      print "    $Host : $SaslAuthenticationFail{$Host} Times(s)\n";
++      print "   $Host : $SaslAuthenticationFail{$Host} Time(s)\n";
+    }
+ }
+ 
+ if (keys %RelayDenied) {
+    print "\n\nRelaying denied:\n";
+    foreach $ThisOne (sort {$a cmp $b} keys %RelayDenied) {
+-      print "    " . $ThisOne . ": " . $RelayDenied{$ThisOne} . " Times(s)\n";
++      print "   $ThisOne : $RelayDenied{$ThisOne} Time(s)\n";
+    }
+ }
+ 
+ if (keys %LocalBounce) {
+    print "\n\nLocal Bounce:\n";
+    foreach $ThisOne (sort {$a cmp $b} keys %LocalBounce) {
+-      print "    " . $ThisOne . ": " . $LocalBounce{$ThisOne} . " Times(s)\n";
++      print "   $ThisOne : $LocalBounce{$ThisOne} Time(s)\n";
+    }
+ }
+ 
+ if (keys %ForeignBounce) {
+    print "\n\nForeign Bounce:\n";
+    foreach $ThisOne (sort {$a cmp $b} keys %ForeignBounce) {
+-      print "    " . $ThisOne . ": " . $ForeignBounce{$ThisOne} . " Times(s)\n";
++      print "   $ThisOne : $ForeignBounce{$ThisOne} Time(s)\n";
+    }
+ }
+ 
+ if (keys %HeaderReject) {
+    print "\n\nHeader content reject:\n";
+    foreach $ThisOne (sort {$a cmp $b} keys %HeaderReject) {
+-      print "    " . $ThisOne . ": " . $HeaderReject{$ThisOne} . " Times(s)\n";
++      print "   $ThisOne : $HeaderReject{$ThisOne} Time(s)\n";
+    }
+ }
+ 
+ if (keys %RejectDomain) {
+    print "\n\nNot found domain in address sent by:\n";
+    foreach $Host (sort {$a cmp $b} keys %RejectDomain) {
+-      print "    $Host : $RejectDomain{$Host} Times(s)\n";
++      print "   $Host : $RejectDomain{$Host} Time(s)\n";
+    }
+ }
+ 
+ if (keys %RejectRBL) {
+    print "\n\nMessages rejected using Anti-Spam site:\n";
+    foreach $Site (sort {$a cmp $b} keys %RejectRBL) {
+-      print "    $Site:\n";
++      print "   $Site:\n";
+       foreach $Host (sort {$a cmp $b} keys %{$RejectRBL{$Site}} ) {
+-         print "        $Host : $RejectRBL{$Site}{$Host} Times(s)\n";
++         print "      $Host : $RejectRBL{$Site}{$Host} Time(s)\n";
+       }
+    }
+ }
+@@ -266,29 +290,47 @@
+ if (keys %AuthWarns) {
+    print "\n\nAuthentication warnings:\n";
+    foreach $ThisOne (sort {$a cmp $b} keys %AuthWarns) {
+-      print "    $ThisOne : $AuthWarns{$ThisOne} Times(s)\n";
++      print "   $ThisOne : $AuthWarns{$ThisOne} Time(s)\n";
+    }
+ }
+ 
+ if (keys %ForwardErrors) {
+    print "\n\nForwarding errors:\n";
+    foreach $ThisOne (sort {$a cmp $b} keys %ForwardErrors) {
+-      print "    $ThisOne : $ForwardErrors{$ThisOne} Times(s)\n";
++      print "   $ThisOne : $ForwardErrors{$ThisOne} Time(s)\n";
++   }
++}
++
++if (keys %SmtpConversationError) {
++   print "\n\nSMTP commands dialog errors:\n";
++   foreach $Error (sort {$a cmp $b} keys %SmtpConversationError) {
++      print "   $Error:\n";
++      foreach $Host (sort {$a cmp $b} keys %{$SmtpConversationError{$Error}} ) {
++         print "      $Host : $SmtpConversationError{$Error}{$Host} Time(s)\n";
++      }
+    }
+ }
+ 
+ if (keys %ConnectionLost) {
+    print "\n\nConnections lost:\n";
+    foreach $ThisOne (sort {$a cmp $b} keys %ConnectionLost) {
+-      print "    Connection lost after command $ThisOne : $ConnectionLost{$ThisOne} Times(s)\n";
++      print "   Connection lost after command $ThisOne : $ConnectionLost{$ThisOne} Time(s)\n";
++   }
++}
++
++if (keys %MxError) {
++   print "\n\nMalformed domain name in resource data of MX record:\n";
++   foreach $Domain (sort {$a cmp $b} keys %MxError) {
++      print "   $Domain : $MxError{$Domain} Time(s)\n";
+    }
+ }
+ 
+ if (%IllegalAddressSyntax) {
+    print "\n\nIllegal address syntax:\n";
+    foreach $Command (sort {$a cmp $b} keys %IllegalAddressSyntax) {
+-      print "    In command $Command from:\n";
+-      foreach $Host (sort {$a cmp $b} keys %{$IllegalAddressSyntax{$Command}} ) {+           print "        $Host : $IllegalAddressSyntax{$Command}{$Host} Times(s)\n";
++      print "   In command $Command from:\n";
++      foreach $Host (sort {$a cmp $b} keys %{$IllegalAddressSyntax{$Command}} ) {
++         print "      $Host : $IllegalAddressSyntax{$Command}{$Host} Time(s)\n";
+       }
+    }
+ }
+@@ -296,28 +338,28 @@
+ if (keys %HostnameVerification) {
+    print "\n\nHostname verification errors:\n";
+    foreach $Error (sort {$a cmp $b} keys %HostnameVerification) {
+-      print "    $Error : $HostnameVerification{$Error} Times(s)\n";
++      print "   $Error : $HostnameVerification{$Error} Time(s)\n";
+    }
+ }
+ 
+ if (keys %MailerLoop) {
+    print "\n\nMailer Loop:\n";
+    foreach $Error (sort {$a cmp $b} keys %MailerLoop) {
+-      print "    $Error : $MailerLoop{$Error} Times(s)\n";
++      print "   $Error : $MailerLoop{$Error} Time(s)\n";
+    }
+ }
+ 
+ if (keys %ValidHostname) {
+    print "\n\nHostname validation errors:\n";
+    foreach $Message (sort {$a cmp $b} keys %ValidHostname) {
+-      print "    $Message : $ValidHostname{$Message} Times(s)\n";
++      print "   $Message : $ValidHostname{$Message} Time(s)\n";
+    }
+ }
+ 
+ if (keys %HeloError) {
+    print "\n\nErrors in HELO/EHLO conversation:\n";
+    foreach $Error (sort {$a cmp $b} keys %HeloError) {
+-      print "    $Error : $HeloError{$Error} Times(s)\n";
++      print "   $Error : $HeloError{$Error} Time(s)\n";
+    }
+ }
+ 
