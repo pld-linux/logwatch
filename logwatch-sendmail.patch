@@ -1,0 +1,96 @@
+Index: scripts/services/sendmail
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/sendmail,v
+retrieving revision 1.38
+diff -u -r1.38 sendmail
+--- scripts/services/sendmail	3 Feb 2004 18:39:34 -0000	1.38
++++ scripts/services/sendmail	13 Apr 2004 07:54:04 -0000
+@@ -54,6 +54,7 @@
+ $OutdatedAliasdb = 0;
+ $MaxLoadAvg = 0;
+ $LoadAvgReject = 0;
++$LoadAvgQueueSkip = 0;
+ 
+ my %relay;
+ my %abuse;
+@@ -160,8 +161,8 @@
+       # Dec 31 04:03:01 tp760 sendmail[26887]: STARTTLS=server, relay=tp760.stovenour.net [127.0.0.1], version=TLSv1/SSLv3, verify=NO, cipher=EDH-RSA-DES-CBC3-SHA, bits=168/168
+       ( $ThisLine =~ m/^STARTTLS=(server|client), relay=/ ) or
+       ( $ThisLine =~ m/Flushing queue from/ ) or
+-      # For Solaris...
+-      ( $ThisLine =~ m/^SYSERR/ ) or
++      # I think that it's wrong...
++      #( $ThisLine =~ m/^SYSERR/ ) or
+       ( $ThisLine =~ m/^clone [a-zA-Z0-9]+, owner=/ ) or
+       ( $ThisLine =~ m/^SYSERR\(root\): collect: I\/O error on connection from / ) or
+       ( $ThisLine =~ m/^accepting connections again for daemon / )
+@@ -402,6 +403,11 @@
+    } elsif ( $ThisLine =~ /rejecting connections on daemon [^ ]+: load average: ([0-9]+)/ ) {
+       $LoadAvg{$1}++;
+       $LoadAvgReject++;
++   } elsif (
++      ($ThisLine =~ /Aborting queue run: load average too high/ ) or
++      ($ThisLine =~ /Skipping queue run -- load average too high/ )
++   ){
++      $LoadAvgQueueSkip++;
+    } elsif ($ThisLine=~ /reject=.*MESSAGE NOT ACCEPTED - (.+)/) {
+       chomp($host=$1);
+       $MailRejected{$host}++;
+@@ -429,6 +435,12 @@
+    } elsif ( ($User,$Uid) = ($ThisLine =~ /^SYSERR\(([^ ]+)\): queueup: cannot create queue file [^ ]+, euid=(\d+): Disk quota exceeded/) ) {
+       $Temp = "$User (uid=$Uid)";
+       $QuotaExceed{$Temp}++;
++   } elsif (
++      ($Address,$Reason) = ($ThisLine =~ /^Syntax error in mailbox address "(.+)" \(([^ ]+)\)/) or
++      ($Address,$Reason) = ($ThisLine =~ /^<(.+)>... (Colon illegal in host name part)/)
++      ($Reason,$Address) = ($ThisLine =~ /^(8-bit character in mailbox address) "<(.+)>"/)
++   ) {
++      $AddressError{$Reason}{$Address}++;
+    } else {
+       $ThisLine =~ s/.*\: (DSN\: .*)/$1/;
+       $ThisLine =~ s/.*\: (postmaster notify\: .*)/$1/;
+@@ -557,7 +569,7 @@
+ }
+ 
+ if (keys %LargeMsgs) {
+-   print "\n\nLarge Msaages (From \-\> To):\n";
++   print "\n\nLarge Messages (From \-\> To):\n";
+    foreach $ThisOne (sort keys %LargeMsgs) {
+       print "    $ThisOne : ${LargeMsgs{$ThisOne}} Time(s)\n";
+    }
+@@ -577,13 +589,17 @@
+       if ($Detail >=5) {
+          print "    Load Avg $Load : $LoadAvg{$Load} Time(s)\n";
+       }
+-      if ($ThisOne > $MaxLoadAvg) {
++      if ($Load > $MaxLoadAvg) {
+          $MaxLoadAvg = $Load;
+       }
+    }
+    print "   Max. Load Avg reached: $MaxLoadAvg\n";
+ }
+ 
++if ($LoadAvgQueueSkip > 0) {
++   print "\nAborted/skipped mail queue run - load average too high: $LoadAvgQueueSkip Time(s)\n";
++}
++
+ if (keys %UnknownUsers) {
+    foreach $Usr (sort keys %UnknownUsers) {
+       foreach $QueueID (sort keys %{ $UnknownUsers{$Usr} }) {
+@@ -835,6 +851,16 @@
+    print "\n\nToo large headers from: \n";
+    foreach $host ( sort {$largeHdrs{$b}<=>$largeHdrs{$a}} keys %largeHdrs ) {
+       printf "    %-17s   %-3i Time(s)\n",$host, $largeHdrs{$host};
++   }
++}
++
++if (keys %AddressError) {
++   print "\n\nErrors in mail address:\n";
++   foreach $Reason (sort {$a cmp $b} keys %AddressError) {
++      print "   $Reason:\n";
++      foreach $Address (sort {$a cmp $b} keys %{$AddressError{$Reason}}) {
++         print "      $Address: $AddressError{$Reason}{$Address} Time(s)\n";
++      }
+    }
+ }
+ 
