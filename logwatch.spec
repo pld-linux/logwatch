@@ -1,18 +1,17 @@
-# TODO:
-# - prepare cron-job to generate not only e-mail, but html (like calamaris) too
-# - choice in cron-jol: html, html-embed or clean text
 %include	/usr/lib/rpm/macros.perl
 Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	6.0.1
-Release:	2
+Release:	2.1
 License:	MIT
 Group:		Applications/System
 Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
 # Source0-md5:	47a609d01472935b269f04584d6e9217
 #Path for pre-versions:
 #Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
+Source1:	%{name}.cron
+Source2:	%{name}.sysconfig
 Patch0:		%{name}-config.patch
 Patch1:		%{name}-log_conf.patch
 Patch2:		%{name}-secure.patch
@@ -52,7 +51,7 @@ u¿yciu i mo¿e pracowaæ na wiêkszo¶ci systemów.
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT{%{_logwatchconf},/etc/cron.daily} \
+install -d $RPM_BUILD_ROOT{%{_logwatchconf},/etc/{cron.daily,sysconfig}} \
 	$RPM_BUILD_ROOT{%{_sbindir},%{_mandir}/man8,%{_logwatchdir}/lib}
 
 install conf/logwatch.conf $RPM_BUILD_ROOT%{_logwatchconf}
@@ -67,7 +66,9 @@ mv $RPM_BUILD_ROOT%{_logwatchdir}/scripts/logwatch.pl $RPM_BUILD_ROOT%{_sbindir}
 
 ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT%{_logwatchdir}/scripts/logwatch.pl
 ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT%{_logwatchconf}/logwatch
-ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT/etc/cron.daily/00-logwatch
+
+install %{SOURCE1} $RPM_BUILD_ROOT/etc/cron.daily/00-%{name}
+install %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/%{name}
 
 install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
 
@@ -85,13 +86,14 @@ fi
 %files
 %defattr(644,root,root,755)
 %doc README HOWTO-Make-Filter project/{CHANGES,TODO}
-%attr(750,root,root) %dir %{_logwatchconf}
-%attr(750,root,root) %dir %{_logwatchconf}/logfiles
-%attr(750,root,root) %dir %{_logwatchconf}/services
+%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/sysconfig/%{name}
+%attr(755,root,root) %config(noreplace) %verify(not size mtime md5) /etc/cron.daily/00-%{name}
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/logwatch.conf
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/services/*.conf
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/logfiles/*.conf
+%attr(750,root,root) %dir %{_logwatchconf}
+%attr(750,root,root) %dir %{_logwatchconf}/logfiles
+%attr(750,root,root) %dir %{_logwatchconf}/services
 %attr(755,root,root) %{_logwatchdir}
 %attr(755,root,root) %{_sbindir}/logwatch
-%attr(755,root,root) /etc/cron.daily/00-logwatch
 %{_mandir}/man8/*
