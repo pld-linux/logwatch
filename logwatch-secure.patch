@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/secure,v
 retrieving revision 1.49
 diff -u -r1.49 secure
 --- scripts/services/secure	24 Feb 2005 17:08:05 -0000	1.49
-+++ scripts/services/secure	24 Feb 2005 22:42:29 -0000
++++ scripts/services/secure	24 Feb 2005 22:47:40 -0000
 @@ -49,6 +49,7 @@
  $ConsoleLock = 0;
  $spop3d_opened=0;
@@ -67,15 +67,6 @@ diff -u -r1.49 secure
  if (keys %{$Connections}) {
     print "\nConnections:\n";
     foreach $ThisOne (keys %{$Connections}) {
-@@ -349,7 +369,7 @@
-    foreach $Service (sort {$a cmp $b} keys %NameVerifyFail) {
-       print "   Service $Service:\n";
-       foreach $Name (sort {$a cmp $b} keys %{$NameVerifyFail{$Service}}) {
--         print "      $Name$NameVerifyFail{$Service}{$Name} Time(s)\n";
-+         print "      $Name$NameVerifyFail{$Service}{$Name} Time(s)\n";
-       }
-    }
- }
 @@ -445,4 +465,3 @@
  exit(0);
  
