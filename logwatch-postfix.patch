@@ -1,302 +1,61 @@
 Index: scripts/services/postfix
 ===================================================================
 RCS file: /var/cvs/logwatch/scripts/services/postfix,v
-retrieving revision 1.9
-diff -u -r1.9 postfix
---- scripts/services/postfix	3 Feb 2004 03:25:02 -0000	1.9
-+++ scripts/services/postfix	7 Jun 2004 10:38:38 -0000
-@@ -82,32 +82,39 @@
- $QueueSizeExceeded = 0;
- $RejectedRBL = 0;
- $ErrorRBL = 0;
-+$NoFreeSpace = 0;
-+$RejectClients = 0;
+retrieving revision 1.12
+diff -u -r1.12 postfix
+--- scripts/services/postfix	21 Jun 2004 14:59:05 -0000	1.12
++++ scripts/services/postfix	21 Jun 2004 21:45:27 -0000
+@@ -105,32 +105,36 @@
  
  while (defined($ThisLine = <STDIN>)) {
--   if ( ( $ThisLine =~ m/^connect/ ) or 
--        ( $ThisLine =~ m/^disconnect/ ) or 
--        ( $ThisLine =~ m/^reload configuration/ ) or 
--        ( $ThisLine =~ m/^[a-zA-Z0-9]+: client/ ) or 
--        ( $ThisLine =~ m/^[a-zA-Z0-9]+: message-id/ ) or
--        ( $ThisLine =~ m/^[a-zA-Z0-9]+: skipped, still being delivered/ ) or
--        ( $ThisLine =~ m/^warning: [\.0-9]+: address not listed for hostname/ ) or
--        ( $ThisLine =~ m/^[a-zA-Z0-9]+: to\=\<.*>, relay\=.*, delay\=[0-9]+, status\=[sent|deferred]/ ) or
--        ( $ThisLine =~ m/^warning: [\.0-9]+: hostname .* verification failed: Host not found/ ) or
--        ( $ThisLine =~ m/^warning: no MX host for .* has a valid A record$/ ) or
--        ( $ThisLine =~ m/^warning: numeric domain name in resource data of MX record for .*$/ ) or
--        ( $ThisLine =~ m/^daemon started$/ ) or
--        ( $ThisLine =~ m/^terminating on signal 15$/ ) or
--        ( $ThisLine =~ m/^warning: Mail system is down -- accessing queue directly$/ ) or
--        ( $ThisLine =~ m/^Deleted: \d message$/ ) or
--        ( $ThisLine =~ m/^warning: [a-zA-Z0-9]+: skipping further client input$/ ) or
--        ( $ThisLine =~ m/^warning: premature end-of-input from cleanup socket while reading input attribute name$/ ) or
--        ( $ThisLine =~ m/^warning: uid=\d: Broken pipe$/ )
--      ) {
-+   if (
-+      ( $ThisLine =~ m/^[a-zA-Z0-9]+: client/ ) or
-+      ( $ThisLine =~ m/^[a-zA-Z0-9]+: message-id/ ) or
-+      ( $ThisLine =~ m/^[a-zA-Z0-9]+: skipped, still being delivered/ ) or
-+      ( $ThisLine =~ m/^[a-zA-Z0-9]+: to\=\<.*>, relay\=.*, delay\=-?[0-9]+, status\=[sent|deferred]/ ) or
+    if ( 
+-      ( $ThisLine =~ m/^connect/ ) or 
+-      ( $ThisLine =~ m/^disconnect/ ) or 
+-      ( $ThisLine =~ m/^reload configuration/ ) or 
+       ( $ThisLine =~ m/^[a-zA-Z0-9]+: client=([^ ]*\[[^ ]*\])$/ ) or 
+       ( $ThisLine =~ m/^[a-zA-Z0-9]+: message-id/ ) or
+       ( $ThisLine =~ m/^[a-zA-Z0-9]+: skipped, still being delivered/ ) or
+-      ( $ThisLine =~ m/^warning: [\.0-9]+: address not listed for hostname/ ) or
+       ( $ThisLine =~ m/^[a-zA-Z0-9]+: to\=\<.*>, relay\=.*, delay\=[0-9]+, status\=(sent|deferred)/ ) or
+-      ( $ThisLine =~ m/^warning: [\.0-9]+: hostname .* verification failed: Host not found/ ) or
+-      ( $ThisLine =~ m/^warning: no MX host for .* has a valid A record$/ ) or
+-      ( $ThisLine =~ m/^warning: numeric domain name in resource data of MX record for .*$/ ) or
 +      ( $ThisLine =~ m/^Deleted: \d message$/ ) or
-+      ( $ThisLine =~ m/^connect/ ) or
-+      ( $ThisLine =~ m/^daemon started$/ ) or
++      ( $ThisLine =~ m/^Peer certificate could not be verified$/ ) or
++      ( $ThisLine =~ m/^Peer certficate could not be verified$/ ) or #postfix typo
++      ( $ThisLine =~ m/^Peer verification:/ ) or
++      ( $ThisLine =~ m/^SSL_accept error from/ ) or
++      ( $ThisLine =~ m/^connect/ ) or 
+       ( $ThisLine =~ m/^daemon started$/ ) or
 +      ( $ThisLine =~ m/^daemon started -- version / ) or
-+      ( $ThisLine =~ m/^disconnect/ ) or
 +      ( $ThisLine =~ m/^dict_eval_action:/ ) or
++      ( $ThisLine =~ m/^disconnect/ ) or 
 +      ( $ThisLine =~ m/^mynetworks:/ ) or
 +      ( $ThisLine =~ m/^name_mask:/ ) or
-+      ( $ThisLine =~ m/^reload configuration/ ) or
-+      ( $ThisLine =~ m/^terminating on signal 15$/ ) or
-+      ( $ThisLine =~ m/^warning: [a-zA-Z0-9]+: skipping further client input$/ ) or
-+      ( $ThisLine =~ m/^warning: [\.0-9]+: hostname .* verification failed: Host not found/ ) or
++      ( $ThisLine =~ m/^reload configuration/ ) or 
++      ( $ThisLine =~ m/^setting up TLS connection (from|to)/ ) or
+       ( $ThisLine =~ m/^terminating on signal 15$/ ) or
+-      ( $ThisLine =~ m/^warning: Mail system is down -- accessing queue directly$/ ) or
+-      ( $ThisLine =~ m/^Deleted: \d message$/ ) or
+       ( $ThisLine =~ m/^warning: [a-zA-Z0-9]+: skipping further client input$/ ) or
 +      ( $ThisLine =~ m/^warning: [\.0-9]+: address not listed for hostname/ ) or
++      ( $ThisLine =~ m/^warning: [\.0-9]+: hostname .* verification failed: Host not found/ ) or
 +      ( $ThisLine =~ m/^warning: Mail system is down -- accessing queue directly$/ ) or
++      ( $ThisLine =~ m/^warning: SASL authentication failure: Password verification failed$/ ) or
++      ( $ThisLine =~ m/^warning: SASL authentication failure: no secret in database$/ ) or
 +      ( $ThisLine =~ m/^warning: no MX host for .* has a valid A record$/ ) or
 +      ( $ThisLine =~ m/^warning: numeric domain name in resource data of MX record for .*$/ ) or
-+      ( $ThisLine =~ m/^warning: premature end-of-input from cleanup socket while reading input attribute name$/ ) or
-+      ( $ThisLine =~ m/^warning: uid=\d: Broken pipe$/ )
-+   ) {
+       ( $ThisLine =~ m/^warning: premature end-of-input from cleanup socket while reading input attribute name$/ ) or
+       ( $ThisLine =~ m/^warning: uid=\d: Broken pipe$/ ) or
+-      ( $ThisLine =~ m/^warning: SASL authentication failure: no secret in database$/ ) or
+-      ( $ThisLine =~ m/^warning: SASL authentication failure: Password verification failed$/ ) or
+-      ( $ThisLine =~ m/^setting up TLS connection (from|to)/ ) or
+-      ( $ThisLine =~ m/^SSL_accept error from/ ) or
+-      ( $ThisLine =~ m/^verify error:num=/ ) or
+-      ( $ThisLine =~ m/^Peer verification:/ ) or
+-      ( $ThisLine =~ m/^Peer certificate could not be verified$/ ) or
+-      ( $ThisLine =~ m/^Peer certficate could not be verified$/ ) #postfix typo
++      ( $ThisLine =~ m/^verify error:num=/ )
+    ) {
        # We don't care about these
     } elsif ( ($Bytes) = ($ThisLine =~ /^[a-zA-Z0-9]+: from=.*size=([0-9]+).*$/) ) {
-       $MsgsSent++;
-       $BytesTransferred += $Bytes;
--   } elsif (($User) = ($ThisLine =~ /^[a-zA-Z0-9]+: to\=\<([^ ]*)>, relay\=local, delay\=[0-9]+, status\=bounced \(unknown user/)) {
-+   } elsif (($User) = ($ThisLine =~ /^[a-zA-Z0-9]+: to\=\<([^ ]*)>, relay\=local, delay\=-?[0-9]+, status\=bounced \(unknown user/)) {
-       # unknown user
-       $UnknownUsers{$User}++;
-    } elsif ((undef,$User) = ($ThisLine =~ /^[a-zA-Z0-9]+: reject: RCPT from ([^ ]*): [0-9]+ <([^ ]*)>: User unknown in virtual mailbox table;/)) {
-@@ -119,7 +126,7 @@
-    } elsif ((undef,$User) = ($ThisLine =~ /^[a-zA-Z0-9]+: reject: RCPT from ([^ ]*): [0-9]+ <([^ ]*)>.*: User unknown in local recipient table/)) {
-       # and yet another unknown user probably
-       $UnknownUsers{$User}++;
--   } elsif (($Dest, $Relay, $Msg) = ($ThisLine =~ /^[a-zA-Z0-9]+: to\=\<([^ ]*)>, relay=([^ ]*).*, delay\=[0-9]+, status\=bounced \(([^)]*)/ )) {
-+   } elsif (($Dest, $Relay, $Msg) = ($ThisLine =~ /^[a-zA-Z0-9]+: to\=\<([^ ]*)>, relay=([^ ]*).*, delay\=-?[0-9]+, status\=bounced \(([^)]*)/ )) {
-       # unknown user
-       # $Msg = " hello "
-       # print "bounce message from " . $Dest . " msg : " . $Relay . "\n";
-@@ -154,9 +161,14 @@
-    #} elsif ( ($Host,undef) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <([^ ]*)>: Sender address rejected: Domain not found;/)) {
-    #   $RejectDomain{$Host}++;
-    # above two lines included in generic reject sender on next condition
--   } elsif ( ($Host,$Sender,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <([^ ]*)>: Sender address rejected: (.*);/)) {
--      $RejectSender{$Host}++;
--   } elsif ( ($Host,$Recip,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <([^ ]*)>: Recipient address rejected: (.*);/)) {
-+   } elsif ( ($Host,$Sender,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <(.*)>: Sender address rejected: (.*);/)) {
-+      $RejectSender{$Reason}{$Host}{$Sender}++;
-+      $RejectSenderHost{$Reason}{$Host}++;
-+      $RejectSenderReason{$Reason}++;
-+   } elsif ( ($Host) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <[^ ]*\[[^ ]*\]>: Client host rejected: Access denied;/)) {
-+      $RejectClientHost{$Host}++;
-+      $RejectClients++;
-+   } elsif ( ($Host,$Recip,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <(.*)>: Recipient address rejected: (.*);/)) {
-       $Temp = "$Host : $Reason";
-       $RejectRecip{$Recip}{$Temp}++;
-    } elsif ( ($Host,undef) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): 554 <(.*)>: Sender address rejected: Access denied;/)) {
-@@ -186,7 +198,7 @@
-    } elsif ( ($Host,$MyName) = ($ThisLine =~ /warning: host ([^ ]*\[[^ ]*\]) replied to HELO\/EHLO with my own hostname ([^ ]*)$/)) {
-       $Temp = "$Host : replied to HELO\/EHLO with my own hostname $MyName";
-       $HeloError{$Temp}++;
--   } elsif ( ($Host,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): 504 <[^ ]*>: Helo command rejected: (.*);/)) {
-+   } elsif ( ($Host,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): \d+ <.*>: Helo command rejected: (.*);/)) {
-       $Temp = "$Host : Helo command rejected \($Reason\)";
-       $HeloError{$Temp}++;
-    } elsif ( ($Size,$Host) = ($ThisLine =~ /bad size limit "\(([^ ]*)\)" in EHLO reply from ([^ ]*\[[^ ]*\])$/)) {
-@@ -196,7 +208,7 @@
-       $IllegalAddressSyntax{$Command}{$Host}++;
-    } elsif ( ($Error) = ($ThisLine =~ /warning: mailer loop: (.*)$/)) {
-       $MailerLoop{$Error}++;
--   } elsif ( ($Host) = ($ThisLine =~ /warning: ([^ ]*\[[^ ]*\]): SASL LOGIN authentication failed/)) {
-+   } elsif ( ($Host,undef) = ($ThisLine =~ /warning: ([^ ]*\[[^ ]*\]): SASL (LOGIN|NTLM) authentication failed/)) {
-       $SaslAuthenticationFail{$Host}++;
-    } elsif ( ($Domain) = ($ThisLine =~ /warning: malformed domain name in resource data of MX record (.*)$/)) {
-       $MxError{$Domain}++;
-@@ -218,51 +230,87 @@
-       $QueueSizeExceeded++;
-    } elsif ( ($Command,$Host) = ($ThisLine =~ /too many errors after ([^ ]*) from ([^ ]*\[[^ ]*\])$/)) {
-       $TooManyErrors{$Command}{$Host}++;
--   } elsif ( (undef,undef,$To) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): 552 Message size exceeds fixed limit; from=<([^ ]*)> to=<([^ ]*)>$/)) {
-+   } elsif ( (undef,undef,$To) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 552 Message size exceeds fixed limit; from=<([^ ]*)> to=<([^ ]*)>$/)) {
-       $SizeLimit{"$From -> $To"}++;
--   } elsif ( (undef,$Source) = ($ThisLine =~ /warning: database ([^ ]*) is older than source file ([a-zA-Z0-9\/]+)$/)) {
-+   } elsif ( (undef,$Source) = ($ThisLine =~ /^warning: database ([^ ]*) is older than source file ([a-zA-Z0-9\/]+)$/)) {
-       $DatabaseGeneration{$Source}++;
--   } elsif ( ($Reason) = ($ThisLine =~ /warning: [a-zA-Z0-9]+: write queue file: (.*)$/)) {
-+   } elsif ( ($Reason) = ($ThisLine =~ /^warning: [a-zA-Z0-9]+: write queue file: (.*)$/)) {
-       $QueueWriteError{$Reason}++;
--   } elsif ( ($Reason) = ($ThisLine =~ /warning: [^ ]*\/[a-zA-Z0-9]+: (Error writing message file)$/)) {
-+   } elsif ( ($Reason) = ($ThisLine =~ /^warning: open active [a-zA-Z0-9]+: (.*)$/)) {
-+      $QueueWriteError{"open active: $Reason"}++;
-+   } elsif ( ($Reason) = ($ThisLine =~ /^warning: qmgr_active_corrupt: save corrupt file queue active id [a-zA-Z0-9]+: (.*)$/)) {
-+      $QueueWriteError{"active corrupt: $Reason"}++;
-+   } elsif ( ($Reason) = ($ThisLine =~ /^warning: qmgr_active_done_3_generic: remove [a-zA-Z0-9]+ from active: (.*)$/)) {
-+      $QueueWriteError{"remove active: $Reason"}++;
-+   } elsif ( ($Reason) = ($ThisLine =~ /^warning: [^ ]*\/[a-zA-Z0-9]+: (Error writing message file)$/)) {
-       $MessageWriteError{$Reason}++;
-+   } elsif ( $ThisLine =~ /reject: RCPT from [^ ]*\[[^ ]*\]: \d+ Insufficient system storage; from=<.*> to=<.*>/) {
-+      $NoFreeSpace++;
-+   } elsif ( ($Process,$Status) = ($ThisLine =~ /^warning: process ([^ ]*) pid \d+ exit status (\d+)$/)) {
-+      $ProcessExit{$Status}{$Process}++;
-+   } elsif ( ($Option,$Reason) = ($ThisLine =~ /^fatal: config variable ([^ ]*): (.*)$/)) {
-+      $ConfigError{$Option}{$Reason}++;
-    } elsif ( ($Warn) = ($ThisLine =~ /^warning: (.*)/)) {
-       # keep this as the next to last condition
-       $UnknownWarnings{$Warn}++;
-    } else {
-       push @OtherList,$ThisLine;
--      # TODO:
--      #warning: open active EA67A1B840: No such file or directory
-    }
- }
- 
-+##################################################################
-+
-+if ($NoFreeSpace > 0) {
-+   print "\nWARNING!!!\n";
-+   print "Insufficient system storage error $NoFreeSpace Time(s)\n";
-+}
-+
- if ($MsgsSent > 0) {
-    print "\n\n$BytesTransferred bytes transferred";
-    print "\n$MsgsSent messages sent";
- }
- 
- if ($FourHourReturns > 0) {
--   print "\n\n$FourHourReturns messages returned after 4 hours";
-+   print "\n$FourHourReturns messages returned after 4 hours";
- }
- 
- if ($ReturnedToSender >0) {
--   print "\n\n$ReturnedToSender messages expired and returned to sender";
-+   print "\n$ReturnedToSender messages expired and returned to sender";
- }
- 
- if ($ResentMessages > 0) {
--   print "\n\n$ResentMessages resent messages";
-+   print "\n$ResentMessages resent messages";
- }
- 
- if ($RemovedFromQueue > 0) {
--   print "\n\n$RemovedFromQueue messages removed from queue";
-+   print "\n$RemovedFromQueue messages removed from queue";
- }
- 
- if ($QueueSizeExceeded > 0) {
--   print "\n\n$QueueSizeExceeded messages exceeded queue or message file size limit and removed";
-+   print "\n$QueueSizeExceeded messages exceeded queue or message file size limit and removed";
-+}
-+
-+if ($TableChanged > 0) {
-+   print "\n$TableChanged exited after table change detection";
-+}
-+
-+if ($UnsuppertedFamily > 0) {
-+   print "\nUnknown address family $UnsuppertedFamily Time(s)\n";
-+}
-+
-+if (keys %ConfigError) {
-+   print "\n\nWARNING!!!\n";
-+   print "Configuration Errors:\n";
-+   foreach $Option (sort {$a cmp $b} keys %ConfigError) {
-+      print "   Option: $Option\n";
-+      foreach $Reason (sort {$a cmp $b} keys %{$ConfigError{$Option}} ) {
-+         print "      $Reason: $ConfigError{$Option}{$Reason} Time(s)\n";
-+      }
-+   }
- }
- 
- if (keys %QueueWriteError) {
--   print "\n\nError writing queue file:\n";
-+   print "\n\nError when accessing queue file:\n";
-    foreach $Reason (sort {$a cmp $b} keys %QueueWriteError) {
-       print "   $Reason : $QueueWriteError{$Reason} Time(s)\n";
-    }
-@@ -275,10 +323,6 @@
-    }
- }
- 
--if ($TableChanged > 0) {
--   print "\n\n$TableChanged exited after table change detection";
--}
--
- if (keys %DatabaseGeneration) {
-    print "\n\nDatabase files are not up-to-date (propably rehash is needed):\n";
-    foreach $Source (sort {$a cmp $b} keys %DatabaseGeneration) {
-@@ -286,10 +330,6 @@
-    }
- }
- 
--if ($UnsuppertedFamily > 0) {
--   print "\n\nUnknown address family $UnsuppertedFamily Time(s)\n";
--}
--
- if (keys %PixWorkaround) {
-    print "\n\nEnabled PIX <CRLF>.<CRLF> workaround for:\n";
-    foreach $Host (sort {$a cmp $b} keys %PixWorkaround) {
-@@ -353,20 +393,24 @@
-    }
- }
- 
--#changed to more generic Sender rejected
--#if (keys %RejectDomain) {
--#   print "\n\nNot found domain in address sent by:\n";
--#   foreach $Host (sort {$a cmp $b} keys %RejectDomain) {
--#      print "   $Host : $RejectDomain{$Host} Time(s)\n";
--#   }
--#}
-+if ($RejectClients > 0) {
-+   print "\n\nClient hosts rejected $RejectClients Time(s)\n";
-+   foreach $Host (sort {$a cmp $b} keys %RejectClientHost) {
-+      print "   $Host $RejectClientHost{$Host} Time(s)\n";
-+   }
-+}
- 
- if (keys %RejectSender) {
--   print "\n\nMessages rejected from sender:\n";
--   foreach $Sender (sort {$a cmp $b} keys %RejectSender) {
--      print "    $Sender:\n";
--      foreach $Host (sort {$a cmp $b} keys %{$RejectSender{$Sender}} ) {
--         print "        $Host : $RejectSender{$Sender}{$Host} Times(s)\n";
-+   print "\n\nMessages rejected:\n";
-+   foreach $Reason (sort {$a cmp $b} keys %RejectSender) {
-+      print "    $Reason $RejectSenderReason{$Reason} Time(s)\n";
-+      foreach $Host (sort {$a cmp $b} keys %{$RejectSender{$Reason}} ) {
-+         print "        $Host $RejectSenderHost{$Reason}{$Host} Time(s)\n";
-+         if ($Detail >= 5) {
-+            foreach $Sender (sort {$a cmp $b} keys %{$RejectSender{$Reason}{$Host}} ) {
-+               print "           $Sender : $RejectSender{$Reason}{$Host}{$Sender} Time(s)\n";
-+            }
-+         }
-       }
-    }
- }
-@@ -376,7 +420,7 @@
-    foreach $Recip (sort {$a cmp $b} keys %RejectRecip) {
-       print "    $Recip:\n";
-       foreach $Host (sort {$a cmp $b} keys %{$RejectRecip{$Recip}} ) {
--         print "        $Host : $RejectRecip{$Recip}{$Host} Times(s)\n";
-+         print "        $Host : $RejectRecip{$Recip}{$Host} Time(s)\n";
-       }
-    }
- }
-@@ -505,10 +549,20 @@
-    }
- }
- 
-+if (keys %ProcessExit) {
-+   print "\n\nProcess exited:\n";
-+   foreach $Status (sort {$a cmp $b} keys %ProcessExit) {
-+      print "   Exit status $Status:\n";
-+      foreach $Process (sort {$a cmp $b} keys %{$ProcessExit{$Status}} ) {
-+         print "      $Process: $ProcessExit{$Status}{$Process} Time(s)\n";
-+      }
-+   }
-+}
-+
- if (keys %UnknownWarnings) {
-    print "\n\nUnrecognized warning:\n";
-    foreach $ThisOne (sort {$a cmp $b} keys %UnknownWarnings) {
--      print "    $ThisOne : $UnknownWarnings{$ThisOne} Times(s)\n";
-+      print "    $ThisOne : $UnknownWarnings{$ThisOne} Time(s)\n";
-    }
- }
- 
