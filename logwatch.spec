@@ -3,7 +3,7 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	5.1
-Release:	4.1
+Release:	4.7
 License:	MIT
 Group:		Applications/System
 #Path for pre-versions:
@@ -23,6 +23,7 @@ Patch5:		%{name}-http.patch
 Patch6:		%{name}-sshd.patch
 Patch7:		%{name}-courier.patch
 Patch8:		%{name}-cron.patch
+Patch9:		%{name}-pam_unix.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	perl-modules
@@ -57,6 +58,7 @@ u¿yciu i moze pracowaæ na wiêkszo¶ci systemów.
 %patch6 -p0
 %patch7 -p0
 %patch8 -p0
+%patch9 -p0
 
 %install
 rm -rf $RPM_BUILD_ROOT
