@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sshd,v
 retrieving revision 1.37
 diff -u -r1.37 sshd
 --- scripts/services/sshd	3 Feb 2004 19:13:14 -0000	1.37
-+++ scripts/services/sshd	31 Mar 2004 13:52:47 -0000
++++ scripts/services/sshd	6 Apr 2004 06:20:10 -0000
 @@ -72,7 +72,10 @@
         ($ThisLine =~ m/^fatal: Timeout before authentication/ ) or
         ($ThisLine =~ m/sshd startup\s+succeeded/) or
@@ -51,7 +51,7 @@ diff -u -r1.37 sshd
        $TTYModesFail{$Reason}++;
     } elsif ( ($User,undef) = ($ThisLine =~ /^User ([^ ]*) not allowed because ([^ ]*) exists$/)) {
        $LoginLock{$User}++;
-+   } elsif ( ($Method,$User,$Host) = ($ThisLine =~ /^Postponed ([^ ]*) for ([^ ]*) from ([^ ]*) port \d+ ssh/)) {
++   } elsif ( ($Method,$User,$Host) = ($ThisLine =~ /^Postponed ([^ ]*) for ([^ ]*|illegal user) from ([^ ]*) port \d+ ssh/)) {
 +      $PostPonedAuth{"$User/$Method"}{$Host}++;
     } elsif ( ($IP) = ($ThisLine =~ /^scanned from ([^ ]*)/) ) {
        push @Scanned, LookupIP($IP);
