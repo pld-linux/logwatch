@@ -38,7 +38,7 @@ u¿yciu i moze pracowaæ na wiêkszo¶ci systemów.
 %patch0 -p1
 %patch1 -p1
 %patch2 -p0
-%patch2 -p1
+%patch3 -p1
 
 %install
 rm -rf $RPM_BUILD_ROOT
