@@ -3,7 +3,7 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	4.3.2
-Release:	0.11
+Release:	0.12
 License:	MIT
 Group:		Applications/System
 Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
