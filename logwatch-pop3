@@ -47,7 +47,7 @@ while (defined($ThisLine = <STDIN>)) {
       ($ThisLine =~ /^read: Connection reset by peer$/) or
       ($ThisLine =~ /^spgetpwnam: can't find user: */) or
       ($ThisLine =~ /^sptls: SSL_accept error: (-|)\d+$/) or
-      ($ThisLine =~ /^sptls: do need at least RSA or DSA cert/key data$/)
+      ($ThisLine =~ /^sptls: do need at least RSA or DSA cert\/key data$/)
    ) {
       # Don't care about these...
    } elsif ( ($User, $Host) = ( $ThisLine =~ /^user (.*?) authenticated - (.*)$/ ) ) {
