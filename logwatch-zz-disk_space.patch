@@ -1,0 +1,12 @@
+diff -urN logwatch-5.2.2/scripts/services/zz-disk_space logwatch-5.2.2.new/scripts/services/zz-disk_space
+--- logwatch-5.2.2/scripts/services/zz-disk_space	2004-06-21 16:18:55.000000000 +0200
++++ logwatch-5.2.2.new/scripts/services/zz-disk_space	2004-07-16 19:26:27.050636392 +0200
+@@ -17,7 +17,7 @@
+    echo
+    echo "------------------ Disk Space --------------------"
+    echo
+-   df -h | grep '^/dev/'
++   df -h | grep '^[/ ]'
+    echo
+ elif [ "$PRINTING" = "y" ] ; then
+    echo
