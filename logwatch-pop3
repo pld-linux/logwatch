@@ -7,7 +7,7 @@
 # Logwatch was written and is maintained by:
 #    Kirk Bauer <kirk@kaybee.org>
 #
-# The courier script was written by:
+# The pop-3 script was written by:
 #    Pawe³ Go³aszewski <blues@gda.pl>
 #
 ########################################################
@@ -39,10 +39,14 @@ while (defined($ThisLine = <STDIN>)) {
    if (
       ($ThisLine =~ /^Initializing */) or
       ($ThisLine =~ /^Installing */) or
+      ($ThisLine =~ /^auth: PAM error: Authentication failure$/) or
+      ($ThisLine =~ /^mailbox: open: No such file or directory$/) or
+      ($ThisLine =~ /^(sktbuff|maildrop): write: Broken pipe$/) or
       ($ThisLine =~ /^open: Permission denied$/) or
       ($ThisLine =~ /^read: Broken pipe$/) or
       ($ThisLine =~ /^read: Connection reset by peer$/) or
-      ($ThisLine =~ /^spgetpwnam: can't find user: */)
+      ($ThisLine =~ /^spgetpwnam: can't find user: */) or
+      ($ThisLine =~ /^sptls: SSL_accept error: (-|)\d+$/)
    ) {
       # Don't care about these...
    } elsif ( ($User, $Host) = ( $ThisLine =~ /^user (.*?) authenticated - (.*)$/ ) ) {
@@ -64,8 +68,12 @@ while (defined($ThisLine = <STDIN>)) {
       $sslMechanism{$Mechanism}++;
    } elsif ( ($Host) = ( $ThisLine =~ /^autologout time elapsed - (.*)$/ ) ) {
       $AutoLogout{$Host}++;
-   } elsif ( ($File) = ( $ThisLine =~ /^can't open or create file: (.*)$/ ) ) {
+   } elsif (
+      (($File) = ( $ThisLine =~ /^can't open or create file: (.*)$/ )) or
+      (($File) = ( $ThisLine =~ /^mailbox: can't open mailbox file: (.*)$/ ))
+   ) {
       $PermissionDenied{$File}++;
+      
    } else {
       # Report any unmatched entries...
       # remove PID from named messages
