@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.3
 diff -u -r1.3 postfix
 --- scripts/services/postfix	18 Nov 2003 14:04:05 -0000	1.3
-+++ scripts/services/postfix	25 Nov 2003 09:13:32 -0000
++++ scripts/services/postfix	25 Nov 2003 10:19:34 -0000
 @@ -51,52 +45,70 @@
  $MsgsSent = 0;
  $BytesTransferred = 0;
@@ -244,7 +244,7 @@ RCS file: /var/cvs/logwatch/scripts/services/samba,v
 retrieving revision 1.11
 diff -u -r1.11 samba
 --- scripts/services/samba	3 Nov 2003 05:07:25 -0000	1.11
-+++ scripts/services/samba	25 Nov 2003 09:13:32 -0000
++++ scripts/services/samba	25 Nov 2003 10:19:34 -0000
 @@ -13,59 +13,90 @@
  
  $Debug = $ENV{'LOGWATCH_DEBUG'};
@@ -473,7 +473,7 @@ RCS file: /var/cvs/logwatch/scripts/services/secure,v
 retrieving revision 1.37
 diff -u -r1.37 secure
 --- scripts/services/secure	18 Nov 2003 14:04:06 -0000	1.37
-+++ scripts/services/secure	25 Nov 2003 09:13:32 -0000
++++ scripts/services/secure	25 Nov 2003 10:19:35 -0000
 @@ -19,14 +19,25 @@
  use Logwatch ':ip';
  
@@ -602,3 +602,287 @@ diff -u -r1.37 secure
  }
  
  if (@RemoveFromGroup) {
+Index: scripts/services/sendmail
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/sendmail,v
+retrieving revision 1.29
+diff -u -r1.29 sendmail
+--- scripts/services/sendmail	7 Nov 2003 14:26:42 -0000	1.29
++++ scripts/services/sendmail	25 Nov 2003 10:19:35 -0000
+@@ -109,69 +109,69 @@
+ my $UnknownUsersThreshold = 0;
+ 
+ while (defined($ThisLine = <STDIN>)) {
+-   ($QueueID) = ($ThisLine =~ m/^([a-zA-Z0-9]+): / );
+-   $ThisLine =~ s/^[a-zA-Z0-9]+: //;
+-   if (  ( $ThisLine =~ m/^alias database [^ ]* (auto)?rebuilt by/ ) or
+-         ( $ThisLine =~ m/[0-9]* aliases, longest [0-9]* bytes, [0-9]* bytes total/ ) or 
+-         ( $ThisLine =~ m/^starting daemon (.*):/ ) or 
+-         ( $ThisLine =~ m/premature EOM/ ) or 
+-         ( $ThisLine =~ m/unexpected close on connection from/ ) or 
+-         ( $ThisLine =~ m/timeout waiting for input from/ ) or 
+-         ( $ThisLine =~ m/lost input channel from/ ) or 
+-         ( $ThisLine =~ m/DSN: Cannot send message for \d+ day/ ) or 
+-         ( $ThisLine =~ m/: Service unavailable$/) or 
+-         ( $ThisLine =~ m/Broken pipe|Connection (reset|timed out)/ ) or
+-         ( $ThisLine =~ m/X-Spam/ ) or
+-         ( $ThisLine =~ m/Milter message: body replaced/ ) or
+-         ( $ThisLine =~ m/Milter: data/ ) or
+-         ( $ThisLine =~ m/Milter change: header/ ) or
+-         ( $ThisLine =~ m/Milter delete: header/ ) or
+-         ( $ThisLine =~ m/Milter add: header: X-Virus-Scanned: by amavis/ ) or
+-         ( $ThisLine =~ m/AUTH=server, relay=/ ) or
+-         ( $ThisLine =~ m/discarded/ ) or
+-         ( $ThisLine =~ m/headers too large/ ) or
+-         ( $ThisLine =~ m/^clone [a-zA-Z0-9]+, owner=/ ) ) {
+-      # We don't care about these
+-   } elsif ( ($FromUser, $FromDomain, $Bytes, $NumRcpts, $RelayHost) = ($ThisLine =~ /^from=[\<]?([^@]+)[@]?([^\> ]+).*size=([0-9]+).*nrcpts=([0-9]+).*relay=(\[[0-9\.]+\]|[^ ]* \[[0-9\.]+\]|[^ ]+).*$/) ) {
+-      if ($NumRcpts > 0) {
+-         $MsgsSent++;
+-         $TotalRcpts += $NumRcpts;
+-         $BytesTransferred += $Bytes;
+-         $MailBomber{$RelayHost} += $NumRcpts;
+-         $MailBomberConn{$RelayHost}++;
+-
+-         if ($Bytes <= 10240) {
+-            $SizeDist[0]{'Num'}++;
+-            $SizeDist[0]{'Bytes'} += $Bytes;
+-         } elsif ($Bytes <= 20480) {
+-            $SizeDist[1]{'Num'}++;
+-            $SizeDist[1]{'Bytes'} += $Bytes;
+-         } elsif ($Bytes <= 51200) {
+-            $SizeDist[2]{'Num'}++;
+-            $SizeDist[2]{'Bytes'} += $Bytes;
+-         } elsif ($Bytes <= 102400) {
+-            $SizeDist[3]{'Num'}++;
+-            $SizeDist[3]{'Bytes'} += $Bytes;
+-         } elsif ($Bytes <= 512000) {
+-            $SizeDist[4]{'Num'}++;
+-            $SizeDist[4]{'Bytes'} += $Bytes;
+-         } elsif ($Bytes <= 1048576) {
+-            $SizeDist[5]{'Num'}++;
+-            $SizeDist[5]{'Bytes'} += $Bytes;
+-         } elsif ($Bytes <= 2097152) {
+-            $SizeDist[6]{'Num'}++;
+-            $SizeDist[6]{'Bytes'} += $Bytes;
+-         } elsif ($Bytes <= 5242880) {
+-            $SizeDist[7]{'Num'}++;
+-            $SizeDist[7]{'Bytes'} += $Bytes;
+-         } elsif ($Bytes <= 10485760) {
+-            $SizeDist[8]{'Num'}++;
+-            $SizeDist[8]{'Bytes'} += $Bytes;
+-         } else {
+-            $SizeDist[9]{'Num'}++;
+-            $SizeDist[9]{'Bytes'} += $Bytes;
+-         }
+-      }
++	($QueueID) = ($ThisLine =~ m/^([a-zA-Z0-9]+): / );
++	$ThisLine =~ s/^[a-zA-Z0-9]+: //;
++	if (  ( $ThisLine =~ m/^alias database [^ ]* (auto)?rebuilt by/ ) or
++		( $ThisLine =~ m/[0-9]* aliases, longest [0-9]* bytes, [0-9]* bytes total/ ) or 
++		( $ThisLine =~ m/^starting daemon (.*):/ ) or 
++		( $ThisLine =~ m/premature EOM/ ) or 
++		( $ThisLine =~ m/unexpected close on connection from/ ) or 
++		( $ThisLine =~ m/timeout waiting for input from/ ) or 
++		( $ThisLine =~ m/lost input channel from/ ) or 
++		( $ThisLine =~ m/DSN: Cannot send message for \d+ day/ ) or 
++		( $ThisLine =~ m/: Service unavailable$/) or 
++		( $ThisLine =~ m/Broken pipe|Connection (reset|timed out)/ ) or
++		( $ThisLine =~ m/X-Spam/ ) or
++		( $ThisLine =~ m/Milter message: body replaced/ ) or
++		( $ThisLine =~ m/Milter: data/ ) or
++		( $ThisLine =~ m/Milter change: header/ ) or
++		( $ThisLine =~ m/Milter delete: header/ ) or
++		( $ThisLine =~ m/Milter add: header: X-Virus-Scanned: by amavis/ ) or
++		( $ThisLine =~ m/AUTH=server, relay=/ ) or
++		( $ThisLine =~ m/discarded/ ) or
++		( $ThisLine =~ m/headers too large/ ) or
++		( $ThisLine =~ m/^clone [a-zA-Z0-9]+, owner=/ ) ) {
++		# We don't care about these
++	} elsif ( ($FromUser, $FromDomain, $Bytes, $NumRcpts, $RelayHost) = ($ThisLine =~ /^from=[\<]?([^@]+)[@]?([^\> ]+).*size=([0-9]+).*nrcpts=([0-9]+).*relay=(\[[0-9\.]+\]|[^ ]* \[[0-9\.]+\]|[^ ]+).*$/) ) {
++		if ($NumRcpts > 0) {
++			$MsgsSent++;
++			$TotalRcpts += $NumRcpts;
++			$BytesTransferred += $Bytes;
++			$MailBomber{$RelayHost} += $NumRcpts;
++			$MailBomberConn{$RelayHost}++;
++			
++			if ($Bytes <= 10240) {
++				$SizeDist[0]{'Num'}++;
++				$SizeDist[0]{'Bytes'} += $Bytes;
++			} elsif ($Bytes <= 20480) {
++				$SizeDist[1]{'Num'}++;
++				$SizeDist[1]{'Bytes'} += $Bytes;
++			} elsif ($Bytes <= 51200) {
++				$SizeDist[2]{'Num'}++;
++				$SizeDist[2]{'Bytes'} += $Bytes;
++			} elsif ($Bytes <= 102400) {
++				$SizeDist[3]{'Num'}++;
++				$SizeDist[3]{'Bytes'} += $Bytes;
++			} elsif ($Bytes <= 512000) {
++				$SizeDist[4]{'Num'}++;
++				$SizeDist[4]{'Bytes'} += $Bytes;
++			} elsif ($Bytes <= 1048576) {
++				$SizeDist[5]{'Num'}++;
++				$SizeDist[5]{'Bytes'} += $Bytes;
++			} elsif ($Bytes <= 2097152) {
++				$SizeDist[6]{'Num'}++;
++				$SizeDist[6]{'Bytes'} += $Bytes;
++			} elsif ($Bytes <= 5242880) {
++				$SizeDist[7]{'Num'}++;
++				$SizeDist[7]{'Bytes'} += $Bytes;
++			} elsif ($Bytes <= 10485760) {
++				$SizeDist[8]{'Num'}++;
++				$SizeDist[8]{'Bytes'} += $Bytes;
++			} else {
++				$SizeDist[9]{'Num'}++;
++				$SizeDist[9]{'Bytes'} += $Bytes;
++			}
++		}
+ 
+       # Add The message to a hash for later per-domain analysis.
+       $Msgs{$QueueID}{"Relay"} = $RelayHost;
+@@ -305,7 +305,7 @@
+    #h2GHtSx30926: SYSERR(root): Too many hops 26 (25 max): from <MAILER-DAEMON@atbusiness.com> via localhost, to <superstore@bpsmailer.com>
+    } elsif ( ($Temp)  = ($ThisLine =~ /^.*?Too many hops (.*)/) ) {
+        $TooManyHops{$Temp}++;
+-   } elsif ( ($Warning)  = ($ThisLine =~ /Authentication-Warning: [^ ]+: ([^ ]+ set sender to  [^ ]+ using -f|.+ didn\'t use HELO protocol|[^ ]+ owned process doing -bs)/) ) {
++   } elsif ( ($Warning)  = ($ThisLine =~ /Authentication-Warning: [^ ]+: ([^ ]+ set sender to ( |)[^ ]+ using -f|.+ didn\'t use HELO protocol|[^ ]+ owned process doing -bs)/) ) {
+       $AuthWarns{$Warning}++;
+    } elsif ( ($Forward,$Error) = ($ThisLine =~ /^forward ([^ ]*): transient error: (.*)$/) ) {
+       $Temp = $Forward . ": " . $Error;
+@@ -319,7 +319,7 @@
+    } elsif ( $ThisLine =~ m/(return to sender|sender notify): Cannot send message for (\d) days/ ) {
+       $NumDays = $2;
+       $DaysReturns++;
+-   } elsif ( ( $NOQUEUE ) = ($ThisLine =~ /\[([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\] (\(may be forged\) |)did not issue MAIL\/EXPN\/VRFY\/ETRN during connection to MTA/) ) {
++   } elsif ( ( $NOQUEUE ) = ($ThisLine =~ /\[([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\] (\(may be forged\) |)did not issue MAIL\/EXPN\/VRFY\/ETRN during connection to (MTA|Daemon0)/) ) {
+       $Noqueuers{$NOQUEUE}++;
+    } elsif ($ThisLine=~ /relay=(\S+)*.*\[(\d+.\d+.\d+.\d+)\], reject=444 4.4.4 \<([^\>]+)\>... Sorry (\S*)/) {
+       chomp($host=$2." ". (defined($1) ? "(".$1.")" : "(unresolved)") );
+@@ -368,13 +368,15 @@
+       $ReturnReceipt++;
+    } elsif ($ThisLine=~ /Remote protocol error/) {
+       $RemoteProtocolError++;
+-   } else {
+-      $ThisLine =~ s/.*\: (DSN\: .*)/$1/;   
+-      $ThisLine =~ s/.*\: (postmaster notify\: .*)/$1/;
+-      chomp($ThisLine);
+-      # Report any unmatched entries...
+-      $OtherList{$ThisLine}++; 
+-   }
++  } elsif ( ($Host,$Attack) = ($ThisLine =~ /POSSIBLE ATTACK from ([^ ]+): ([^ ]+)$/) ) {
++	  $AttackAttempt{$Host}{$Attack}++;
++  } else {
++	  $ThisLine =~ s/.*\: (DSN\: .*)/$1/;
++	  $ThisLine =~ s/.*\: (postmaster notify\: .*)/$1/;
++	  chomp($ThisLine);
++	  # Report any unmatched entries...
++	  $OtherList{$ThisLine}++; 
++  }
+ }
+ 
+ if ($MsgsSent > 0) {
+@@ -420,7 +422,18 @@
+ }
+ 
+ if($ReturnReceipt > 0) {
+-   print "\n\n" . $ReturnReceipt . " Return Receipt's";
++	print "\n\n" . $ReturnReceipt . " Return Receipt's";
++}
++
++if (keys %AttackAttempt) {
++	print "\nWARNING!!!!\n";
++	print "Possible Attack:\n";
++	foreach $Host (sort {$a cmp $b} keys %AttackAttempt) {
++		print "   Attempt from $Host with:\n"
++		foreach $Attack (sort {$a cmp $b} keys %{$AttackAttempt{$Host}}) {
++			print "      $Attack : $AttackAttempt{$Host}{$Attack} Time(s)\n";
++		}
++	}
+ }
+ 
+ if (($Detail >= 10) and (keys %LocalDomains)) {
+@@ -729,3 +742,4 @@
+ 
+ exit(0);
+ 
++# vi: shiftwidth=4 tabstop=4
+Index: scripts/services/sshd
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/sshd,v
+retrieving revision 1.30
+diff -u -r1.30 sshd
+--- scripts/services/sshd	3 Nov 2003 14:30:40 -0000	1.30
++++ scripts/services/sshd	25 Nov 2003 10:19:35 -0000
+@@ -18,30 +18,30 @@
+ 
+ # Avoid "Use of uninitialized value" warning messages.
+ sub ValueOrDefault {
+-   my ($value, $default) = @_;
+-   return ($value ? $value : $default);
++	my ($value, $default) = @_;
++	return ($value ? $value : $default);
+ }
+ 
+ # No sense in running if 'sshd' doesn't even exist on this system...
+ unless (( -f "/usr/sbin/sshd" ) or ( -f "/usr/local/sbin/sshd")) {
+-   exit (0);
++	exit (0);
+ }
+ 
+ my $sftpRequests = 0;
+ 
+ if ( $Debug >= 5 ) {
+-   print STDERR "\n\nDEBUG: Inside SSHD Filter \n\n";
+-   $DebugCounter = 1;
++	print STDERR "\n\nDEBUG: Inside SSHD Filter \n\n";
++	$DebugCounter = 1;
+ }
+ 
+ while (defined($ThisLine = <STDIN>)) {
+-   if ( $Debug >= 5 ) {
+-      print STDERR "DEBUG($DebugCounter): $ThisLine";
+-      $DebugCounter++;
+-   }
+-   chomp($ThisLine);
+-   if ( 
+-        ($ThisLine =~ m/^connect from \d+\.\d+\.\d+\.\d+/) or 
++	if ( $Debug >= 5 ) {
++		print STDERR "DEBUG($DebugCounter): $ThisLine";
++		$DebugCounter++;
++	}
++	chomp($ThisLine);
++	if ( 
++		($ThisLine =~ m/^connect from \d+\.\d+\.\d+\.\d+/) or 
+         ($ThisLine =~ m/Read from socket failed/)
+       ) {
+       # Ignore these
+@@ -50,16 +50,16 @@
+          print STDERR "DEBUG: Found -$2 logged in from $3 using $1\n";
+       }
+       if ($Detail >= 20) {
+-	  $Users{$2}{$3}{$1}++;
+-      } else {
+-	  $Users{$2}{$3}{"(all)"}++;
+-      }
+-   } elsif ( $ThisLine =~ m/^Failed (\S+) for (\S+) from ([\d.]+) port (\d+)/ ) { #openssh
++		  $Users{$2}{$3}{$1}++;
++	  } else {
++		  $Users{$2}{$3}{"(all)"}++;
++	  }
++   } elsif ( $ThisLine =~ m/^Failed (\S+) for (\S+) from ([^ ]+\) port (\d+)/ ) { #openssh
+       if ( $Debug >= 5 ) {
+          print STDERR "DEBUG: Found -Failed login- line\n";
+       }
+       $BadLogins{"$2/$1 from $3"}++;
+-   } elsif ( $ThisLine =~ m/^Failed (\S+) for illegal user (\S+) from ([\d.]+) port (\d+)/ ) { #openssh
++   } elsif ( $ThisLine =~ m/^Failed (\S+) for illegal user (\S+) from ([^ ]+\) port (\d+)/ ) { #openssh
+       $BadLogins{"$2/$1 from $3"}++;
+    } elsif ( $ThisLine =~ m/^Illegal user (\S+) from ([\d.]+)/ ) { #redhat thing
+       $IllegalUsers{"$1/none from $2"}++;
+@@ -242,3 +242,4 @@
+ 
+ exit(0);
+ 
++# vi: shiftwidth=4 tabstop=4
