@@ -1,0 +1,14 @@
+--- ./scripts/logwatch.pl.org	Wed Nov  5 09:51:15 2003
++++ ./scripts/logwatch.pl	Wed Nov  5 09:52:16 2003
+@@ -15,9 +15,9 @@
+ #
+ ########################################################
+ 
+-my $BaseDir = "/etc/log.d";
++my $BaseDir = "/usr/share/logwatch";
+ #my $BaseDir = "/home/kirk/cvs-work/logwatch";
+-my $ConfigDir = "$BaseDir/conf";
++my $ConfigDir = "/etc/log.d";
+ 
+ #Added to create switches for different os options -mgt
+ #For now working on Linux and SunOS

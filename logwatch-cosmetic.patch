@@ -1,0 +1,20 @@
+--- ./scripts/logwatch.pl.org	Mon Nov  3 16:16:13 2003
++++ ./scripts/logwatch.pl	Wed Nov  5 09:49:38 2003
+@@ -19,14 +19,14 @@
+ #my $BaseDir = "/home/kirk/cvs-work/logwatch";
+ my $ConfigDir = "$BaseDir/conf";
+ 
+-my $Version = 'pre5.0';
+-my $VDate = '11/03/03';
+-
+ #Added to create switches for different os options -mgt
+ #For now working on Linux and SunOS
+ my $OSname = `uname -s`;
+ chomp $OSname;
+ 
++my $Version = 'pre5.0';
++my $VDate = '11/03/03';
++
+ #############################################################################
+ 
+ use Getopt::Long;
