@@ -1,0 +1,16 @@
+--- ./scripts/services/modprobe.kernel	Wed Apr  2 22:09:38 2003
++++ ./scripts/services/modprobe	Wed Apr  2 22:21:01 2003
+@@ -16,9 +16,12 @@
+ while (defined($ThisLine = <STDIN>)) {
+    chomp($ThisLine);
+    if ( $ThisLine =~ s/^modprobe: Can\'t locate module ([\w-]+)\s*$/$1/ ) {
+-      $Modules{$ThisLine}++;
+-   }
+-   else {
++	   $Modules{$ThisLine}++;
++   } elsif ( $ThisLine =~ s/^FATAL: Module (.*) not found./$1/) {
++	   $Modules{$ThisLine}++;
++   } else {
+       $OtherList{$ThisLine}++;
+    }
+ }

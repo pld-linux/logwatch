@@ -1,0 +1,53 @@
+--- ./scripts/services/pam_unix.org	Wed Apr  2 21:10:16 2003
++++ ./scripts/services/pam_unix	Wed Apr  2 21:56:36 2003
+@@ -52,6 +52,10 @@
+       } else {
+          $data{$service}{'Unknown Entries'}{$line}++;
+       }
++   } elsif ($service eq 'passwd') {
++	   if ($line =~ s/^password changed for (.+)/$1/) {
++		   ($Detail >= 5) && $data{$service}{'Password changed'}{$line}++;
++	   }
+    } elsif ($service eq 'gdm') {
+       if ($line =~ s/^session opened for user (.+) by \(uid=\d+\)/$1/) {
+          ($Detail >= 5) && $data{$service}{'Sessions Opened'}{$line}++;
+@@ -60,6 +64,12 @@
+       } else {
+          $data{$service}{'Unknown Entries'}{$line}++;
+       }
++   } elsif ($service eq 'kdm') {
++	   if ($line =~ s/^session opened for user (.+) by \(uid=\d+\)/$1/) {
++		   ($Detail >= 5) && $data{$service}{'Sessions Opened'}{$line}++;
++	   } elsif ($line =~ /session closed for user/) {
++		   # ignore this line
++	   }
+    } elsif ($service eq 'imap') {
+ 	   if ($line =~ s/^authentication failure; logname=(.+) uid=(\d+) .*user=(.+)$/$1($2) -> $3/) {
+ 		   $data{$service}{'Authentication Failures'}{$line}++;
+@@ -71,7 +81,7 @@
+ 		   $data{$service}{'Sessions Opened'}{$line}++;
+ 	   } elsif ($line =~ /session closed for user/) {
+ 		   # ignore this line
+-	   } elsif ($line =~ s/^authentication failure; logname=(.+) uid=(\d+) .*user=(.+)$/$1($2) -> $3/) {
++	   } elsif ($line =~ s/^authentication failure; .*user=(.+)$/$1/) {
+ 		   $data{$service}{'Authentication Failures'}{$line}++;
+ 	   } else {
+ 		   $data{$service}{'Unknown Entries'}{$line}++;
+@@ -87,15 +97,11 @@
+    } elsif ($service eq 'pure-ftpd') {
+ 	   if ($line =~ s/^session opened for user (.+)/$1/) {
+ 		   $data{$service}{'Sessions Opened'}{$line}++;
++	   } elsif ($line =~ s/^check pass; (.+)/$1/) {
++		   $data{$service}{'Password Failures'}{$line}++;
+ 	   } else {
+ 		   $data{$service}{'Unknown Entries'}{$line}++;
+ 	   }
+-   } elsif ($service eq 'kdm') {
+-	   if ($line =~ s/^session opened for user (.+) by \(uid=\d+\)/$1/) {
+-		   ($Detail >= 5) && $data{$service}{'Sessions Opened'}{$line}++;
+-	   } elsif ($line =~ /session closed for user/) {
+-		   # ignore this line
+-	   }
+    } else {
+       $data{$service}{'Unknown Entries'}{$line}++;
+    }
