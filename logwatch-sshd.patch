@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sshd,v
 retrieving revision 1.33
 diff -u -r1.33 sshd
 --- scripts/services/sshd	15 Dec 2003 19:01:19 -0000	1.33
-+++ scripts/services/sshd	16 Dec 2003 13:04:35 -0000
++++ scripts/services/sshd	16 Dec 2003 13:12:20 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -69,7 +69,7 @@ diff -u -r1.33 sshd
 +if (keys %BindFailed) {
 +   print "\nFailed to bind:\n";
 +   foreach $ThisOne (sort {$a cmp $b} keys %BindFailed) {
-+      print "   $ThisOne : $BindFailed{$Temp} Time(s)\n";
++      print "   $ThisOne : $BindFailed{$ThisOne} Time(s)\n";
 +   }
 +}
 +
