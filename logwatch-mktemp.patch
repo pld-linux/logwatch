@@ -1,0 +1,58 @@
+--- logwatch-2.6/scripts/logwatch.pl.sopwith	Sun Mar 31 17:27:05 2002
++++ logwatch-2.6/scripts/logwatch.pl	Sun Mar 31 17:28:06 2002
+@@ -415,48 +415,13 @@
+ #############################################################################
+ 
+ my $TempDir;
+-if (-x '/bin/mktemp') {
+-   $TempDir = `/bin/mktemp -d $Config{'tmpdir'}/logwatch.XXXXXXXX 2>/dev/null`;
+-   chomp($TempDir);
+-   unless (($? == 0) and $TempDir) {
+-      die "Failed to create $Config{'tmpdir'}/logwatch.XXXXXXXX with mktemp!!\n";
+-   }
+-   if ($Config{'debug'}>7) {
+-       print "\nMade Temp Dir: " . $TempDir . " with mktemp\n";
+-   }
+-} else {
+-   my $uid = `id -u`;
+-   my $gid = `id -g`;
+-   chomp($uid);
+-   chomp($gid);
+-
+-   # Create the temporary directory...
+-   $TempDir = $Config{'tmpdir'} . "logwatch." . $$;
+-
+-   if ($Config{'debug'}>7) {
+-       print "\nMaking Temp Dir: " . $TempDir . "\n";
+-   }
+-
+-   `rm -rf $TempDir`;
+-   mkdir ($TempDir,0700) or die "Failed to create TempDir: $TempDir (somebody may be attempting a root exploit!)\n";
+-   `chown $uid.$gid $TempDir`;
+-   `chmod 0700 $TempDir`;
+-   unless (-d $TempDir and (not -l $TempDir)) {
+-      die "$TempDir not a directory (somebody is attempting a root exploit!)\n";
+-   }
+-   unless ((stat($TempDir))[4] == $uid) {
+-      die "$TempDir not owned by UID $uid (somebody is attempting a root exploit!)\n";
+-   }
+-   unless ((stat($TempDir))[5] == $gid) {
+-      die "$TempDir not owned by GID $gid (somebody is attempting a root exploit!)\n";
+-   }
+-   unless (((stat($TempDir))[2] & 07777) == 0700) {
+-      die "$TempDir permissions not 0700 (somebody is attempting a root exploit!)\n";
+-   }
+-   `rm -rf $TempDir/*`;
+-   unless (`ls $TempDir | wc -l` == 0) {
+-      die "$TempDir not empty (somebody is attempting a root exploit!)\n";
+-   }  
++$TempDir = `/bin/mktemp -d $Config{'tmpdir'}/logwatch.XXXXXXXX 2>/dev/null`;
++chomp($TempDir);
++unless (($? == 0) and $TempDir) {
++   die "Failed to create $Config{'tmpdir'}/logwatch.XXXXXXXX with mktemp!!\n";
++}
++if ($Config{'debug'}>7) {
++    print "\nMade Temp Dir: " . $TempDir . " with mktemp\n";
+ }
+ unless ($TempDir =~ m=/$=) {
+     $TempDir .= "/";
