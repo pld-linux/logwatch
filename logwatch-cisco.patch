@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/cisco,v
 retrieving revision 1.2
 diff -u -r1.2 cisco
 --- scripts/services/cisco	21 Jun 2004 15:07:21 -0000	1.2
-+++ scripts/services/cisco	28 Sep 2004 14:11:25 -0000
++++ scripts/services/cisco	1 Oct 2004 17:57:12 -0000
 @@ -1,6 +1,6 @@
  #!/usr/bin/perl -w
  ##########################################################################
@@ -13,16 +13,38 @@ diff -u -r1.2 cisco
  ##########################################################################
  
  ########################################################
-@@ -13,7 +13,7 @@
- #    etc, to laurent.dufour@havas.com
- ########################################################
+@@ -15,11 +15,29 @@
  
--use Logwatch ':all';
-+#use Logwatch ':all';
+ use Logwatch ':all';
  
- $Detail = $ENV{'LOGWATCH_DETAIL_LEVEL'} || 0;
+-$Detail = $ENV{'LOGWATCH_DETAIL_LEVEL'} || 0;
++$Debug = ValueOrDefault($ENV{'LOGWATCH_DEBUG'}, 0);
++$Detail = ValueOrDefault($ENV{'LOGWATCH_DETAIL_LEVEL'}, 0);
++
++# Avoid "Use of uninitialized value" warning messages.
++sub ValueOrDefault {
++    my ($value, $default) = @_;
++    return ($value ? $value : $default);
++}
++
++if ( $Debug >= 5 ) {
++    print STDERR "\n\nDEBUG: Inside CISCO Filter \n\n";
++    $DebugCounter = 1;
++}
++
++
  
-@@ -27,6 +27,7 @@
+ my ($month,$day,$time,$host,$process,$conn,$msg);
+ 
+ while (defined($ThisLine = <STDIN>)) {
++    if ( $Debug >= 30 ) {
++        print STDERR "DEBUG($DebugCounter): $ThisLine";
++        $DebugCounter++;
++    }
+ 
+ ($month,$day,$time,$host,$process,$conn,$msg)=split(/ +/,$ThisLine,7);
+ 
+@@ -27,6 +45,7 @@
           ($ThisLine =~ /Copyright/ ) or 
           ($ThisLine =~ /Cisco Internetwork Operating System Software/ ) or 
           ($ThisLine =~ /IOS \(tm\)/ ) or 
@@ -30,7 +52,7 @@ diff -u -r1.2 cisco
           ($ThisLine =~ /accept udp/ ) or
           ($ThisLine =~ /accept tcp/ ) or
           ($ThisLine =~ /accept icmp/ ) or
-@@ -59,6 +60,9 @@
+@@ -59,6 +78,9 @@
     elsif ( ($interface) = ($ThisLine =~ /DUPLEXMISMATCH:Full\/half duplex mismatch detected on port (.*)/) ) {
        $DuplexMismatched{$host}{$interface}++;
     }
@@ -40,7 +62,17 @@ diff -u -r1.2 cisco
     elsif ( ($interface,$state,$destination_port) = ($ThisLine =~ /PORTFROMSTP:Port (.+) (.+) bridge port (.*)/) ) {
        $PortStateBridge{$host}{$interface," ",$state," ",$destination_port}++;
     }
-@@ -125,6 +129,87 @@
+@@ -101,6 +123,9 @@
+    elsif ( ($interface) = ($ThisLine =~ /P2_WARN: (.*)/) ) {
+       $InvalidMulticast{$host}{$interface}++;
+    }
++   elsif ( ($device,$vty,$interface) = ($ThisLine =~ /Configured from (\S+) by (\S+) \((.+)\)/) ) {
++      $Configured{$host}{"Configured from $device by $vty ",LookupIP($interface)}++;
++   }
+    elsif ( ($interface) = ($ThisLine =~ /CONFIG.+: (.*)/) ) {
+       $Configured{$host}{$interface}++;
+    }
+@@ -125,6 +150,90 @@
     elsif ( ($interface) = ($ThisLine =~ /DHCPD-4-DECLINE_CONFLICT: (.*)/) ) {
        $DHCPConflict{$host}{$interface}++;
     }
@@ -125,10 +157,13 @@ diff -u -r1.2 cisco
 +   elsif ( ($interface) = ($ThisLine =~ /SYS-5-SUP_IMGSYNCFINISH: (.*)/) ) {
 +      $SYSImgSyncFinished{$host}{$interface}++;
 +   }
++   elsif ( ($interface) = ($ThisLine =~ /SNMP-5-COLDSTART: (.*)/) ) {
++      $SNMPColdStart{$host}{$interface}++;
++   }
     elsif ( ($interface) = ($ThisLine =~ /COUNTERS: (.*)/) ) {
        $CountersMsg{$host}{$interface}++;
     }
-@@ -392,6 +477,279 @@
+@@ -392,6 +501,289 @@
  }
  
  
@@ -401,6 +436,16 @@ diff -u -r1.2 cisco
 +      print "   " . $ThisOne . ":\n";
 +      foreach $ThatOne (keys %{$SYSImgSyncFinished{$ThisOne}}) {
 +         print "\t " .$ThatOne . "\t: " . $SYSImgSyncFinished{$ThisOne}{$ThatOne} . " Time(s)\n";
++      }
++   }
++}
++
++if (keys %SNMPColdStart) {
++   print "\nSNMP Cold (Re)start on device :\n";
++   foreach $ThisOne (keys %SNMPColdStart) {
++      print "   " . $ThisOne . ":\n";
++      foreach $ThatOne (keys %{$SNMPColdStart{$ThisOne}}) {
++         print "\t " .$ThatOne . "\t: " . $SNMPColdStart{$ThisOne}{$ThatOne} . " Time(s)\n";
 +      }
 +   }
 +}
