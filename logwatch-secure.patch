@@ -1,0 +1,54 @@
+Index: scripts/services/secure
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/secure,v
+retrieving revision 1.40
+diff -u -r1.40 secure
+--- scripts/services/secure	15 Dec 2003 21:49:19 -0000	1.40
++++ scripts/services/secure	16 Dec 2003 13:27:00 -0000
+@@ -2,6 +2,8 @@
+ ##########################################################################
+ # $Id$
+ ##########################################################################
++# $Log$
++##########################################################################
+ 
+ ########################################################
+ # This was written and is maintained by:
+@@ -15,7 +17,7 @@
+ $DoLookup = $ENV{'secure_ip_lookup'};
+ $Ignore = $ENV{'ignore_services'};
+ $Summarize = $ENV{'summarize_connections'};
+-
++$ConsoleLock = 0;
+ use Logwatch ':ip';
+ 
+ while (defined($ThisLine = <STDIN>)) {
+@@ -109,6 +111,10 @@
+    } elsif ( ($service, $from) = ($ThisLine =~ /^xinetd\[\d+\]: FAIL: (.+) (?:address|libwrap) from=([\d.]+)/)) {
+       if ($Ignore =~ /\b\Q$service\E\b/i) { next; }    
+       $Refused->{$service}->{$from}++;
++   } elsif ( ($User) = ($ThisLine =~ /^chage\[\d+\]: changed password expiry for ([^ ]+)/)) {
++      $PasswordExpiry{$User}++;
++   } elsif ( (undef) = ($ThisLine =~ /^pam_console\[\d+\]: console file lock already in place ([^ ]+)/)) {
++      $ConsoleLock++;
+    } else {
+       # Unmatched entries...
+       push @OtherList, "$ThisLine\n";
+@@ -216,6 +222,17 @@
+ 	foreach $User (sort {$a cmp $b} keys %UserLogin) {
+ 		print "   $User : $UserLogin{$User} Time(s)\n";
+ 	}
++}
++
++if ($ConsoleLock > 0) {
++   print "\nConsole file lock already in place: $ConsoleLock Time(s).\n";
++}
++
++if (keys %PasswordExpiry) {
++   print "\nChanged password expiry for users:\n";
++   foreach $User (sort {$a cmp $b} keys %PasswordExpiry) {
++      print "   $User : $PasswordExpiry{$User} Time(s)\n";
++   }
+ }
+ 
+ if ($#SudoList >= 0) {
