@@ -1,0 +1,37 @@
+Index: scripts/services/oidentd
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/oidentd,v
+retrieving revision 1.1
+diff -u -r1.1 oidentd
+--- scripts/services/oidentd	3 Feb 2004 02:45:26 -0000	1.1
++++ scripts/services/oidentd	11 Feb 2004 22:51:11 -0000
+@@ -30,6 +30,7 @@
+ $LookupCount = 0;
+ $LookupErrorCount = 0;
+ $Connections = 0;
++$MasqLookupCount = 0;
+ 
+ while (defined($ThisLine = <STDIN>)) {
+    chomp($ThisLine);
+@@ -42,6 +43,11 @@
+       $Temp = "$User announced as $Identity";
+       $Lookups{$Port}{$Temp}{$Host}++;
+       $LookupCount++;
++   } elsif ( ($Host,$Port,$User) = ($ThisLine =~ /^\[([^ ]*)\] \(Masqueraded\) Successful lookup: \d+ , (\d+) : ([^ ]*)$/)) {
++      $Temp = "Masqueraded as $User";
++      $Lookups{$Port}{$Temp}{$Host}++;
++      $LookupCount++;
++      $MasqLookupCount++;
+    } elsif ( 
+       (($Host) = ($ThisLine =~ /^Connection from ([^ ]* \([^ ]*\)):\d+$/)) or
+       (($Host) = ($ThisLine =~ /^Connection from ([^ ]*):\d+$/))
+@@ -80,6 +86,9 @@
+ 
+ if (keys %Lookups) {
+    print "\nSuccessful ident lookups $LookupCount Time(s)\n";
++   if ($MasqLookupCount > 0) {
++      print "Masqueraded connections: $MasqLookupCount Time(s)\n";
++   }
+    foreach $Port (sort {$a cmp $b} keys %Lookups) {
+       print "    Service on port $Port:\n";
+       foreach $User (sort {$a cmp $b} keys %{$Lookups{$Port}}) {
