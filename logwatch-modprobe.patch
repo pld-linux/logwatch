@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/modprobe,v
 retrieving revision 1.9
 diff -u -r1.9 modprobe
 --- scripts/services/modprobe	15 Dec 2003 18:09:23 -0000	1.9
-+++ scripts/services/modprobe	23 Dec 2003 22:18:52 -0000
++++ scripts/services/modprobe	17 Jan 2004 22:50:21 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -14,7 +14,7 @@ diff -u -r1.9 modprobe
  
  ########################################################
  # This was written and is maintained by:
-@@ -19,9 +21,9 @@
+@@ -19,10 +21,12 @@
        $Modules{$ThisLine}++;
     } elsif ( $ThisLine =~ s/^FATAL: Module (.*) not found./$1/) {
        $Modules{$ThisLine}++;
@@ -22,7 +22,24 @@ diff -u -r1.9 modprobe
 +   } elsif ( (undef,$Module,$Reason) = ( $ThisLine =~ /(WARNING|FATAL): Error inserting ([^ ]* \([^ ]*\)): (.*)$/ ) ) {
        $ErrorInsert{$Module}{$Reason}++;
 -   } elsif ( ($Module) = ( $ThisLine =~ /WARNING: Error running install command for scsi_mod$/ ) ) {
-+   } elsif ( ($Module) = ( $ThisLine =~ /WARNING: Error running install command for (.*)$/ ) ) {
++   } elsif ( (undef,$Module) = ( $ThisLine =~ /(WARNING|FATAL): Error running install command for (.*)$/ ) ) {
        $ErrorInstall{$Module}++;
++   } elsif ( (undef,$Module) = ( $ThisLine =~ /(WARNING|FATAL): Module ([^ ]*) already in kernel./ ) ) {
++      $AlreadyLoaded{$Module}++;
     } else {
        $OtherList{$ThisLine}++;
+    }
+@@ -49,6 +53,13 @@
+    print "\nErrors running install command:\n";
+    foreach $Module (sort {$a cmp $b} keys %ErrorInstall) {
+       print "   $Module : $ErrorInstall{$Module} Time(s)\n";
++   }
++}
++
++if (keys %AlreadyLoaded) {
++   print "\nModules already in kernel:\n";
++   foreach $Module (sort {$a cmp $b} keys %AlreadyLoaded) {
++      print "   $Module : $AlreadyLoaded{$Module} Time(s)\n";
+    }
+ }
+ 
