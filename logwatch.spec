@@ -1,7 +1,7 @@
 Summary:    	Analyzes system logs 
 Summary(pl): 	Logwatch - analizator logów systemowych
 Name:        	logwatch
-Version:     	2.1.1
+Version:     	2.5
 Release:     	0.1
 License:   	GPL
 Group:       	Utilities/System
