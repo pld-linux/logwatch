@@ -51,8 +51,8 @@ cat sendmail.conf.patch030319 | patch -p3
 cat sendmail.patch030325 | patch -p3
 
 %build
-mv amavis.conf conf/services/
-mv amavis scripts/services/
+mv amavis.conf conf/services
+mv amavis scripts/services
 for i in scripts/{shared/{onlycontains,remove},services/zz-fortune}; do
 	mv -f $i $i.
 	sed -e s/bash/sh/ $i. > $i
@@ -65,11 +65,11 @@ install -d $RPM_BUILD_ROOT%{_sysconfdir}/log.d/ \
 	$RPM_BUILD_ROOT{%{_sbindir},%{_mandir}/man8,%{_datadir}/logwatch} \
 	$RPM_BUILD_ROOT/etc/cron.daily
 
-install conf/logwatch.conf $RPM_BUILD_ROOT%{_sysconfdir}/log.d/
+install conf/logwatch.conf $RPM_BUILD_ROOT%{_sysconfdir}/log.d
 
-cp -a conf/services $RPM_BUILD_ROOT%{_sysconfdir}/log.d/
-cp -a conf/logfiles $RPM_BUILD_ROOT%{_sysconfdir}/log.d/
-cp -a scripts $RPM_BUILD_ROOT/%{_datadir}/logwatch
+cp -a conf/services $RPM_BUILD_ROOT%{_sysconfdir}/log.d
+cp -a conf/logfiles $RPM_BUILD_ROOT%{_sysconfdir}/log.d
+cp -a scripts $RPM_BUILD_ROOT%{_datadir}/logwatch
 
 mv $RPM_BUILD_ROOT%{_datadir}/logwatch/scripts/logwatch.pl $RPM_BUILD_ROOT%{_sbindir}/logwatch
 
@@ -79,6 +79,9 @@ ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT%{_sysconfdir}/log.d/logwatch
 ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT/etc/cron.daily/00-logwatch
 
 install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
+
+%clean
+rm -rf $RPM_BUILD_ROOT
 
 %pre
 # needed for smooth upgrade from < 4.3.2 package
@@ -91,9 +94,6 @@ fi
 %post
 echo "You should take a look at /etc/log.d/logwatch.conf..."
 echo "Especially the Detail entry..."
-
-%clean
-rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(644,root,root,755)
@@ -120,8 +120,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(700,root,root) %{_datadir}/logwatch/scripts/logwatch.pl
 
 %attr(600,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/log.d/logwatch.conf
-%attr(600,root,root) %config %verify(not size mtime md5) %{_sysconfdir}/log.d/services/*.conf
-%attr(600,root,root) %config %verify(not size mtime md5) %{_sysconfdir}/log.d/logfiles/*.conf
+%attr(600,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/log.d/services/*.conf
+%attr(600,root,root) %config(noreplace) %verify(not size mtime md5) %{_sysconfdir}/log.d/logfiles/*.conf
 
 %attr(700,root,root) %{_sbindir}/logwatch
 %attr(700,root,root) /etc/cron.daily/00-logwatch
