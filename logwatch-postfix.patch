@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.7
 diff -u -r1.7 postfix
 --- scripts/services/postfix	15 Dec 2003 18:35:03 -0000	1.7
-+++ scripts/services/postfix	18 Dec 2003 07:26:55 -0000
++++ scripts/services/postfix	31 Dec 2003 16:07:35 -0000
 @@ -61,12 +61,18 @@
  #
  ########################################################
@@ -24,17 +24,18 @@ diff -u -r1.7 postfix
  
  while (defined($ThisLine = <STDIN>)) {
     if ( ( $ThisLine =~ m/^connect/ ) or 
-@@ -83,7 +89,8 @@
+@@ -83,7 +89,9 @@
          ( $ThisLine =~ m/^daemon started$/ ) or
          ( $ThisLine =~ m/^terminating on signal 15$/ ) or
          ( $ThisLine =~ m/^warning: Mail system is down -- accessing queue directly$/ ) or
 -        ( $ThisLine =~ m/^Deleted: \d message$/ )
 +        ( $ThisLine =~ m/^Deleted: \d message$/ ) or
-+        ( $ThisLine =~ m/^warning: [a-zA-Z0-9]+: skipping further client input$/ )
++        ( $ThisLine =~ m/^warning: [a-zA-Z0-9]+: skipping further client input$/ ) or
++        ( $ThisLine =~ m/^warning: premature end-of-input from cleanup socket while reading input attribute name$/ )
        ) {
        # We don't care about these
     } elsif ( ($Bytes) = ($ThisLine =~ /^[a-zA-Z0-9]+: from=.*size=([0-9]+).*$/) ) {
-@@ -124,7 +131,7 @@
+@@ -124,7 +132,7 @@
        $ConnectionLost{$Command}++;
     } elsif ( ($Rejected,undef,undef) = ($ThisLine =~ /^^[a-zA-Z0-9]+: reject: header (.*); from=<([^ ]*)> to=<([^ ]*)>: Message content rejected$/)) {
        $HeaderReject{$Rejected}++;
@@ -43,23 +44,22 @@ diff -u -r1.7 postfix
        $RejectDomain{$Host}++;
     } elsif ( ($Host,$Site,$Reason) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 554 Service unavailable; \[[^ ]*\] blocked using ([^ ]*), reason: (.*);/)) {
        $Temp = "$Host : $Reason";
-@@ -137,11 +144,11 @@
+@@ -137,11 +145,11 @@
        $PixWorkaround{$Host}++;
     } elsif ( ($Message) = ($ThisLine =~ /^warning: valid_hostname: (.*)$/)) {
        $ValidHostname{$Message}++;
 -   } elsif ( ($Host,$MyName) = ($ThisLine =~ /^warning: ([^ ]*\[[^ ]*\]) greeted me with my own hostname ([^ ]*)$/)) {
 -      $Temp = "$Host : greeted me with my own hostname \($MyName\)";
-+   } elsif ( ($Host,$MyName) = ($ThisLine =~ /^warning: host ([^ ]*\[[^ ]*\]) greeted me with my own hostname ([^ ]*).$/)) {
++   } elsif ( ($Host,$MyName) = ($ThisLine =~ /^warning: host ([^ ]*\[[^ ]*\]) greeted me with my own hostname ([^ ]*)$/)) {
 +      $Temp = "$Host : greeted me with my own hostname $MyName";
        $HeloError{$Temp}++;
--   } elsif ( ($Host,$MyName) = ($ThisLine =~ /^warning: host ([^ ]*\[[^ ]*\]) replied to HELO\/EHLO with my own hostname ([^ ]*)$/)) {
+    } elsif ( ($Host,$MyName) = ($ThisLine =~ /^warning: host ([^ ]*\[[^ ]*\]) replied to HELO\/EHLO with my own hostname ([^ ]*)$/)) {
 -      $Temp = "$Host : replied to HELO\/EHLO with my own hostname\($MyName\)";
-+   } elsif ( ($Host,$MyName) = ($ThisLine =~ /^warning: host ([^ ]*\[[^ ]*\]) replied to HELO\/EHLO with my own hostname ([^ ]*).$/)) {
 +      $Temp = "$Host : replied to HELO\/EHLO with my own hostname $MyName";
        $HeloError{$Temp}++;
     } elsif ( ($Host,$Reason) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 504 <[^ ]*>: Helo command rejected: (.*);/)) {
        $Temp = "$Host : Helo command rejected \($Reason\)";
-@@ -155,17 +162,25 @@
+@@ -155,17 +163,27 @@
        $MailerLoop{$Error}++;
     } elsif ( ($Host) = ($ThisLine =~ /^warning: ([^ ]*\[[^ ]*\]): SASL LOGIN authentication failed/)) {
        $SaslAuthenticationFail{$Host}++;
@@ -75,14 +75,18 @@ diff -u -r1.7 postfix
 +      $TableChanged++;
 +   } elsif ($ThisLine =~ m/^warning: [a-zA-Z0-9]+: queue file size limit exceeded$/) {
 +      $QueueSizeExceeded++;
++   } elsif ( ($Command,$Host) = ($ThisLine =~ /^too many errors after ([^ ]*) from ([^ ]*\[[^ ]*\])$/)) {
++      $TooManyErrors{$Command}{$Host}++;
++   } elsif ( (undef,undef,$To) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 552 Message size exceeds fixed limit; from=<([^ ]*)> to=<([^ ]*)>$/)) {
++      $SizeLimit{"$From -> $To"}++;
     } else {
        push @OtherList,$ThisLine;
        # TODO:
-       #too many errors after RCPT from ta130.internetdsl.tpnet.pl[80.55.104.130]
+-      #too many errors after RCPT from ta130.internetdsl.tpnet.pl[80.55.104.130]
 -      #warning: malformed domain name in resource data of MX record for sfol.com:
 -      #warning: malformed domain name in resource data of MX record for kiri.com: \254\184\194\008
        #warning: open active EA67A1B840: No such file or directory
-       #warning: premature end-of-input from cleanup socket while reading input attribute name
+-      #warning: premature end-of-input from cleanup socket while reading input attribute name
 -      #warning: smtp_connect_addr: socket: Address family not supported by protocol
 -      #warning: smtp_addr_one: unknown address family 1 for localhost
 -      #warning: unknown[203.197.217.137] sent message header instead of SMTP command: From:"Bailey" <sanchez_24@canada.com>
@@ -90,7 +94,7 @@ diff -u -r1.7 postfix
     }
  }
  
-@@ -190,75 +205,87 @@
+@@ -190,75 +208,94 @@
     print "\n\n$RemovedFromQueue messages removed from queue";
  }
  
@@ -143,6 +147,13 @@ diff -u -r1.7 postfix
     foreach $ThisOne (sort {$a cmp $b} keys %RelayDenied) {
 -      print "    " . $ThisOne . ": " . $RelayDenied{$ThisOne} . " Times(s)\n";
 +      print "   $ThisOne : $RelayDenied{$ThisOne} Time(s)\n";
++   }
++}
++
++if (keys %SizeLimit) {
++   print "\n\nMessage size exceeds fixed limit:\n";
++   foreach $Message (sort {$a cmp $b} keys %SizeLimit) {
++      print "   $Message: $SizeLimit{$Message} Time(s)\n";
     }
  }
  
@@ -190,7 +201,7 @@ diff -u -r1.7 postfix
        }
     }
  }
-@@ -266,29 +293,47 @@
+@@ -266,29 +303,57 @@
  if (keys %AuthWarns) {
     print "\n\nAuthentication warnings:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %AuthWarns) {
@@ -207,12 +218,22 @@ diff -u -r1.7 postfix
 +   }
 +}
 +
-+if (keys %SmtpConversationError) {
++if (($Detail >= 5) and (keys %SmtpConversationError)) {
 +   print "\n\nSMTP commands dialog errors:\n";
 +   foreach $Error (sort {$a cmp $b} keys %SmtpConversationError) {
 +      print "   $Error:\n";
 +      foreach $Host (sort {$a cmp $b} keys %{$SmtpConversationError{$Error}} ) {
 +         print "      $Host : $SmtpConversationError{$Error}{$Host} Time(s)\n";
++      }
++   }
++}
++
++if (keys %TooManyErrors) {
++   print "\n\nToo many errors in SMTP commands dialog:"
++   foreach $Command(sort {$a cmp $b} keys %TooManyErrors) {
++      print "   After command $Command:\n";
++      foreach $Host (sort {$a cmp $b} keys %{$TooManyErrors{$Command}} ) {
++         print "      $Host : $TooManyErrors{$Command}{$Host} Time(s)\n";
 +      }
     }
  }
@@ -225,7 +246,7 @@ diff -u -r1.7 postfix
 +   }
 +}
 +
-+if (keys %MxError) {
++if (($Detail >= 5) and (keys %MxError)) {
 +   print "\n\nMalformed domain name in resource data of MX record:\n";
 +   foreach $Domain (sort {$a cmp $b} keys %MxError) {
 +      print "   $Domain : $MxError{$Domain} Time(s)\n";
@@ -243,7 +264,7 @@ diff -u -r1.7 postfix
        }
     }
  }
-@@ -296,28 +341,28 @@
+@@ -296,28 +361,28 @@
  if (keys %HostnameVerification) {
     print "\n\nHostname verification errors:\n";
     foreach $Error (sort {$a cmp $b} keys %HostnameVerification) {
