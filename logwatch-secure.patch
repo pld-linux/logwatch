@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/secure,v
 retrieving revision 1.40
 diff -u -r1.40 secure
 --- scripts/services/secure	15 Dec 2003 21:49:19 -0000	1.40
-+++ scripts/services/secure	26 Dec 2003 00:00:36 -0000
++++ scripts/services/secure	7 Jan 2004 17:11:40 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -14,7 +14,7 @@ diff -u -r1.40 secure
  
  ########################################################
  # This was written and is maintained by:
-@@ -15,7 +17,7 @@
+@@ -15,28 +17,28 @@
  $DoLookup = $ENV{'secure_ip_lookup'};
  $Ignore = $ENV{'ignore_services'};
  $Summarize = $ENV{'summarize_connections'};
@@ -23,6 +23,54 @@ diff -u -r1.40 secure
  use Logwatch ':ip';
  
  while (defined($ThisLine = <STDIN>)) {
+-	chomp($ThisLine);
+-	$ThisLine =~ s/^... .. ..:..:.. [^ ]+ //;
+-	my $temp = $ThisLine;
+-	$temp =~ s/^([^[]+).*/$1/;
+-	if ($Ignore =~ /\b\Q$temp\E\b/i) { next; }
+-	if (
+-		( $ThisLine =~ m/^[^ ]+\[\d+\]: connect from localhost$/ ) or
+-		( $ThisLine =~ /^\/usr\/bin\/sudo:/) or
+-		( $ThisLine =~ /^sudo:/) or
+-		( $ThisLine =~ /^passwd\[\d+\]:/) or
+-		( $ThisLine =~ /warning: can.t get client address: Connection refused/) or
+-		( $ThisLine =~ /^xinetd\[\d+\]: USERID: ([^ ]+) (.+)$/ ) or
+-		( $ThisLine =~ /^(xinetd|xinetd-ipv6)\[\d+\]: EXIT: ([^ ]+) pid=\d+/)
+-	) {
+-		# Ignore these entries
+-	} elsif ( ($Host,$User) = ($ThisLine =~ /^login: FAILED LOGIN \d+ FROM ([^ ]+) FOR ([^,]+),/ ) ) {
+-		$FailedLogins->{$User}->{$Host}++;
+-	} elsif ( ($Service,$IP) = ($ThisLine =~ /^([^ ]+)\[\d+\]: connect(ion)? from "?(\d+\.\d+\.\d+\.\d+).*/) ) {
++   chomp($ThisLine);
++   $ThisLine =~ s/^... .. ..:..:.. [^ ]+ //;
++   my $temp = $ThisLine;
++   $temp =~ s/^([^[]+).*/$1/;
++   if ($Ignore =~ /\b\Q$temp\E\b/i) { next; }
++   if (
++      ( $ThisLine =~ m/^[^ ]+\[\d+\]: connect from localhost$/ ) or
++      ( $ThisLine =~ /^\/usr\/bin\/sudo:/) or
++      ( $ThisLine =~ /^sudo:/) or
++      ( $ThisLine =~ /^passwd\[\d+\]:/) or
++      ( $ThisLine =~ /warning: can.t get client address: Connection refused/) or
++      ( $ThisLine =~ /^xinetd\[\d+\]: USERID: ([^ ]+) (.+)$/ ) or
++      ( $ThisLine =~ /^(xinetd|xinetd-ipv6)\[\d+\]: EXIT: ([^ ]+) pid=\d+/)
++   ) {
++      # Ignore these entries
++   } elsif ( ($Host,$User) = ($ThisLine =~ /^login: FAILED LOGIN \d+ FROM ([^ ]+) FOR ([^,]+),/ ) ) {
++      $FailedLogins->{$User}->{$Host}++;
++   } elsif ( ($Service,$IP) = ($ThisLine =~ /^([^ ]+)\[\d+\]: connect(ion)? from "?(\d+\.\d+\.\d+\.\d+).*/) ) {
+       $Name = LookupIP($IP);
+       if ($Summarize =~ /\Q$Service\E/) { 
+          $Connections->{$Service}++;
+@@ -63,7 +65,7 @@
+          $Connections->{$Service}->{$Name}++;
+       }
+    } elsif ( ($Display, $User) = ($ThisLine =~ /^xscreensaver\[\d+\]: FAILED LOGIN \d ON DISPLAY \"([^ ]+)\", FOR \"([^ ]+)\"$/) ) {
+-      $FailedSaver->{$User}->{$Display}++;
++      $FailedSave{$User}{$Display}++;
+    } elsif ( $ThisLine =~ s/^([^ ]+)\[\d+\]: warning: can\'t get client address: No route to host$/$1/ ) {
+       $NoIP->{$ThisLine}++;
+    } elsif ( $ThisLine =~ s/^([^ ]+)\[\d+\]: warning: can\'t get client address: Network is unreachable$/$1/ ) {
 @@ -80,7 +82,7 @@
        $Error{$Service}{$Err}++;
     } elsif ( $ThisLine =~ /^login: ROOT LOGIN ON tty[0-9]+/) {
@@ -32,7 +80,7 @@ diff -u -r1.40 secure
        $UserLogin{$User}++;
     } elsif ( $ThisLine =~ s/^userdel\[\d+\]: delete user `(.+)'/$1/ ) {
        push @DeletedUsers, "   $ThisLine\n";
-@@ -109,6 +111,10 @@
+@@ -109,14 +111,20 @@
     } elsif ( ($service, $from) = ($ThisLine =~ /^xinetd\[\d+\]: FAIL: (.+) (?:address|libwrap) from=([\d.]+)/)) {
        if ($Ignore =~ /\b\Q$service\E\b/i) { next; }    
        $Refused->{$service}->{$from}++;
@@ -43,27 +91,99 @@ diff -u -r1.40 secure
     } else {
        # Unmatched entries...
        push @OtherList, "$ThisLine\n";
-@@ -200,9 +206,9 @@
- if (keys %Error) {
- 	print "\nErrors:\n";
- 	foreach $Service (sort {$a cmp $b} keys %Error) {
--		print "   Service " . $Service . ":\n";
-+		print "   Service $Service:\n";
- 		foreach $Err (sort {$a cmp $b} keys %{$Error{$Service}}) {
--			print "      " . $Err . ": " . $Error{$Service}{$Err} . " Time(s)\n";
-+			print "      $Err: $Error{$Service}{$Err} Time(s)\n";
- 		}
- 	}
+    }
  }
-@@ -212,10 +218,21 @@
+ 
++#######################################
++
+ if (@NewUsers) {
+-	print "\nNew Users:\n@NewUsers\n";
++   print "\nNew Users:\n@NewUsers\n";
+ }
+ 
+ if (@DeletedUsers) {
+@@ -132,13 +140,13 @@
+ }
+ 
+ if (keys %AddToGroup) {
+-	print "\nAdded User to group:\n";
+-	foreach $Group (sort {$a cmp $b} keys %AddToGroup) {
+-		print "   Group $Group:\n";
+-		foreach $User (sort {$a cmp $b} keys %{$AddToGroup{$User}}) {
+-			print "      $User\n";
+-		}
+-	}
++   print "\nAdded User to group:\n";
++   foreach $Group (sort {$a cmp $b} keys %AddToGroup) {
++      print "   Group $Group:\n";
++      foreach $User (sort {$a cmp $b} keys %{$AddToGroup{$User}}) {
++         print "      $User\n";
++      }
++   }
+ }
+ 
+ if (@RemoveFromGroup) {
+@@ -180,52 +188,62 @@
+ }
+ 
+ if (keys %{$FailedSaver}) {
+-	print "\nFailed screensaver disable:\n";
+-	foreach $ThisOne (sort {$a cmp $b} keys %{$FailedSaver}) {
+-		print "   User " . $ThisOne . " on displays:\n";
+-		foreach $OtherOne (sort {$a cmp $b} keys %{$FailedSaver>{$ThisOne}}) {
+-			# Why it does not work?
+-			print "      " . $FailedLogins->{$ThisOne}->{$OtherOne} . " Time(s)\n";
+-		}
+-	}
++   print "\nFailed screensaver disable:\n";
++   foreach $User (sort {$a cmp $b} keys %{$FailedSaver}) {
++      print "   User $User on displays:\n";
++      foreach $Display (sort {$a cmp $b} keys %{$FailedSaver{$User}}) {
++         print "      $Display : $FailedSaver{$User}{$Display} Time(s)\n";
++      }
++   }
+ }
+ 
+ if (keys %{$NoIP}) {
+    print "\nCouldn't get client IPs for connections to:\n";
+-   foreach $ThisOne (keys %{$NoIP}) {
+-      print "   " . $ThisOne . ": " . $NoIP->{$ThisOne} . " Time(s)\n";
++   foreach $ThisOne (sort {$a cmp $b} keys %{$NoIP}) {
++      print "   $ThisOne: $NoIP{$ThisOne} Time(s)\n";
+    }
+ }
+ 
+ if (keys %Error) {
+-	print "\nErrors:\n";
+-	foreach $Service (sort {$a cmp $b} keys %Error) {
+-		print "   Service " . $Service . ":\n";
+-		foreach $Err (sort {$a cmp $b} keys %{$Error{$Service}}) {
+-			print "      " . $Err . ": " . $Error{$Service}{$Err} . " Time(s)\n";
+-		}
+-	}
++   print "\nErrors:\n";
++   foreach $Service (sort {$a cmp $b} keys %Error) {
++      print "   Service $Service:\n";
++      foreach $Err (sort {$a cmp $b} keys %{$Error{$Service}}) {
++         print "      $Err: $Error{$Service}{$Err} Time(s)\n";
++      }
++   }
+ }
+ 
+ if ($RootLoginTTY) {
+-	print "\nRoot logins on tty\'s: $RootLoginTTY Time(s).\n";
++   print "\nRoot logins on tty\'s: $RootLoginTTY Time(s).\n";
  }
  
  if (keys %UserLogin) {
 -	print "\nUser Login's on tty\'s:\n";
-+	print "\nUser Login's:\n";
- 	foreach $User (sort {$a cmp $b} keys %UserLogin) {
- 		print "   $User : $UserLogin{$User} Time(s)\n";
- 	}
+-	foreach $User (sort {$a cmp $b} keys %UserLogin) {
+-		print "   $User : $UserLogin{$User} Time(s)\n";
+-	}
++   print "\nUser Login's:\n";
++   foreach $User (sort {$a cmp $b} keys %UserLogin) {
++      print "   $User : $UserLogin{$User} Time(s)\n";
++   }
 +}
 +
 +if ($ConsoleLock > 0) {
@@ -78,3 +198,17 @@ diff -u -r1.40 secure
  }
  
  if ($#SudoList >= 0) {
+-	print "\nUnauthorized sudo commands attempted (" . ($#SudoList + 1) . "):\n";
+-	print @SudoList;
++   print "\nUnauthorized sudo commands attempted (" . ($#SudoList + 1) . "):\n";
++   print @SudoList;
+ }
+ 
+ if ($#OtherList >= 0) {
+-	print "\n**Unmatched Entries**\n";
+-	print @OtherList;
++   print "\n**Unmatched Entries**\n";
++   print @OtherList;
+ }
+ 
+ exit(0);
