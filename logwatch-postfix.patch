@@ -4,16 +4,60 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.9
 diff -u -r1.9 postfix
 --- scripts/services/postfix	3 Feb 2004 03:25:02 -0000	1.9
-+++ scripts/services/postfix	19 Mar 2004 09:04:02 -0000
-@@ -82,6 +82,7 @@
++++ scripts/services/postfix	31 Mar 2004 12:07:35 -0000
+@@ -82,27 +82,32 @@
  $QueueSizeExceeded = 0;
  $RejectedRBL = 0;
  $ErrorRBL = 0;
 +$NoFreeSpace = 0;
  
  while (defined($ThisLine = <STDIN>)) {
-    if ( ( $ThisLine =~ m/^connect/ ) or 
-@@ -155,7 +156,9 @@
+-   if ( ( $ThisLine =~ m/^connect/ ) or 
+-        ( $ThisLine =~ m/^disconnect/ ) or 
+-        ( $ThisLine =~ m/^reload configuration/ ) or 
+-        ( $ThisLine =~ m/^[a-zA-Z0-9]+: client/ ) or 
+-        ( $ThisLine =~ m/^[a-zA-Z0-9]+: message-id/ ) or
+-        ( $ThisLine =~ m/^[a-zA-Z0-9]+: skipped, still being delivered/ ) or
+-        ( $ThisLine =~ m/^warning: [\.0-9]+: address not listed for hostname/ ) or
+-        ( $ThisLine =~ m/^[a-zA-Z0-9]+: to\=\<.*>, relay\=.*, delay\=[0-9]+, status\=[sent|deferred]/ ) or
+-        ( $ThisLine =~ m/^warning: [\.0-9]+: hostname .* verification failed: Host not found/ ) or
+-        ( $ThisLine =~ m/^warning: no MX host for .* has a valid A record$/ ) or
+-        ( $ThisLine =~ m/^warning: numeric domain name in resource data of MX record for .*$/ ) or
+-        ( $ThisLine =~ m/^daemon started$/ ) or
+-        ( $ThisLine =~ m/^terminating on signal 15$/ ) or
+-        ( $ThisLine =~ m/^warning: Mail system is down -- accessing queue directly$/ ) or
+-        ( $ThisLine =~ m/^Deleted: \d message$/ ) or
+-        ( $ThisLine =~ m/^warning: [a-zA-Z0-9]+: skipping further client input$/ ) or
+-        ( $ThisLine =~ m/^warning: premature end-of-input from cleanup socket while reading input attribute name$/ ) or
+-        ( $ThisLine =~ m/^warning: uid=\d: Broken pipe$/ )
+-      ) {
++   if (
++      ( $ThisLine =~ m/^[a-zA-Z0-9]+: client/ ) or
++      ( $ThisLine =~ m/^[a-zA-Z0-9]+: message-id/ ) or
++      ( $ThisLine =~ m/^[a-zA-Z0-9]+: skipped, still being delivered/ ) or
++      ( $ThisLine =~ m/^[a-zA-Z0-9]+: to\=\<.*>, relay\=.*, delay\=[0-9]+, status\=[sent|deferred]/ ) or
++      ( $ThisLine =~ m/^Deleted: \d message$/ ) or
++      ( $ThisLine =~ m/^connect/ ) or
++      ( $ThisLine =~ m/^daemon started$/ ) or
++      ( $ThisLine =~ m/^disconnect/ ) or
++      ( $ThisLine =~ m/^dict_eval_action:/ ) or
++      ( $ThisLine =~ m/^mynetworks:/ ) or
++      ( $ThisLine =~ m/^name_mask:/ ) or
++      ( $ThisLine =~ m/^reload configuration/ ) or
++      ( $ThisLine =~ m/^terminating on signal 15$/ ) or
++      ( $ThisLine =~ m/^warning: [a-zA-Z0-9]+: skipping further client input$/ ) or
++      ( $ThisLine =~ m/^warning: [\.0-9]+: hostname .* verification failed: Host not found/ ) or
++      ( $ThisLine =~ m/^warning: [\.0-9]+: address not listed for hostname/ ) or
++      ( $ThisLine =~ m/^warning: Mail system is down -- accessing queue directly$/ ) or
++      ( $ThisLine =~ m/^warning: no MX host for .* has a valid A record$/ ) or
++      ( $ThisLine =~ m/^warning: numeric domain name in resource data of MX record for .*$/ ) or
++      ( $ThisLine =~ m/^warning: premature end-of-input from cleanup socket while reading input attribute name$/ ) or
++      ( $ThisLine =~ m/^warning: uid=\d: Broken pipe$/ )
++   ) {
+       # We don't care about these
+    } elsif ( ($Bytes) = ($ThisLine =~ /^[a-zA-Z0-9]+: from=.*size=([0-9]+).*$/) ) {
+       $MsgsSent++;
+@@ -155,7 +160,9 @@
     #   $RejectDomain{$Host}++;
     # above two lines included in generic reject sender on next condition
     } elsif ( ($Host,$Sender,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <([^ ]*)>: Sender address rejected: (.*);/)) {
@@ -24,7 +68,7 @@ diff -u -r1.9 postfix
     } elsif ( ($Host,$Recip,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <([^ ]*)>: Recipient address rejected: (.*);/)) {
        $Temp = "$Host : $Reason";
        $RejectRecip{$Recip}{$Temp}++;
-@@ -186,7 +189,7 @@
+@@ -186,7 +193,7 @@
     } elsif ( ($Host,$MyName) = ($ThisLine =~ /warning: host ([^ ]*\[[^ ]*\]) replied to HELO\/EHLO with my own hostname ([^ ]*)$/)) {
        $Temp = "$Host : replied to HELO\/EHLO with my own hostname $MyName";
        $HeloError{$Temp}++;
@@ -33,7 +77,7 @@ diff -u -r1.9 postfix
        $Temp = "$Host : Helo command rejected \($Reason\)";
        $HeloError{$Temp}++;
     } elsif ( ($Size,$Host) = ($ThisLine =~ /bad size limit "\(([^ ]*)\)" in EHLO reply from ([^ ]*\[[^ ]*\])$/)) {
-@@ -196,7 +199,7 @@
+@@ -196,7 +203,7 @@
        $IllegalAddressSyntax{$Command}{$Host}++;
     } elsif ( ($Error) = ($ThisLine =~ /warning: mailer loop: (.*)$/)) {
        $MailerLoop{$Error}++;
@@ -42,8 +86,16 @@ diff -u -r1.9 postfix
        $SaslAuthenticationFail{$Host}++;
     } elsif ( ($Domain) = ($ThisLine =~ /warning: malformed domain name in resource data of MX record (.*)$/)) {
        $MxError{$Domain}++;
-@@ -226,6 +229,8 @@
+@@ -224,18 +231,31 @@
+       $DatabaseGeneration{$Source}++;
+    } elsif ( ($Reason) = ($ThisLine =~ /warning: [a-zA-Z0-9]+: write queue file: (.*)$/)) {
        $QueueWriteError{$Reason}++;
++   } elsif ( ($Reason) = ($ThisLine =~ /warning: open active [a-zA-Z0-9]+: (.*)$/)) {
++      $QueueWriteError{"open active: $Reason"}++;
++   } elsif ( ($Reason) = ($ThisLine =~ /warning: qmgr_active_corrupt: save corrupt file queue active id [a-zA-Z0-9]+: (.*)$/)) {
++      $QueueWriteError{"active corrupt: $Reason"}++;
++   } elsif ( ($Reason) = ($ThisLine =~ /warning: qmgr_active_done_3_generic: remove [a-zA-Z0-9]+ from active: (.*)$/)) {
++      $QueueWriteError{"remove active: $Reason"}++;
     } elsif ( ($Reason) = ($ThisLine =~ /warning: [^ ]*\/[a-zA-Z0-9]+: (Error writing message file)$/)) {
        $MessageWriteError{$Reason}++;
 +   } elsif ( $ThisLine =~ /reject: RCPT from [^ ]*\[[^ ]*\]: \d+ Insufficient system storage; from=<.*> to=<.*>/) {
@@ -51,7 +103,10 @@ diff -u -r1.9 postfix
     } elsif ( ($Warn) = ($ThisLine =~ /^warning: (.*)/)) {
        # keep this as the next to last condition
        $UnknownWarnings{$Warn}++;
-@@ -236,6 +241,13 @@
+    } else {
+       push @OtherList,$ThisLine;
+-      # TODO:
+-      #warning: open active EA67A1B840: No such file or directory
     }
  }
  
@@ -65,7 +120,16 @@ diff -u -r1.9 postfix
  if ($MsgsSent > 0) {
     print "\n\n$BytesTransferred bytes transferred";
     print "\n$MsgsSent messages sent";
-@@ -362,11 +374,16 @@
+@@ -262,7 +282,7 @@
+ }
+ 
+ if (keys %QueueWriteError) {
+-   print "\n\nError writing queue file:\n";
++   print "\n\nError when accessing queue file:\n";
+    foreach $Reason (sort {$a cmp $b} keys %QueueWriteError) {
+       print "   $Reason : $QueueWriteError{$Reason} Time(s)\n";
+    }
+@@ -362,11 +382,16 @@
  #}
  
  if (keys %RejectSender) {
@@ -87,7 +151,7 @@ diff -u -r1.9 postfix
        }
     }
  }
-@@ -376,7 +393,7 @@
+@@ -376,7 +401,7 @@
     foreach $Recip (sort {$a cmp $b} keys %RejectRecip) {
        print "    $Recip:\n";
        foreach $Host (sort {$a cmp $b} keys %{$RejectRecip{$Recip}} ) {
@@ -96,7 +160,7 @@ diff -u -r1.9 postfix
        }
     }
  }
-@@ -508,7 +525,7 @@
+@@ -508,7 +533,7 @@
  if (keys %UnknownWarnings) {
     print "\n\nUnrecognized warning:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %UnknownWarnings) {
