@@ -3,7 +3,7 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	5.1
-Release:	3
+Release:	4
 License:	MIT
 Group:		Applications/System
 #Path for pre-versions:
@@ -12,6 +12,8 @@ Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
 # Source0-md5:	35f96e1002d081620c508216bb9a0170
 Source1:	%{name}-pop3.conf
 Source2:	%{name}-pop3
+Source3:	%{name}-imapd.conf
+Source4:	%{name}-imapd
 Patch0:		%{name}-config.patch
 Patch1:		%{name}-log_conf.patch
 Patch2:		%{name}-secure.patch
@@ -77,6 +79,8 @@ install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
 
 install %{SOURCE1} $RPM_BUILD_ROOT%{_logwatchconf}/services/pop3.conf
 install %{SOURCE2} $RPM_BUILD_ROOT%{_logwatchdir}/scripts/services/pop3
+install %{SOURCE3} $RPM_BUILD_ROOT%{_logwatchconf}/services/imapd.conf
+install %{SOURCE4} $RPM_BUILD_ROOT%{_logwatchdir}/scripts/services/imapd
 
 %clean
 rm -rf $RPM_BUILD_ROOT
