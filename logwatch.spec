@@ -46,14 +46,14 @@ ln -sf /etc/log.d/conf/logwatch.conf $RPM_BUILD_ROOT/etc/log.d/logwatch.conf
 ln -sf /etc/log.d/scripts/logwatch.pl $RPM_BUILD_ROOT/etc/cron.daily/00-logwatch 
 ln -sf /etc/log.d/scripts/logwatch.pl $RPM_BUILD_ROOT%{_sbindir}/logwatch 
 
-%clean
-rm -rf $RPM_BUILD_ROOT
-
 %post
 echo
 echo "You should take a look at /etc/log.d/logwatch.conf..."
 echo "Especially the Detail entry..."
 echo
+
+%clean
+rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(644,root,root,755)
