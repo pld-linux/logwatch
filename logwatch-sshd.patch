@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sshd,v
 retrieving revision 1.33
 diff -u -r1.33 sshd
 --- scripts/services/sshd	15 Dec 2003 19:01:19 -0000	1.33
-+++ scripts/services/sshd	23 Dec 2003 22:33:34 -0000
++++ scripts/services/sshd	23 Dec 2003 22:41:08 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -41,7 +41,7 @@ diff -u -r1.33 sshd
        # Don't care about this...
        if ( $Debug >= 5 ) {
           print STDERR "DEBUG: Found -Generating RSA key- line\n";
-@@ -129,6 +136,14 @@
+@@ -129,6 +136,16 @@
        $sftpRequests++;
     } elsif ( $ThisLine =~ m/refused connect from (.*)$/ ) {
        $RefusedConnections{$1}++;
@@ -53,10 +53,12 @@ diff -u -r1.33 sshd
 +      $RootLogin{$Host}++;
 +   } elsif ( ($Error) = ($ThisLine =~ /^Cannot release PAM authentication\[\d\]: (.*)$/)) {
 +      $PamReleaseFail{$Error}++;
++   } elsif ( $ThisLine =~ m/^error: PAM: (.*)$/) {
++      $PamReleaseFail{$Error}++;
     } elsif ( ($IP) = ($ThisLine =~ /^scanned from ([^ ]*)/) ) {
        push @Scanned, LookupIP($IP);
     } else {
-@@ -149,16 +164,31 @@
+@@ -149,16 +166,31 @@
     print "\nSSHD Started: " . $Starts . " Time(s)\n";
  }
  
@@ -90,7 +92,7 @@ diff -u -r1.33 sshd
           print "   " . $ThisOne . ": " . $NoIdent{$ThisOne} . " Time(s)\n";
        }
     }
-@@ -171,6 +201,13 @@
+@@ -171,6 +203,13 @@
     }
  }
  
@@ -104,7 +106,7 @@ diff -u -r1.33 sshd
  if (keys %BadLogins) {
     print "\nFailed logins from these:\n";
     for (sort keys %BadLogins) {
-@@ -187,7 +224,7 @@
+@@ -187,7 +226,7 @@
  
  if (keys %Users) {
     print "\nUsers logging in through sshd:\n";
@@ -113,7 +115,7 @@ diff -u -r1.33 sshd
        print "   $user:\n";
        my $totalSort = TotalCountOrder(%{$Users{$user}}, \&SortIP);
        foreach my $ip (sort $totalSort keys %{$Users{$user}}) {
-@@ -209,6 +246,23 @@
+@@ -209,6 +248,23 @@
     }
  }
  
@@ -137,7 +139,7 @@ diff -u -r1.33 sshd
  if ($#Scanned >= 0) {
     print "\nScanned from these:\n";
     foreach $ThisOne (sort SortIP @Scanned) {
-@@ -218,8 +272,15 @@
+@@ -218,8 +274,15 @@
  
  if (keys %RefusedConnections) {
     print "\nRefused incoming connections:\n";
