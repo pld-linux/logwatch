@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.7
 diff -u -r1.7 postfix
 --- scripts/services/postfix	15 Dec 2003 18:35:03 -0000	1.7
-+++ scripts/services/postfix	18 Jan 2004 16:16:14 -0000
++++ scripts/services/postfix	27 Jan 2004 08:05:19 -0000
 @@ -61,12 +61,20 @@
  #
  ########################################################
@@ -38,13 +38,15 @@ diff -u -r1.7 postfix
        ) {
        # We don't care about these
     } elsif ( ($Bytes) = ($ThisLine =~ /^[a-zA-Z0-9]+: from=.*size=([0-9]+).*$/) ) {
-@@ -124,11 +135,19 @@
+@@ -124,11 +135,21 @@
        $ConnectionLost{$Command}++;
     } elsif ( ($Rejected,undef,undef) = ($ThisLine =~ /^^[a-zA-Z0-9]+: reject: header (.*); from=<([^ ]*)> to=<([^ ]*)>: Message content rejected$/)) {
        $HeaderReject{$Rejected}++;
 -   } elsif ( ($Host,undef) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 450 <([^ ]*)>: Sender address rejected: Domain not found;/)) {
 +   } elsif ( ($Host,undef) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 450 <(.*)>: Sender address rejected: Domain not found;/)) {
        $RejectDomain{$Host}++;
++   } elsif ( ($Host,undef) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 554 <(.*)>: Sender address rejected: Access denied;/)) {
++      $RejectAddress{$Host}++;
     } elsif ( ($Host,$Site,$Reason) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 554 Service unavailable; \[[^ ]*\] blocked using ([^ ]*), reason: (.*);/)) {
        $Temp = "$Host : $Reason";
        $RejectRBL{$Site}{$Temp}++;
@@ -59,7 +61,7 @@ diff -u -r1.7 postfix
     } elsif ( (undef,undef,$Error) = ($ThisLine =~ /^warning: ([^ ]*): hostname ([^ ]*) verification failed: (.*)$/)) {
        $HostnameVerification{$Error}++;
     } elsif ( $ThisLine =~ /^[a-zA-Z0-9]+: removed$/) {
-@@ -137,11 +156,11 @@
+@@ -137,11 +158,11 @@
        $PixWorkaround{$Host}++;
     } elsif ( ($Message) = ($ThisLine =~ /^warning: valid_hostname: (.*)$/)) {
        $ValidHostname{$Message}++;
@@ -74,7 +76,7 @@ diff -u -r1.7 postfix
        $HeloError{$Temp}++;
     } elsif ( ($Host,$Reason) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 504 <[^ ]*>: Helo command rejected: (.*);/)) {
        $Temp = "$Host : Helo command rejected \($Reason\)";
-@@ -155,17 +174,38 @@
+@@ -155,17 +176,38 @@
        $MailerLoop{$Error}++;
     } elsif ( ($Host) = ($ThisLine =~ /^warning: ([^ ]*\[[^ ]*\]): SASL LOGIN authentication failed/)) {
        $SaslAuthenticationFail{$Host}++;
@@ -120,7 +122,7 @@ diff -u -r1.7 postfix
     }
  }
  
-@@ -190,75 +230,127 @@
+@@ -190,75 +232,134 @@
     print "\n\n$RemovedFromQueue messages removed from queue";
  }
  
@@ -235,6 +237,13 @@ diff -u -r1.7 postfix
     foreach $Host (sort {$a cmp $b} keys %RejectDomain) {
 -      print "    $Host : $RejectDomain{$Host} Times(s)\n";
 +      print "   $Host : $RejectDomain{$Host} Time(s)\n";
++   }
++}
++
++if (keys %RejectAddress) {
++   print "\n\nRejected sender address from:\n";
++   foreach $Host (sort {$a cmp $b} keys %RejectAddress) {
++      print "   $Host : $RejectAddress{$Host} Time(s)\n";
     }
  }
  
@@ -262,7 +271,7 @@ diff -u -r1.7 postfix
        }
     }
  }
-@@ -266,29 +358,57 @@
+@@ -266,29 +367,57 @@
  if (keys %AuthWarns) {
     print "\n\nAuthentication warnings:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %AuthWarns) {
@@ -325,7 +334,7 @@ diff -u -r1.7 postfix
        }
     }
  }
-@@ -296,28 +416,28 @@
+@@ -296,28 +425,28 @@
  if (keys %HostnameVerification) {
     print "\n\nHostname verification errors:\n";
     foreach $Error (sort {$a cmp $b} keys %HostnameVerification) {
