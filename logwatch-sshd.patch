@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sshd,v
 retrieving revision 1.31
 diff -u -r1.31 sshd
 --- scripts/services/sshd	26 Nov 2003 14:36:30 -0000	1.31
-+++ scripts/services/sshd	15 Dec 2003 11:43:14 -0000
++++ scripts/services/sshd	15 Dec 2003 11:48:19 -0000
 @@ -40,204 +40,196 @@
  		$DebugCounter++;
  	}
@@ -142,7 +142,7 @@ diff -u -r1.31 sshd
 +	  $BadLogins{"$2/$1 from $3"}++;
 +  } elsif ( $ThisLine =~ m/^Failed (\S+) for illegal user (\S+) from ([^ ]+) port (\d+)/ ) { #openssh
 +	  $BadLogins{"$2/$1 from $3"}++;
-+	  $IllegalUser{$2}++;
++	  $IllegalUsers{$2}++;
 +  } elsif ( ($User) = ($ThisLine =~ /^input_userauth_request: illegal user ([^ ]+)$/ )) {
 +	  $IllegalUsers{"$User/none from unknown"}++;
 +  } elsif ( $ThisLine =~ m/^Illegal user (\S+) from ([^ ]+)/ ) { #redhat thing
