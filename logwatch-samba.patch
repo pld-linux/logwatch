@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/samba,v
 retrieving revision 1.17
 diff -u -r1.17 samba
 --- scripts/services/samba	15 Dec 2003 22:03:55 -0000	1.17
-+++ scripts/services/samba	31 Dec 2003 22:33:55 -0000
++++ scripts/services/samba	6 Jan 2004 10:48:51 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -14,7 +14,7 @@ diff -u -r1.17 samba
  
  ########################################################
  # This was written and is maintained by:
-@@ -13,9 +15,10 @@
+@@ -13,46 +15,51 @@
  
  $Debug = $ENV{'LOGWATCH_DEBUG'};
  $Detail = $ENV{'LOGWATCH_DETAIL_LEVEL'} || 0;
@@ -27,32 +27,78 @@ diff -u -r1.17 samba
 +$GetDomainMasterStatusFail = 0;
  
  if ( $Debug >= 5 ) {
- 	print STDERR "\n\nDEBUG: Inside Samba Filter \n\n";
-@@ -28,7 +31,6 @@
- 		($ThisLine =~ /version .+ started/) or
- 		($ThisLine =~ /oplock[_ ]break/) or
- 		($ThisLine =~ /No route to host/) or
+-	print STDERR "\n\nDEBUG: Inside Samba Filter \n\n";
++   print STDERR "\n\nDEBUG: Inside Samba Filter \n\n";
+ }
+ 
+ while (defined($ThisLine = <STDIN>)) {
+-	chomp($ThisLine);
+-	if ( 
+-		($ThisLine =~ /Currently not implemented/) or
+-		($ThisLine =~ /version .+ started/) or
+-		($ThisLine =~ /oplock[_ ]break/) or
+-		($ThisLine =~ /No route to host/) or
 -		($ThisLine =~ /SIGTERM: going down/) or
- 		($ThisLine =~ /response packet id \d+ received with no matching record/) or
- 		($ThisLine =~ /matchname/i) or
- 		# Ignore entries in smbmount logfile
-@@ -45,11 +47,14 @@
- 		($ThisLine =~ /Multiple .+ responses received for a query/) or
- 		($ThisLine =~ /Connection timed out/) or
- 		($ThisLine =~ /closed connection to/) or
+-		($ThisLine =~ /response packet id \d+ received with no matching record/) or
+-		($ThisLine =~ /matchname/i) or
+-		# Ignore entries in smbmount logfile
+-		($ThisLine =~ /smbmount/) or
+-		($ThisLine =~ /become_local_master/) or
+-		($ThisLine =~ /become_domain_master/) or
+-		($ThisLine =~ /add_domain_logon_names/) or
+-		($ThisLine =~ /become_logon_server/) or
+-		($ThisLine =~ /start_async_dns/) or
+-		($ThisLine =~ /timeout connecting to/) or
+-		($ThisLine =~ /Operation not permitted/) or
+-		($ThisLine =~ /Record does not exist/) or
+-		($ThisLine =~ /Connection reset by peer/) or
+-		($ThisLine =~ /Multiple .+ responses received for a query/) or
+-		($ThisLine =~ /Connection timed out/) or
+-		($ThisLine =~ /closed connection to/) or
 -		($ThisLine =~ /Got SIGHUP/) or
- 		($ThisLine =~ /current master browser/) or
- 		($ThisLine =~ /debug_message/) or
+-		($ThisLine =~ /current master browser/) or
+-		($ThisLine =~ /debug_message/) or
++   chomp($ThisLine);
++   if ( 
++      ($ThisLine =~ /Currently not implemented/) or
++      ($ThisLine =~ /version .+ started/) or
++      ($ThisLine =~ /oplock[_ ]break/) or
++      ($ThisLine =~ /No route to host/) or
++      ($ThisLine =~ /response packet id \d+ received with no matching record/) or
++      ($ThisLine =~ /matchname/i) or
++      # Ignore entries in smbmount logfile
++      ($ThisLine =~ /smbmount/) or
++      ($ThisLine =~ /become_local_master/) or
++      ($ThisLine =~ /become_domain_master/) or
++      ($ThisLine =~ /add_domain_logon_names/) or
++      ($ThisLine =~ /become_logon_server/) or
++      ($ThisLine =~ /start_async_dns/) or
++      ($ThisLine =~ /timeout connecting to/) or
++      ($ThisLine =~ /Operation not permitted/) or
++      ($ThisLine =~ /Record does not exist/) or
++      ($ThisLine =~ /Connection reset by peer/) or
++      ($ThisLine =~ /Multiple .+ responses received for a query/) or
++      ($ThisLine =~ /Connection timed out/) or
++      ($ThisLine =~ /closed connection to/) or
++      ($ThisLine =~ /current master browser/) or
++      ($ThisLine =~ /debug_message/) or
        ($ThisLine =~ /process_name_refresh_request\(184\)  Error - should be sent to WINS server$/) or
        ($ThisLine =~ /cli_connect\(783\)  Error connecting to [^ ]+ \(Operation already in progress\)$/) or
 +      ($ThisLine =~ /nmbd_incomingrequests\.c:process_name_refresh_request\([0-9]+\)$/) or
 +      ($ThisLine =~ /Got SIGHUP dumping debug info.$/) or
 +      ($ThisLine =~ /Got SIGTERM: going down/) or
 +      ($ThisLine =~ /get_socket_addr\(\d+\)  getpeername failed. Error was Transport endpoint is not connected$/) or
++      ($ThisLine =~ /lib\/access.c:check_access\(\d+\)$/) or
++      ($ThisLine =~ /smbd\/process.c:process_smb\(\d+\)$/) or
  		($ThisLine =~ /===============================================================/)
- 	) {
- 		#Don't care about these...
-@@ -78,6 +83,13 @@
+-	) {
+-		#Don't care about these...
++   ) {
++      #Don't care about these...
+ 	} elsif ( ($Host, $Service, $User) = ( $ThisLine =~ /([^ ]+ \([^ ]+\)) connect to service ([^ ]+) as user ([^ ]+)/ ) ) {
+ 		$Connect{$Service}{$User}{$Host}++;
+ 	} elsif ( ($NoService) = ( $ThisLine =~ /couldn't find service (\S+)/ ) ) {
+@@ -78,6 +85,13 @@
  	} elsif ( ( $ThisLine =~ /^\[[^\]]+\] lib\/util_sock.c:read_data\(436\)/ ) ) {
  		# This is due to a nasty bug in samba which causes it to drop connections :-(
  		$SocketReadError++;
@@ -66,7 +112,7 @@ diff -u -r1.17 samba
  	} elsif ( ( $ThisLine =~ /unable to open passdb database.$/ ) ) {
  		$DbOpenFail++;
  	} elsif ( ($Server,$Ip,$Group) = ($ThisLine =~ /Server ([^ ]+) at IP ([^ ]+) is announcing itself as a local master browser for workgroup ([^ ]+) and we think we are master. Forcing election.$/ ) ) {
-@@ -107,16 +119,27 @@
+@@ -107,16 +121,27 @@
  		$RootLoggedIn{$user}++;
  	} elsif ( ($file,$function) = ($ThisLine =~ /([a-zA-Z_\/():\.0-9-]+)  ([a-zA-Z0-9_-]+): Not yet implemented.$/)) {
  		$NotImplemented{$file}{$function}++;
@@ -99,7 +145,7 @@ diff -u -r1.17 samba
  	}
  }
  
-@@ -131,6 +154,21 @@
+@@ -131,6 +156,21 @@
  	}
  }
  
@@ -121,7 +167,7 @@ diff -u -r1.17 samba
  if (keys %DiscardWins) {
     print "\nDiscarded invalid wins.dat file with version:\n";
     foreach $Version (sort {$a cmp $b} keys %DiscardWins) {
-@@ -169,6 +207,13 @@
+@@ -169,6 +209,13 @@
     }
  }
  
@@ -135,7 +181,7 @@ diff -u -r1.17 samba
  if (($Detail >= 5) and (keys %RootLoggedIn)) {
     print "\nAdmin logins (root privileges):\n";
     foreach $user (sort {$a cmp $b} keys %RootLoggedIn) {
-@@ -186,13 +231,6 @@
+@@ -186,13 +233,6 @@
  }
       
  
@@ -149,7 +195,7 @@ diff -u -r1.17 samba
  if (keys %ForceElection) {
  	print "\nForced Election:\n";
  	foreach $Group (sort {$a cmp $b} keys %ForceElection) {
-@@ -227,6 +265,13 @@
+@@ -227,6 +267,13 @@
  	print "\nFailed to get Domain Master node name: $GetDomainMasterStatusFail Time(s)\n";
  }
  
@@ -163,7 +209,7 @@ diff -u -r1.17 samba
  if (($Detail >= 5) and (keys %NoServ)) {
     print "\nCouldn't find services:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %NoServ) {
-@@ -291,6 +336,19 @@
+@@ -291,6 +338,19 @@
      foreach $User (sort {$a cmp $b} keys %AccountDisabled) {
          print "   $User : $AccountDisabled{$User} Time(s)\n";
      }
