@@ -1,0 +1,19 @@
+? conf/logfiles/exim.conf.origin
+Index: conf//logfiles/exim.conf
+===================================================================
+RCS file: /var/cvs/logwatch/conf/logfiles/exim.conf,v
+retrieving revision 1.3
+diff -u -r1.3 exim.conf
+--- conf//logfiles/exim.conf	13 Oct 2002 15:24:27 -0000	1.3
++++ conf//logfiles/exim.conf	7 Dec 2003 23:49:32 -0000
+@@ -13,8 +13,8 @@
+ # No  = False = Off = 0
+ 
+ # Which logfile group...
+-LogFile = /var/log/exim/exim_mainlog
+-Archive = /var/log/exim/exim_mainlog.*
++LogFile = /var/log/exim/main.log
++Archive = /var/log/archiv/exim/main.log.*
+ 
+ ########################################################
+ # This was written and is maintained by:
