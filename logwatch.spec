@@ -6,6 +6,7 @@ Release:     	1
 License:   	GPL
 Group:       	Applications/System
 Source:      	ftp://ftp.kaybee.org/pub/linux/%{name}-%{version}.tar.gz
+Patch0:		logwatch-mktemp.patch
 Requires:    	perl
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Buildarch:   	noarch
@@ -24,9 +25,9 @@ wiêkszo¶ci systemów.
 
 %prep
 %setup -q
+%patch0 -p1
 
 %build
-
 for i in scripts/{shared/{onlycontains,remove},services/zz-fortune}; do
 	mv -f $i $i.
 	sed -e s/bash/sh/ $i. > $i
@@ -35,7 +36,6 @@ done
 
 %install
 rm -rf $RPM_BUILD_ROOT
-
 install -d $RPM_BUILD_ROOT/etc/log.d/ \
 	$RPM_BUILD_ROOT{%{_sbindir},%{_mandir}/man8} \
 	$RPM_BUILD_ROOT/etc/cron.daily 
