@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sshd,v
 retrieving revision 1.37
 diff -u -r1.37 sshd
 --- scripts/services/sshd	3 Feb 2004 19:13:14 -0000	1.37
-+++ scripts/services/sshd	26 Feb 2004 22:42:18 -0000
++++ scripts/services/sshd	31 Mar 2004 13:52:47 -0000
 @@ -72,7 +72,10 @@
         ($ThisLine =~ m/^fatal: Timeout before authentication/ ) or
         ($ThisLine =~ m/sshd startup\s+succeeded/) or
@@ -56,7 +56,21 @@ diff -u -r1.37 sshd
     } elsif ( ($IP) = ($ThisLine =~ /^scanned from ([^ ]*)/) ) {
        push @Scanned, LookupIP($IP);
     } else {
-@@ -260,6 +269,16 @@
+@@ -235,13 +244,6 @@
+    }
+ }
+ 
+-if (keys %TooManyFailures) {
+-   print "\nDisconnecting after too many authentication failures for user:\n";
+-   foreach $User (sort {$a cmp $b} keys %TooManyFailures) {
+-      print "   $User : $TooManyFailures{$User} Time(s)\n";
+-   }
+-}
+-
+ if (keys %BadLogins) {
+    print "\nFailed logins from these:\n";
+    for (sort keys %BadLogins) {
+@@ -260,6 +262,16 @@
     print "\nUser login attempt when nologin was set:\n";
     foreach $User (sort {$a cmp $b} keys %LoginLock) {
        print "   $User : $LoginLock{$User} Time(s)\n";
