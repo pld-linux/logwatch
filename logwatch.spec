@@ -3,10 +3,11 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	4.3.2
-Release:	3
+Release:	4
 License:	MIT
 Group:		Applications/System
 Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
+Source1:	http://www.jimohalloran.com/archives/files/patches030325.tar.gz
 Patch0:		%{name}-more_features.patch
 Patch1:		%{name}-dirs.patch
 Patch2:		%{name}-init.patch
@@ -29,13 +30,19 @@ analizowania logów systemowych i przesy³aniu ich po wstêpnjej obróbce
 poczt± elektroniczn± do administratora systemu. Logwatch jest ³atwy w
 u¿yciu i moze pracowaæ na wiêkszo¶ci systemów.
 
-%prep
-%setup -q
+%prep 
+%setup -q -a1
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
 
+cat in.qpopper.patch030319 | patch -p3
+cat sendmail.conf.patch030319 | patch -p3
+cat sendmail.patch030325 | patch -p3
+
 %build
+mv amavis.conf conf/services/
+mv amavis scripts/services/
 for i in scripts/{shared/{onlycontains,remove},services/zz-fortune}; do
 	mv -f $i $i.
 	sed -e s/bash/sh/ $i. > $i
