@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/samba,v
 retrieving revision 1.17
 diff -u -r1.17 samba
 --- scripts/services/samba	15 Dec 2003 22:03:55 -0000	1.17
-+++ scripts/services/samba	23 Dec 2003 21:39:52 -0000
++++ scripts/services/samba	23 Dec 2003 21:41:53 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -45,7 +45,7 @@ diff -u -r1.17 samba
 +      $CantChangeDir{$Directory}{$Reason}{$Temp}++;
 +   } elsif ( ($Signal) = ($ThisLine =~ /open_sockets\([0-9]+\)  Reloading services after ([^ ]+)/)) {
 +      $ReloadAfter{$Signal}++;
-+   } elsif ( ($Signal) = ($ThisLine =~ /open_sockets\([0-9]+\)  Got SIGHUP/)) {
++   } elsif ( ($Signal) = ($ThisLine =~ /open_sockets\([0-9]+\)  Got ([^ ]+)/)) {
 +      $ReloadAfter{$Signal}++;
 +   } elsif ( ($Share) = ($ThisLine =~ /cups_printername_ok\([0-9]+\)  Unable to get printer status for ([^ ]+) - client-error-not-found/)) {
 +      $PrinterStatus{$Share}++;
