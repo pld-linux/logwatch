@@ -15,8 +15,8 @@ BuildRequires:	rpm-perlprov
 Requires:	perl-modules
 Requires:	smtpdaemon
 Requires:	crondaemon
+BuildArch:	noarch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
-Buildarch:	noarch
 
 %description
 LogWatch is a customizable, pluggable log-monitoring system. It will
