@@ -3,7 +3,7 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	5.1
-Release:	10
+Release:	11
 License:	MIT
 Group:		Applications/System
 #Path for pre-versions:
