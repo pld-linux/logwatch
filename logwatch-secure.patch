@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/secure,v
 retrieving revision 1.49
 diff -u -r1.49 secure
 --- scripts/services/secure	24 Feb 2005 17:08:05 -0000	1.49
-+++ scripts/services/secure	28 Feb 2005 10:06:55 -0000
++++ scripts/services/secure	11 Mar 2005 09:08:07 -0000
 @@ -49,6 +49,8 @@
  $ConsoleLock = 0;
  $spop3d_opened=0;
@@ -46,12 +46,14 @@ diff -u -r1.49 secure
     } elsif ( $ThisLine =~ /^login: ROOT LOGIN ON tty[0-9]+/) {
        $RootLoginTTY++
     } elsif ( (undef,$User) = ($ThisLine =~ /^login: LOGIN ON (tty|pts\/)[0-9]+ BY ([^ ]+)/ )) {
-@@ -212,6 +218,14 @@
+@@ -212,6 +218,16 @@
     } elsif ( ($PID) = ($ThisLine =~ /^checkpassword-pam\[(\d+)\]: Setting PAM credentials succeeded/)) {
     } elsif ( ($PID) = ($ThisLine =~ /^checkpassword-pam\[(\d+)\]: Terminating PAM library/)) {
     } elsif ( ($PID) = ($ThisLine =~ /^checkpassword-pam\[(\d+)\]: Exiting with status 0/)) {
 +   } elsif ( ($User) = ($ThisLine =~ /^pam_tally\[\d+\]: pam_tally: pam_get_uid; no such user ([^ ]+)/)) {
 +      $UnknownUser{$User}++;
++   } elsif ( ($User) = ($ThisLine =~ /^pam_tally\[\d+\]: Tally overflowed for user ([^ ]+)$/)) {
++      $TallyOverflow{$User}++;
 +   } elsif ( ($User) = ($ThisLine =~ /^pam_pwdfile\[\d+\]: user not found in password database/) ) {
 +      $pwd_file_unknown++;
 +   } elsif ( ($User) = ($ThisLine =~ /^pam_pwdfile\[\d+\]: wrong password for user ([^ ]+)/)) {
@@ -61,7 +63,7 @@ diff -u -r1.49 secure
     } else {
        # Unmatched entries...
        push @OtherList, "$ThisLine\n";
-@@ -282,6 +296,20 @@
+@@ -282,6 +298,20 @@
     }
  }
  
@@ -82,7 +84,21 @@ diff -u -r1.49 secure
  if (keys %{$Connections}) {
     print "\nConnections:\n";
     foreach $ThisOne (keys %{$Connections}) {
-@@ -445,4 +473,3 @@
+@@ -437,6 +467,13 @@
+    }
+ }
+ 
++if (keys %TallyOverflow) {
++   print "\nTally overflowed for user:\n";
++   foreach $User (sort {$a cmp $b} keys %TallyOverflow) {
++      print "   $User : $TallyOverflow{$User} Time(s)\n";
++   }
++}
++
+ if ($#OtherList >= 0) {
+    print "\n**Unmatched Entries**\n";
+    print @OtherList;
+@@ -445,4 +482,3 @@
  exit(0);
  
  # vi: shiftwidth=3 tabstop=3 syntax=perl et
