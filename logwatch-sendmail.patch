@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sendmail,v
 retrieving revision 1.37
 diff -u -r1.37 sendmail
 --- scripts/services/sendmail	3 Feb 2004 04:29:42 -0000	1.37
-+++ scripts/services/sendmail	3 Feb 2004 07:51:24 -0000
++++ scripts/services/sendmail	3 Feb 2004 09:07:36 -0000
 @@ -147,8 +147,7 @@
        ( $ThisLine =~ m/X-Spam/ ) or
        ( $ThisLine =~ m/Milter message: body replaced/ ) or
@@ -15,7 +15,7 @@ diff -u -r1.37 sendmail
        ( $ThisLine =~ m/Milter add: header: X-Virus-Scanned: by amavis/ ) or
        ( $ThisLine =~ m/AUTH=server, relay=/ ) or
        ( $ThisLine =~ m/discarded/ ) or
-@@ -156,11 +155,12 @@
+@@ -156,11 +155,13 @@
        # Ignore these lines for now...
        # Dec 31 04:03:01 tp760 sendmail[26884]: STARTTLS=client, relay=[127.0.0.1], version=TLSv1/SSLv3, verify=FAIL, cipher=EDH-RSA-DES-CBC3-SHA, bits=168/168
        # Dec 31 04:03:01 tp760 sendmail[26887]: STARTTLS=server, relay=tp760.stovenour.net [127.0.0.1], version=TLSv1/SSLv3, verify=NO, cipher=EDH-RSA-DES-CBC3-SHA, bits=168/168
@@ -24,14 +24,16 @@ diff -u -r1.37 sendmail
 -      ( $ThisLine =~ m/^clone [a-zA-Z0-9]+, owner=/ ) or
 +      ( $ThisLine =~ m/^STARTTLS=(server|client), relay=/ ) or
        ( $ThisLine =~ m/Flushing queue from/ ) or
-       ( $ThisLine =~ m/^SYSERR/ )
+-      ( $ThisLine =~ m/^SYSERR/ )
++      # I think that it's wrong...
++      #( $ThisLine =~ m/^SYSERR/ ) or
 +      ( $ThisLine =~ m/^clone [a-zA-Z0-9]+, owner=/ ) or
 +      ( $ThisLine =~ m/^SYSERR\(root\): collect: I\/O error on connection from / ) or
 +      ( $ThisLine =~ m/^accepting connections again for daemon / )
     ) {
        # We don't care about these
     } elsif ( ($FromUser, $FromDomain, $Bytes, $NumRcpts, $RelayHost) = ($ThisLine =~ /^from=[\<]?([^@]+)[@]?([^\> ]+).*size=([0-9]+).*nrcpts=([0-9]+).*relay=(\[[0-9\.]+\]|[^ ]* \[[0-9\.]+\]|[^ ]+).*$/) ) {
-@@ -281,7 +281,7 @@
+@@ -281,7 +282,7 @@
     # test for unknown relay users (users we would have relayed elsewhere)
     } elsif ( ($User) = ($ThisLine =~ /^[a-zA-Z0-9]+: ruleset=check_rcpt.*<(.*?)>.*... User unknown$/) ) {
        $UnknownUserscheckrcpt{$User}++;
@@ -40,7 +42,7 @@ diff -u -r1.37 sendmail
        $Temp = "From " . $Relay . " to " . $Dest;
        $RelayDenied{$Temp}++;
     } elsif ($ThisLine =~ /^ruleset=check_relay, arg1=[^,]*, arg2=[^,]*, relay=([^,]*), reject=550\s*[\d.]*\s*(Mail from|Rejected:) [^ ]* (refused by blackhole site|listed at) (.*)/) {
-@@ -409,7 +409,7 @@
+@@ -409,7 +410,7 @@
        $ReturnReceipt++;
     } elsif ($ThisLine=~ /Remote protocol error/) {
        $RemoteProtocolError++;
@@ -49,7 +51,7 @@ diff -u -r1.37 sendmail
        $AttackAttempt{$Host}{$Attack}++;
     } elsif ( ($Host,$Attack) = ($ThisLine =~ /([^ ]+ \[[^ ]+\]): possible SMTP attack: (.*)$/) ) {
        $AttackAttempt{$Host}{$Attack}++;
-@@ -419,8 +419,12 @@
+@@ -419,8 +420,12 @@
        $CantCreateOutput++;
     } elsif ( $ThisLine =~ m/alias database [^ ]+ out of date/ ) {
        $OutdatedAliasdb++;
@@ -64,7 +66,7 @@ diff -u -r1.37 sendmail
     } else {
        $ThisLine =~ s/.*\: (DSN\: .*)/$1/;
        $ThisLine =~ s/.*\: (postmaster notify\: .*)/$1/;
-@@ -643,7 +647,7 @@
+@@ -643,7 +648,7 @@
  if (keys %KnownSpammer) {
     print "\n\nRelay attempts from known spammers:\n";
     foreach $ThisOne (sort keys %KnownSpammer) {
@@ -73,7 +75,7 @@ diff -u -r1.37 sendmail
        $knspam = $knspam + $KnownSpammer{$ThisOne};
     }
     print "\n\tTotal:  $knspam\n";
-@@ -653,7 +657,7 @@
+@@ -653,7 +658,7 @@
     print "\n\nRelaying denied:\n";
     my $count = CountOrder(%RelayDenied);
     foreach $ThisOne (sort $count keys %RelayDenied) {
@@ -82,7 +84,7 @@ diff -u -r1.37 sendmail
        $rldeny = $rldeny + $RelayDenied{$ThisOne};
     }
     print "\n\tTotal:  $rldeny\n";
-@@ -662,7 +666,7 @@
+@@ -662,7 +667,7 @@
  if (keys %CheckMailReject) {
     print "\n\nRejected incoming mail:\n";
     foreach $ThisOne (keys %CheckMailReject) {
@@ -91,7 +93,7 @@ diff -u -r1.37 sendmail
        $chkmreject = $chkmreject + $CheckMailReject{$ThisOne};
     }
     print "\n\tTotal:  $chkmreject\n";
-@@ -671,7 +675,7 @@
+@@ -671,7 +676,7 @@
  if (keys %CheckRcptReject) {
     print "\n\nRejected outgoing mail:\n";
     foreach $ThisOne (keys %CheckRcptReject) {
@@ -100,7 +102,7 @@ diff -u -r1.37 sendmail
        $chkrereject = $chkrereject + $CheckRcptReject{$ThisOne};
     }
     print "\n\tTotal:  $chkrereject\n";
-@@ -715,7 +719,7 @@
+@@ -715,7 +720,7 @@
  if (keys %BlackHoled) {
     print "\n\nBlackHole Totals:\n";
     foreach $ThisOne (sort keys %BlackHoles) {
@@ -109,7 +111,7 @@ diff -u -r1.37 sendmail
        $blktotal = $blktotal + $BlackHoles{$ThisOne};
     }
     if ($Detail >= 10) {
-@@ -730,7 +734,7 @@
+@@ -730,7 +735,7 @@
     print "\n\nUnresolveable or non-existent domains:\n";
     my $count = CountOrder(%DomainErrors);
     foreach $ThisOne (sort $count keys %DomainErrors) {
@@ -118,7 +120,7 @@ diff -u -r1.37 sendmail
        $domainer = $domainer + $DomainErrors{$ThisOne};
     }
     print "\n\tTotal:  $domainer\n";
-@@ -747,7 +751,7 @@
+@@ -747,7 +752,7 @@
     print "\n\nUnknown hosts:\n";
     my $count = CountOrder(%UnknownHosts);
     foreach $ThisOne (sort $count keys %UnknownHosts) {
@@ -127,7 +129,7 @@ diff -u -r1.37 sendmail
        $uknhosts = $uknhosts + $UnknownHosts{$ThisOne};
     }
     print "\n\tTotal:  $uknhosts\n";
-@@ -757,7 +761,7 @@
+@@ -757,7 +762,7 @@
     print "\n\nUnresolved sender domains:\n";
     my $count = CountOrder(%UnresolvedDomains);
     foreach $ThisOne (sort $count keys %UnresolvedDomains) {
