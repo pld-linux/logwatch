@@ -1,17 +1,17 @@
 Index: scripts/services/secure
 ===================================================================
 RCS file: /var/cvs/logwatch/scripts/services/secure,v
-retrieving revision 1.46
-diff -u -r1.46 secure
---- scripts/services/secure	21 Jun 2004 14:59:05 -0000	1.46
-+++ scripts/services/secure	8 Oct 2004 06:02:02 -0000
-@@ -52,16 +52,18 @@
+retrieving revision 1.47
+diff -u -r1.47 secure
+--- scripts/services/secure	29 Oct 2004 21:19:01 -0000	1.47
++++ scripts/services/secure	31 Oct 2004 16:21:30 -0000
+@@ -67,17 +67,18 @@
     $temp =~ s/^([^[]+).*/$1/;
     if ($Ignore =~ /\b\Q$temp\E\b/i) { next; }
     if (
--      ( $ThisLine =~ m/^[^ ]+\[\d+\]: connect from localhost$/ ) or
+-      ( $ThisLine =~ /pam_succeed_if: requirement "uid < 100" not met by user /) or
 +      ( $ThisLine =~ /^(.*)\(pam_unix\)/) or
-+      ( $ThisLine =~ /^[^ ]+\[\d+\]: connect from localhost$/ ) or
+       ( $ThisLine =~ m/^[^ ]+\[\d+\]: connect from localhost$/ ) or
        ( $ThisLine =~ /^\/usr\/bin\/sudo:/) or
 -      ( $ThisLine =~ /^sudo:/) or
        ( $ThisLine =~ /^halt:/) or
@@ -25,7 +25,14 @@ diff -u -r1.46 secure
 -      ( $ThisLine =~ /^(xinetd|xinetd-ipv6)\[\d+\]: EXIT: /)
 +      ( $ThisLine =~ /^(xinetd|xinetd-ipv6)\[\d+\]: EXIT: /) or
 +      ( $ThisLine =~ /pam_succeed_if: requirement "uid < 100" not met by user /) or
-+      ( $ThisLine =~ /warning: can.t get client address: Connection refused/) 
++      ( $ThisLine =~ /warning: can.t get client address: Connection refused/)
     ) {
        # Ignore these entries
     } elsif ($ThisLine =~ /^spop3d/) {
+@@ -446,5 +447,4 @@
+ 
+ exit(0);
+ 
+-# vi: shiftwidth=3 tabstop=3 et
+-
++# vi: shiftwidth=3 tabstop=3 syntax=perl et
