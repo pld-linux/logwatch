@@ -1,0 +1,64 @@
+Index: scripts/services/sshd
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/sshd,v
+retrieving revision 1.33
+diff -u -r1.33 sshd
+--- scripts/services/sshd	15 Dec 2003 19:01:19 -0000	1.33
++++ scripts/services/sshd	16 Dec 2003 09:30:39 -0000
+@@ -2,6 +2,8 @@
+ ##########################################################################
+ # $Id$
+ ##########################################################################
++# $Log$
++##########################################################################
+ 
+ ########################################################
+ # This was written and is maintained by:
+@@ -100,8 +102,10 @@
+       if ( $Debug >= 5 ) {
+          print STDERR "DEBUG: Found -Listening on port 22- line\n";
+       }
+-   }
+-   elsif ( $ThisLine =~ m/^(log: )?Generating .* \w+ key\./ ) { # ssh/openssh
++   } elsif ( ($Port,$Address,$Reason) = ($ThisLine =~ /^error: Bind to port ([^ ]+) on ([^ ]+) failed: (.+).$/ )) {
++      $Temp = "$Address port $Port ($Reason)";
++      $BindFailed{$Temp}++;
++   } elsif ( $ThisLine =~ m/^(log: )?Generating .* \w+ key\./ ) { # ssh/openssh
+       # Don't care about this...
+       if ( $Debug >= 5 ) {
+          print STDERR "DEBUG: Found -Generating RSA key- line\n";
+@@ -149,16 +153,23 @@
+    print "\nSSHD Started: " . $Starts . " Time(s)\n";
+ }
+ 
++if (keys %BindFailed) {
++   print "\nFailed to bind:\n";
++   foreach $ThisOne (sort {$a cmp $b} keys %BindFailed) {
++      print "   $ThisOne : $BindFailed{$Temp} Time(s)\n";
++   }
++}
++
+ if ($Detail >= 10) {
+    if (keys %NoRevMap) {
+       print "\nCouldn't resolve these IPs:\n";
+-      foreach $ThisOne (keys %NoRevMap) {
++      foreach $ThisOne (sort {$a cmp $b} keys %NoRevMap) {
+          print "   " . $ThisOne . ": " . $NoRevMap{$ThisOne} . " Time(s)\n";
+       }
+    }
+    if (keys %NoIdent) {
+       print "\nDidn't receive an ident from these IPs:\n";
+-      foreach $ThisOne (keys %NoIdent) {
++      foreach $ThisOne (sort {$a cmp $b} keys %NoIdent) {
+          print "   " . $ThisOne . ": " . $NoIdent{$ThisOne} . " Time(s)\n";
+       }
+    }
+@@ -218,7 +229,7 @@
+ 
+ if (keys %RefusedConnections) {
+    print "\nRefused incoming connections:\n";
+-   foreach my $badguy ( keys %RefusedConnections ) {
++   foreach my $badguy (sort {$a cmp $b} keys %RefusedConnections ) {
+       print "      $badguy: " . $RefusedConnections{$badguy} . " Time(s)\n";
+    }
+ }
