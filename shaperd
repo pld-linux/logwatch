@@ -3,6 +3,9 @@
 # $Id$
 ##########################################################################
 # $Log$
+# Revision 1.2  2004/01/06 10:57:33  blues
+# - delay decreating message
+#
 # Revision 1.1  2003/12/25 20:07:15  blues
 # - shaperd support for logwatch
 #
@@ -29,7 +32,17 @@ while (defined($ThisLine = <STDIN>)) {
       ($ThisLine =~ m/^upload ip: /) or
       ($ThisLine =~ m/^download ip: /) or
       ($ThisLine =~ m/^Delay parameter has too low amount for this number of IP's or possibility of server.$/) or
-      ($ThisLine =~ m/^Dlay parameter has too high amount./)
+      ($ThisLine =~ m/^Dlay parameter has too high amount./) or
+      ($ThisLine =~ m/^starting: LAN Traffic shaper/) or
+      ($ThisLine =~ m/^using IP [^ ]* for [^ ]* (local|internet) interface/) or
+      ($ThisLine =~ m/^running, PID=/) or
+      ($ThisLine =~ m/^divide_upload active/) or
+      ($ThisLine =~ m/^Normal termination./) or
+      ($ThisLine =~ m/^Initialisation finished/) or
+      ($ThisLine =~ m/^HTB3 found - quantum option enabled./) or
+      ($ThisLine =~ m/^HTB Upload Class type activated/) or
+      ($ThisLine =~ m/^HTB Download Class type activated/) or
+      ($ThisLine =~ m/^Continuous traffic control enabled/)
    ) {
       #ignore these
    } elsif ( ($Direction,$Ip) = ($ThisLine =~ /^Can't control ([^ ]*) bandwidth of IP ([^ ]*)$/)) {
