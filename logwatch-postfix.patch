@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.9
 diff -u -r1.9 postfix
 --- scripts/services/postfix	3 Feb 2004 03:25:02 -0000	1.9
-+++ scripts/services/postfix	20 Apr 2004 06:14:52 -0000
++++ scripts/services/postfix	3 May 2004 20:24:58 -0000
 @@ -82,27 +82,32 @@
  $QueueSizeExceeded = 0;
  $RejectedRBL = 0;
@@ -73,7 +73,7 @@ diff -u -r1.9 postfix
        $Temp = "$Host : replied to HELO\/EHLO with my own hostname $MyName";
        $HeloError{$Temp}++;
 -   } elsif ( ($Host,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): 504 <[^ ]*>: Helo command rejected: (.*);/)) {
-+   } elsif ( ($Host,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): \d+ <[^ ]*>: Helo command rejected: (.*);/)) {
++   } elsif ( ($Host,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): \d+ <.*>: Helo command rejected: (.*);/)) {
        $Temp = "$Host : Helo command rejected \($Reason\)";
        $HeloError{$Temp}++;
     } elsif ( ($Size,$Host) = ($ThisLine =~ /bad size limit "\(([^ ]*)\)" in EHLO reply from ([^ ]*\[[^ ]*\])$/)) {
