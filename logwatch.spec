@@ -1,7 +1,7 @@
 Summary:    	Analyzes system logs 
 Summary(pl): 	Logwatch - analizator logów systemowych
 Name:        	logwatch
-Version:     	3.0
+Version:     	3.1
 Release:     	1
 License:   	MIT
 Group:       	Applications/System
@@ -49,7 +49,6 @@ ln -sf /etc/log.d/conf/logwatch.conf $RPM_BUILD_ROOT/etc/log.d/logwatch.conf
 ln -sf /etc/log.d/scripts/logwatch.pl $RPM_BUILD_ROOT/etc/cron.daily/00-logwatch 
 ln -sf /etc/log.d/scripts/logwatch.pl $RPM_BUILD_ROOT%{_sbindir}/logwatch 
 
-gzip README
 
 %post
 echo
@@ -62,7 +61,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(644,root,root,755)
-%doc *.gz
+%doc  README
 
 %attr(700,root,root) %dir /etc/log.d
 %attr(700,root,root) %dir /etc/log.d/conf
