@@ -1,11 +1,11 @@
 Index: scripts/services/sshd
 ===================================================================
 RCS file: /var/cvs/logwatch/scripts/services/sshd,v
-retrieving revision 1.38
-diff -u -r1.38 sshd
---- scripts/services/sshd	23 Jun 2004 15:01:17 -0000	1.38
-+++ scripts/services/sshd	22 Sep 2004 07:40:25 -0000
-@@ -92,16 +92,16 @@
+retrieving revision 1.39
+diff -u -r1.39 sshd
+--- scripts/services/sshd	29 Oct 2004 21:19:01 -0000	1.39
++++ scripts/services/sshd	31 Oct 2004 15:34:31 -0000
+@@ -106,16 +106,16 @@
           print STDERR "DEBUG: Found -Failed login- line\n";
        }
        $BadLogins{"$2/$1 from $3"}++;
@@ -27,26 +27,3 @@ diff -u -r1.38 sshd
     } elsif ( $ThisLine =~ m/^(fatal: )?Did not receive ident(ification)? string from (.+)/ ) { # ssh/openssh
        $name = LookupIP($3);
        $NoIdent{$name}++;
-@@ -179,6 +179,8 @@
-    } elsif ( ($Method,$User,$Host) = ($ThisLine =~ /^Postponed ([^ ]*) for (illegal user [^ ]*|[^ ]*) from ([^ ]*) port \d+ ssh/)) {
-       $PostPonedAuth{"$User/$Method"}{$Host}++;
-       $IllegalUsers{"$User/$Method"}++;
-+   } elsif ( ($User) = ($ThisLine =~ /^User ([^ ]*) not allowed because account is locked/)) {
-+      $LockedAccount{$User}++;
-    } elsif ( ($IP) = ($ThisLine =~ /^scanned from ([^ ]*)/) ) {
-       push @Scanned, LookupIP($IP);
-    } else {
-@@ -266,6 +268,13 @@
-    }
- }
- 
-+if (keys %LockedAccount) {
-+   print "\nLocked account login attempts:\n";
-+   foreach $User (sort {$a cmp $b} keys %LockedAccount) {
-+      print "   $User : $LockedAccount{$User} Time(s)\n";
-+   }
-+}
-+
- if ((keys %LoginLock) and ($Detail >= 5)) {
-    print "\nUser login attempt when nologin was set:\n";
-    foreach $User (sort {$a cmp $b} keys %LoginLock) {
