@@ -3,6 +3,9 @@
 # $Id$
 ##########################################################################
 # $Log$
+# Revision 1.1  2003/12/25 20:07:15  blues
+# - shaperd support for logwatch
+#
 ##########################################################################
 
 ########################################################
@@ -15,7 +18,9 @@
 
 ## Initial initialization:
 $DelayIncCount = 0;
+$DelayDecCount = 0;
 $MaxDelay = 0;
+$MinDelay = 0;
 $TooOldSoft = 0;
 
 while (defined($ThisLine = <STDIN>)) {
@@ -23,7 +28,8 @@ while (defined($ThisLine = <STDIN>)) {
    if (
       ($ThisLine =~ m/^upload ip: /) or
       ($ThisLine =~ m/^download ip: /) or
-      ($ThisLine =~ m/^Delay parameter has too low amount for this number of IP's or possibility of server.$/)
+      ($ThisLine =~ m/^Delay parameter has too low amount for this number of IP's or possibility of server.$/) or
+      ($ThisLine =~ m/^Dlay parameter has too high amount./)
    ) {
       #ignore these
    } elsif ( ($Direction,$Ip) = ($ThisLine =~ /^Can't control ([^ ]*) bandwidth of IP ([^ ]*)$/)) {
@@ -33,6 +39,9 @@ while (defined($ThisLine = <STDIN>)) {
    } elsif ( ($Delay) = ( $ThisLine =~ /^Increasing delay to ([0-9]*) seconds$/) ) {
       $IncreasingDelay{$Delay}++;
       $DelayIncCount++;
+   } elsif ( ($Delay) = ( $ThisLine =~ /^Decreasing delay to ([0-9]*) seconds$/) ) {
+      $DecreasingDelay{$Delay}++;
+      $DelayDecCount++;
    } elsif ( $ThisLine =~ m/^It seems that iproute2 did'nt work correctly. Please upgrade your iproute2 and\/or kernel./) {
       $TooOldSoft++;
    } else {
@@ -55,6 +64,15 @@ if (keys %IncreasingDelay) {
       }
    }
    print "\nDelay increased $DelayIncCount Time(s) up to $MaxDelay seconds.\n";
+}
+
+if (keys %DecreasingDelay) {
+   foreach $Delay (keys %DecreasingDelay) {
+      if ($Delay < $MinDelay) {
+         $MinDelay = $Delay;
+      }
+   }
+   print "\nDelay decreased $DelayDecCount Time(s) to $MinDelay seconds.\n";
 }
 
 if (keys %BandwidthControl) {
