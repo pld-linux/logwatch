@@ -4,16 +4,17 @@ RCS file: /var/cvs/logwatch/scripts/services/secure,v
 retrieving revision 1.49
 diff -u -r1.49 secure
 --- scripts/services/secure	24 Feb 2005 17:08:05 -0000	1.49
-+++ scripts/services/secure	25 Feb 2005 08:39:52 -0000
-@@ -49,6 +49,7 @@
++++ scripts/services/secure	25 Feb 2005 12:03:09 -0000
+@@ -49,6 +49,8 @@
  $ConsoleLock = 0;
  $spop3d_opened=0;
  $spop3d_errors=0;
 +$pwd_file_unknown = 0;
++$pwd_file_too_short = 0;
  use Logwatch ':ip';
  
  while (defined($ThisLine = <STDIN>)) {
-@@ -60,16 +61,18 @@
+@@ -60,16 +62,18 @@
     $temp =~ s/^([^[]+).*/$1/;
     if ($Ignore =~ /\b\Q$temp\E\b/i) { next; }
     if (
@@ -36,7 +37,7 @@ diff -u -r1.49 secure
        ( $ThisLine =~ /^(xinetd|xinetd-ipv6)\[\d+\]: EXIT: /) or
        ( $ThisLine =~ /^crond\(\w+\)\[\d+\]: session /) or
        ( $ThisLine =~ /^sshd\(\w+\)\[\d+\]: authentication failure/) or
-@@ -212,6 +215,12 @@
+@@ -212,6 +216,14 @@
     } elsif ( ($PID) = ($ThisLine =~ /^checkpassword-pam\[(\d+)\]: Setting PAM credentials succeeded/)) {
     } elsif ( ($PID) = ($ThisLine =~ /^checkpassword-pam\[(\d+)\]: Terminating PAM library/)) {
     } elsif ( ($PID) = ($ThisLine =~ /^checkpassword-pam\[(\d+)\]: Exiting with status 0/)) {
@@ -46,10 +47,12 @@ diff -u -r1.49 secure
 +      $pwd_file_unknown++;
 +   } elsif ( ($User) = ($ThisLine =~ /^pam_pwdfile\[\d+\]: wrong password for user ([^ ]+)/)) {
 +      $UnknownUser{$User}++;
++   } elsif ($ThisLine =~ /^pam_pwdfile\[\d+\]: password too short or NULL/) {
++       $pwd_file_too_short++;
     } else {
        # Unmatched entries...
        push @OtherList, "$ThisLine\n";
-@@ -282,6 +291,17 @@
+@@ -282,6 +294,20 @@
     }
  }
  
@@ -63,11 +66,14 @@ diff -u -r1.49 secure
 +if ($pwd_file_unknown > 0) {
 +   print "\nUsers unknown in password database (pwd_file): $pwd_file_unknown\n";
 +}
++if ($pwd_file_too_short > 0) {
++   print "\nPassword too short or NULL (pwd_file): $pwd_file_too_short Time(s)\n";
++}
 +
  if (keys %{$Connections}) {
     print "\nConnections:\n";
     foreach $ThisOne (keys %{$Connections}) {
-@@ -445,4 +465,3 @@
+@@ -445,4 +471,3 @@
  exit(0);
  
  # vi: shiftwidth=3 tabstop=3 syntax=perl et
