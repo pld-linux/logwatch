@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/conf/logfiles/http.conf,v
 retrieving revision 1.2
 diff -u -r1.2 http.conf
 --- conf/logfiles/http.conf	15 Dec 2003 18:35:01 -0000	1.2
-+++ conf/logfiles/http.conf	4 May 2004 05:55:19 -0000
++++ conf/logfiles/http.conf	12 May 2004 10:51:42 -0000
 @@ -4,13 +4,16 @@
  
  # What actual file?  Defaults to LogPath if not absolute path....
@@ -28,8 +28,8 @@ RCS file: /var/cvs/logwatch/scripts/services/http,v
 retrieving revision 1.9
 diff -u -r1.9 http
 --- scripts/services/http	3 Feb 2004 02:45:26 -0000	1.9
-+++ scripts/services/http	4 May 2004 05:55:19 -0000
-@@ -79,40 +79,57 @@
++++ scripts/services/http	12 May 2004 10:51:42 -0000
+@@ -79,40 +79,64 @@
  my $wpad_bytes =     0;
  my $src_count =      0;
  my $src_bytes =      0;
@@ -61,14 +61,15 @@ diff -u -r1.9 http
 +my $archive_types =  '(\.ace|\.bz2|\.cab|\.deb|\.dsc|\.ed2k|\.gz|\.hqx|\.rar|\.rpm|\.sig|\.sign|\.tar|\.tbz2|\.tgz|\.Z|\.zip)';
  my $sound_types =    '(\.mp3|\.ram|\.raw|\.rm|\.wav|\.wma|\.mid)';
 -my $movie_types =    '(\.asf|\.avi|\.mid|\.mpg|\.mpeg|\.mov)';
+-my $winexec_types =  '(\.com|\.exe|\.dll)';
 +my $movie_types =    '(\.asf|\.ass|\.avi|\.idx|\.mid|\.mpg|\.mpeg|\.mov|\.qt|\.sub)';
- my $winexec_types =  '(\.com|\.exe|\.dll)';
++my $winexec_types =  '(\.bat|\.com|\.exe|\.dll)';
  my $wpad_files =     '(wpad\.dat|wspad\.dat|proxy\.pac)';
 -my $program_src =    '(\.bas|\.c|\.diff|\.f|\.h|\.patch|\.cpp)';
 -my $images_types =   '(\.bin|\.cue|\.iso|\.run)';
 +my $program_src =    '(\.bas|\.c|\.cfg|\.conf|\.config|\.cpp|\.diff|\.f|\.h|\.init|\.pas|\.patch|\.spec)';
 +my $images_types =   '(\.bin|\.cue|\.img|\.iso|\.run)';
-+my $logs_types =     '(\.log|\.logs)';
++my $logs_types =     '(\.log|_log|-log|\.logs)';
  
  #
  #   what to look for as an attack  USE LOWER CASE!!!!!!
@@ -79,6 +80,10 @@ diff -u -r1.9 http
 -   '\\x90\\x90\\x90\\x90',
 -   '\\x04\\x01',
 -   '\\x05\\x01',
++   '/../../../',
++   '../../config.sys',
++   '/../../../autoexec.bat',
++   '/../../windows/user.dat',
 +   '\\\x02\\\xb1',
 +   '\\\x04\\\x01',
 +   '\\\x05\\\x01',
@@ -86,9 +91,12 @@ diff -u -r1.9 http
 +   '\\\x90\\\x90\\\x90\\\x90',
 +   '\\\xff\\\xff\\\xff\\\xff',
     '\/c\+dir',
++   '\/c\+dir\+c',
++   'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
 +   'author.exe',
     'cmd.exe',
 +   'cltreq.asp',
++   'c%20dir%20C',
     'default.ida',
 +   'httpodbc.dll',
     'nsiislog.dll',
@@ -102,7 +110,7 @@ diff -u -r1.9 http
  );
  
  #
-@@ -238,9 +255,16 @@
+@@ -238,9 +262,16 @@
     } elsif ($field{base_url} =~ /$images_types$/) {
        $images_count += 1;
        $images_bytes += $field{bytes_transfered};
@@ -119,7 +127,7 @@ diff -u -r1.9 http
     } else {
        $other_count += 1;
        $other_bytes += $field{bytes_transfered};
-@@ -282,7 +306,7 @@
+@@ -282,7 +313,7 @@
     
  } ## End of while loop
  
@@ -128,7 +136,7 @@ diff -u -r1.9 http
  ##   output the results 
  ##
  
-@@ -293,18 +317,20 @@
+@@ -293,18 +324,20 @@
     print " responses ";
     print " (1xx $a1xx_resp, 2xx $a2xx_resp, 3xx $a3xx_resp,";
     print " 4xx $a4xx_resp, 5xx $a5xx_resp) \n";
@@ -161,7 +169,7 @@ diff -u -r1.9 http
  }
  
  #
-@@ -335,6 +361,12 @@
+@@ -335,6 +368,12 @@
     }	
  }
  
