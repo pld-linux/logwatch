@@ -1,5 +1,5 @@
 --- ./scripts/services/pam_unix.org	Wed Apr  2 21:10:16 2003
-+++ ./scripts/services/pam_unix	Sun Apr 13 10:25:51 2003
++++ ./scripts/services/pam_unix	Mon Apr 14 12:58:36 2003
 @@ -33,10 +33,18 @@
           # ignore this line
        } elsif ($line =~ s/^authentication failure; .*rhost=(.+)\s+user=(.+)$/$2 ($1)/) {
@@ -19,7 +19,7 @@
        } elsif ($line =~ s/bad username \[(.*)\]/$1/) {
           $data{$service}{'Invalid Users'}{"Bad User: $line"}++;
        } else {
-@@ -52,6 +60,10 @@
+@@ -52,6 +60,14 @@
        } else {
           $data{$service}{'Unknown Entries'}{$line}++;
        }
@@ -27,10 +27,14 @@
 +	   if ($line =~ s/^password changed for (.+)/$1/) {
 +		   ($Detail >= 5) && $data{$service}{'Password changed'}{$line}++;
 +	   }
++   } elsif ($service eq 'poppassd') {
++	   if ($line =~ s/^password changed for (.+)/$1/) {
++		   ($Detail >= 5) && $data{$service}{'Password changed'}{$line}++;
++	   }
     } elsif ($service eq 'gdm') {
        if ($line =~ s/^session opened for user (.+) by \(uid=\d+\)/$1/) {
           ($Detail >= 5) && $data{$service}{'Sessions Opened'}{$line}++;
-@@ -60,8 +72,14 @@
+@@ -60,8 +76,14 @@
        } else {
           $data{$service}{'Unknown Entries'}{$line}++;
        }
@@ -46,7 +50,7 @@
  		   $data{$service}{'Authentication Failures'}{$line}++;
  	   } else {
  		   $data{$service}{'Unknown Entries'}{$line}++;
-@@ -71,8 +89,10 @@
+@@ -71,8 +93,10 @@
  		   $data{$service}{'Sessions Opened'}{$line}++;
  	   } elsif ($line =~ /session closed for user/) {
  		   # ignore this line
@@ -58,7 +62,7 @@
  	   } else {
  		   $data{$service}{'Unknown Entries'}{$line}++;
  	   }
-@@ -87,15 +107,11 @@
+@@ -87,15 +111,11 @@
     } elsif ($service eq 'pure-ftpd') {
  	   if ($line =~ s/^session opened for user (.+)/$1/) {
  		   $data{$service}{'Sessions Opened'}{$line}++;
