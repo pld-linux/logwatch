@@ -45,12 +45,12 @@ cp -a conf $RPM_BUILD_ROOT/etc/log.d/
 
 install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
 
-gzip -9rn $RPM_BUILD_ROOT%{_mandir}/man8/* README
-
 ln -sf /etc/log.d/scripts/logwatch.pl $RPM_BUILD_ROOT/etc/log.d/logwatch 
 ln -sf /etc/log.d/conf/logwatch.conf $RPM_BUILD_ROOT/etc/log.d/logwatch.conf 
 ln -sf /etc/log.d/scripts/logwatch.pl $RPM_BUILD_ROOT/etc/cron.daily/00-logwatch 
 ln -sf /etc/log.d/scripts/logwatch.pl $RPM_BUILD_ROOT%{_sbindir}/logwatch 
+
+gzip README
 
 %post
 echo
@@ -63,7 +63,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(644,root,root,755)
-%doc README.gz
+%doc *.gz
 
 %attr(700,root,root) %dir /etc/log.d
 %attr(700,root,root) %dir /etc/log.d/conf
