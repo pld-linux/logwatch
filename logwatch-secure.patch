@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/secure,v
 retrieving revision 1.44
 diff -u -r1.44 secure
 --- scripts/services/secure	3 Feb 2004 04:26:36 -0000	1.44
-+++ scripts/services/secure	9 Mar 2004 12:14:40 -0000
++++ scripts/services/secure	3 Apr 2004 13:46:42 -0000
 @@ -47,6 +47,7 @@
        ( $ThisLine =~ /^sudo:/) or
        ( $ThisLine =~ /^halt:/) or
@@ -47,7 +47,7 @@ diff -u -r1.44 secure
        push @RemoveFromGroup, "    user $1 from group $3\n";
        # This is an inetd lookup... $1 is the service (i.e. ftp), $2 is the response
        # I don't think these are important to log at this time
-@@ -141,8 +146,14 @@
+@@ -141,8 +146,16 @@
        $Refused->{$service}->{$from}++;
     } elsif ( ($User) = ($ThisLine =~ /^chage\[\d+\]: changed password expiry for ([^ ]+)/)) {
        $PasswordExpiry{$User}++;
@@ -60,10 +60,12 @@ diff -u -r1.44 secure
 +      $GroupRenamed{"$Group -> $NewName"}++;
 +   } elsif ( ($User,$Home,$NewHome) = ($ThisLine =~ /^usermod\[\d+\]: change user `(.*)' home from `(.*)' to `(.*)'/)) {
 +      $HomeChange{$User}{"$Home -> $NewHome"}++;
++   } elsif ( ($User,$From,$To) = ($ThisLine =~ /^usermod\[\d+\]:change user `(.*)' UID from `(.*)' to `(.*)'/)) {
++      $UidChange{"$User: $From -> $To"}++;
     } else {
        # Unmatched entries...
        push @OtherList, "$ThisLine\n";
-@@ -167,11 +178,18 @@
+@@ -167,11 +180,18 @@
     print "\nDeleted Groups:\n@DeletedUsers\n";
  }
  
@@ -84,7 +86,7 @@ diff -u -r1.44 secure
           print "      $User\n";
        }
     }
-@@ -181,6 +199,17 @@
+@@ -181,6 +201,24 @@
     print "\nRemoved From Group:\n@RemoveFromGroup\n";
  }
  
@@ -99,10 +101,17 @@ diff -u -r1.44 secure
 +   }
 +}
 +
++if (keys %UidChange) {
++   print "\nChanged users UID:\n";
++   foreach $Entry (sort {$a cmp $b} keys %UidChange) {
++      print "   $Entry\n";
++   }
++}
++
  if (keys %{$Connections}) {
     print "\nConnections:\n";
     foreach $ThisOne (keys %{$Connections}) {
-@@ -225,13 +254,23 @@
+@@ -225,13 +263,23 @@
     }
  }
  
@@ -128,7 +137,7 @@ diff -u -r1.44 secure
  if (keys %Error) {
     print "\nErrors:\n";
     foreach $Service (sort {$a cmp $b} keys %Error) {
-@@ -261,6 +300,13 @@
+@@ -261,6 +309,13 @@
     print "\nChanged password expiry for users:\n";
     foreach $User (sort {$a cmp $b} keys %PasswordExpiry) {
        print "   $User : $PasswordExpiry{$User} Time(s)\n";
