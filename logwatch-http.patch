@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/http,v
 retrieving revision 1.13
 diff -u -r1.13 http
 --- scripts/services/http	22 Jun 2004 13:48:26 -0000	1.13
-+++ scripts/services/http	15 Jul 2004 10:06:12 -0000
++++ scripts/services/http	26 Aug 2004 07:35:46 -0000
 @@ -99,6 +99,8 @@
  my $images_bytes =   0;
  my $fonts_count =    0;
@@ -14,7 +14,13 @@ diff -u -r1.13 http
  my $proxy_count =    0;
  my $proxy_bytes =    0;
  my %proxy_host =     ();
-@@ -121,11 +123,12 @@
+@@ -116,16 +118,17 @@
+    $content_types =  $content_types.'|COPYRIGHT|readme|README|FAQ|INSTALL|\.txt)';
+ my $docs_types =     '(\.asc|\.doc|\.dot|\.dvi|\.gnumeric|\.mcd|\.mso|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.sxi|\.tex|\.text|\.xls|\.xml)';
+ my $archive_types =  '(\.ace|\.bz2|\.cab|\.deb|\.dsc|\.ed2k|\.gz|\.hqx|\.md5|\.rar|\.rpm|\.sig|\.sign|\.tar|\.tbz2|\.tgz|\.Z|\.zip)';
+-my $sound_types =    '(\.au|\.mid|\.mp3|\.ram|\.raw|\.rm|\.wav|\.wma|\.wmv|\.xsm)';
++my $sound_types =    '(\.au|\.mid|\.mp3|\.ogg|\.ram|\.raw|\.rm|\.wav|\.wma|\.wmv|\.xsm)';
+ my $movie_types =    '(\.asf|\.ass|\.avi|\.idx|\.mid|\.mpg|\.mpeg|\.mov|\.qt|\.psb|\.srt|\.ssa|\.smi|\.sub)';
  my $winexec_types =  '(\.bat|\.com|\.exe|\.dll)';
  my $wpad_files =     '(wpad\.dat|wspad\.dat|proxy\.pac)';
  my $program_src =    '(';
