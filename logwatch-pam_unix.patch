@@ -1,0 +1,16 @@
+Index: scripts/services/pam_unix
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/pam_unix,v
+retrieving revision 1.14
+diff -u -r1.14 pam_unix
+--- scripts/services/pam_unix	21 Jun 2004 14:59:05 -0000	1.14
++++ scripts/services/pam_unix	19 Aug 2004 14:29:18 -0000
+@@ -86,6 +86,8 @@
+    } elsif ($service eq 'gdm') {
+       if ($line =~ s/^session opened for user (.+) by \(uid=\d+\)/$1/) {
+          ($Detail >= 5) && $data{$service}{'Sessions Opened'}{$line}++;
++      } elsif ($line =~ s/^authentication failure; logname=.*user=(.+)$/$1/) {
++         $data{$service}{'Authentication Failures'}{$line}++;
+       } elsif ($line =~ /session closed for user/) {
+          # ignore this line
+       } else {
