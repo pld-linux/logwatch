@@ -5,18 +5,16 @@
 Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
-Version:	5.2.2
-Release:	14
+Version:	6.0
+Release:	0.pre.0.1
 License:	MIT
 Group:		Applications/System
+#Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
 #Path for pre-versions:
-#Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
-Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
-# Source0-md5:	d3b676fd15e51a00027ee13b4a5ce486
-Source1:	http://piorun.ds.pg.gda.pl/~blues/SOURCES/%{name}-netscreen-filter-0.10.tar.gz
-# Source1-md5:	3002de179d14fb053ccfc378f63138f5
-Source2:	%{name}-saslauthd
-Source3:	%{name}-saslauthd.conf
+Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
+# Source0-md5:	591d6e4480db79d5a2f9f397bbf565eb
+#Source2:	%{name}-saslauthd
+#Source3:	%{name}-saslauthd.conf
 Patch0:		%{name}-config.patch
 Patch1:		%{name}-log_conf.patch
 Patch2:		%{name}-clam-update.patch
@@ -64,9 +62,6 @@ u¿yciu i mo¿e pracowaæ na wiêkszo¶ci systemów.
 
 %prep
 %setup -q
-
-tar -zxvf %{SOURCE1}
-
 %patch0 -p1
 %patch1 -p1
 %patch2 -p0
