@@ -1,14 +1,14 @@
-Summary:     Analyzes system logs 
-Name:        logwatch
-Version:     1.1
-Release:     2
-Copyright:   GPL
-Group:       Utilities/System
-Source:      ftp://ftp.kaybee.org/pub/linux/%{name}-%{version}.tar.gz
-Requires:    perl
-Buildroot:   /tmp/%{name}-%{version}-root
-Buildarch:   noarch
-Summary(pl): Logwatch - analizator logów systemowych
+Summary:    	Analyzes system logs 
+Summary(pl): 	Logwatch - analizator logów systemowych
+Name:        	logwatch
+Version:     	1.6.6
+Release:     	0.1
+Copyright:   	GPL
+Group:       	Utilities/System
+Source:      	ftp://ftp.kaybee.org/pub/linux/%{name}-%{version}.tar.gz
+Requires:    	perl
+Buildroot:   	/tmp/%{name}-%{version}-root
+Buildarch:   	noarch
 
 %description
 LogWatch is a customizable, pluggable log-monitoring system.  It will go
@@ -28,33 +28,23 @@ wiêkszo¶ci systemów.
 %build
 
 %install
-install -d $RPM_BUILD_ROOT/etc/log.d/scripts/{services,shared,logfiles/{messages,xferlog}}
-install -d $RPM_BUILD_ROOT/etc/log.d/conf/{services,logfiles}
-install -d $RPM_BUILD_ROOT/usr/{sbin,man/man8}
-install -d $RPM_BUILD_ROOT/etc/cron.daily
+rm -rf $RPM_BUILD_ROOT
 
-install scripts/logwatch.pl $RPM_BUILD_ROOT/etc/log.d/scripts/logwatch.pl
-install scripts/logfiles/xferlog/* $RPM_BUILD_ROOT/etc/log.d/scripts/logfiles/xferlog
-install scripts/services/* $RPM_BUILD_ROOT/etc/log.d/scripts/services
-install scripts/shared/* $RPM_BUILD_ROOT/etc/log.d/scripts/shared
+install -d $RPM_BUILD_ROOT/etc/log.d/ \
+	$RPM_BUILD_ROOT{%{_sbindir},%{_mandir}/man8} \
+	$RPM_BUILD_ROOT/etc/cron.daily 
 
-install conf/logwatch.conf $RPM_BUILD_ROOT/etc/log.d/conf/logwatch.conf
-install conf/logfiles/* $RPM_BUILD_ROOT/etc/log.d/conf/logfiles
-install conf/services/* $RPM_BUILD_ROOT/etc/log.d/conf/services
+cp -a scripts $RPM_BUILD_ROOT/etc/log.d/
+cp -a conf $RPM_BUILD_ROOT/etc/log.d/
 
-install logwatch.8 $RPM_BUILD_ROOT/usr/man/man8
+install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
 
-bzip2 -9 $RPM_BUILD_ROOT/usr/man/man8/*
-
-rm -f $RPM_BUILD_ROOT/etc/log.d/logwatch 
-rm -f $RPM_BUILD_ROOT/etc/log.d/logwatch.conf 
-rm -f $RPM_BUILD_ROOT/etc/cron.daily/00-logwatch 
-rm -f $RPM_BUILD_ROOT/usr/sbin/logwatch
+gzip -9rn $RPM_BUILD_ROOT%{_mandir}/man8/* README
 
 ln -sf /etc/log.d/scripts/logwatch.pl $RPM_BUILD_ROOT/etc/log.d/logwatch 
 ln -sf /etc/log.d/conf/logwatch.conf $RPM_BUILD_ROOT/etc/log.d/logwatch.conf 
 ln -sf /etc/log.d/scripts/logwatch.pl $RPM_BUILD_ROOT/etc/cron.daily/00-logwatch 
-ln -sf /etc/log.d/scripts/logwatch.pl $RPM_BUILD_ROOT/usr/sbin/logwatch 
+ln -sf /etc/log.d/scripts/logwatch.pl $RPM_BUILD_ROOT%{_sbindir}/logwatch 
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -67,28 +57,35 @@ echo
 
 %files
 %defattr(644,root,root,755)
-%doc README
+%doc README.gz
 
 %attr(700,root,root) %dir /etc/log.d
 %attr(700,root,root) %dir /etc/log.d/conf
 %attr(700,root,root) %dir /etc/log.d/scripts
+
 %attr(700,root,root) %dir /etc/log.d/conf/logfiles
 %attr(700,root,root) %dir /etc/log.d/conf/services
+
 %attr(700,root,root) %dir /etc/log.d/scripts/logfiles
 %attr(700,root,root) %dir /etc/log.d/scripts/services
 %attr(700,root,root) %dir /etc/log.d/scripts/shared
-%attr(700,root,root) %dir /etc/log.d/scripts/logfiles/messages
-%attr(700,root,root) %dir /etc/log.d/scripts/logfiles/xferlog
+
+%attr(700,root,root) %dir /etc/log.d/scripts/logfiles/*
 
 %attr(600,root,root) %config(noreplace) %verify(not size mtime md5) /etc/log.d/conf/logwatch.conf
-%attr(600,root,root) %config /etc/log.d/conf/services/*
-%attr(600,root,root) %config /etc/log.d/conf/logfiles/*
-%attr(700,root,root) /etc/log.d/scripts/logwatch.pl
-%attr(700,root,root) /usr/sbin/logwatch
-%attr(700,root,root) %config /etc/log.d/scripts/shared/*
-%attr(700,root,root) %config /etc/log.d/scripts/services/*
-%attr(700,root,root) %config /etc/log.d/scripts/logfiles/xferlog/*
-%attr(700,root,root) /etc/log.d/logwatch
 %attr(600,root,root) %config(noreplace) %verify(not size mtime md5) /etc/log.d/logwatch.conf
+
+%attr(600,root,root) %config %verify(not size mtime md5) /etc/log.d/conf/services/*
+%attr(600,root,root) %config %verify(not size mtime md5) /etc/log.d/conf/logfiles/*
+
+%attr(700,root,root) /etc/log.d/scripts/logwatch.pl
+%attr(700,root,root) %{_sbindir}/logwatch
+
+%attr(700,root,root) /etc/log.d/scripts/shared/*
+%attr(700,root,root) /etc/log.d/scripts/services/*
+%attr(700,root,root) /etc/log.d/scripts/logfiles/*/*
+
+%attr(700,root,root) /etc/log.d/logwatch
+
 %attr(700,root,root) /etc/cron.daily/00-logwatch
-%attr(644,root, man) /usr/man/man8/*
+%{_mandir}/man8/*
