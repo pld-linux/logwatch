@@ -4,20 +4,39 @@ RCS file: /var/cvs/logwatch/scripts/services/sshd,v
 retrieving revision 1.37
 diff -u -r1.37 sshd
 --- scripts/services/sshd	3 Feb 2004 19:13:14 -0000	1.37
-+++ scripts/services/sshd	7 Apr 2004 07:49:12 -0000
-@@ -72,7 +72,10 @@
++++ scripts/services/sshd	21 Jun 2004 22:11:31 -0000
+@@ -56,23 +56,23 @@
+    }
+    chomp($ThisLine);
+    if (
+-       ($ThisLine =~ m/^(log: )?Closing connection to/) or
+-       ($ThisLine =~ m/^Connection closed by/) or
+        ($ThisLine =~ m/^(log: )?$/ ) or
+        ($ThisLine =~ m/^(log: )?\^\[\[60G/ ) or
+        ($ThisLine =~ m/^(log: )? succeeded$/ ) or
++       ($ThisLine =~ m/^(log: )?Closing connection to/) or
+        ($ThisLine =~ m/^(log: )?Starting sshd:/ ) or
+        ($ThisLine =~ m/^(log: )?sshd \-TERM succeeded/ ) or
+-       ($ThisLine =~ m/^Disconnecting: Command terminated on signal \d+/) or
+        ($ThisLine =~ m/^Bad protocol version identification .*:? [\d.]+/ ) or
+        ($ThisLine =~ m/^Bad protocol version identification.*Big-Brother-Monitor/ ) or
+-       ($ThisLine =~ m/Connection from .* port /) or
++       ($ThisLine =~ m/^Connection closed by/) or
++       ($ThisLine =~ m/^Disconnecting: Command terminated on signal \d+/) or
+        ($ThisLine =~ m/^connect from \d+\.\d+\.\d+\.\d+/) or
+-       ($ThisLine =~ m/Read from socket failed/) or
         ($ThisLine =~ m/^fatal: Timeout before authentication/ ) or
-        ($ThisLine =~ m/sshd startup\s+succeeded/) or
-        ($ThisLine =~ m/sshd shutdown\s+succeeded/) or
--       ($ThisLine =~ m/Postponed keyboard-interactive for [^ ]+ from [^ ]+/)
++       ($ThisLine =~ m/Connection from .* port /) or
 +       ($ThisLine =~ m/Postponed keyboard-interactive for [^ ]+ from [^ ]+/) or
-+       ($ThisLine =~ m/Disconnecting: Corrupted MAC on input./) or
-+       ($ThisLine =~ m/Disconnecting: Corrupted check bytes on input./) or
-+       ($ThisLine =~ m/^error: accept: Connection reset by peer$/)
++       ($ThisLine =~ m/Read from socket failed/) or
+        ($ThisLine =~ m/sshd startup\s+succeeded/) or
+-       ($ThisLine =~ m/sshd shutdown\s+succeeded/) or
+-       ($ThisLine =~ m/Postponed keyboard-interactive for [^ ]+ from [^ ]+/)
++       ($ThisLine =~ m/sshd shutdown\s+succeeded/)
     ) {
        # Ignore these
     } elsif ($ThisLine =~ /^Accepted (\S+) for (\S+) from ([\d\.:a-f]+) port (\d+)/) {
-@@ -89,15 +92,15 @@
+@@ -89,15 +89,15 @@
           print STDERR "DEBUG: Found -Failed login- line\n";
        }
        $BadLogins{"$2/$1 from $3"}++;
@@ -36,7 +55,7 @@ diff -u -r1.37 sshd
        $IllegalUsers{"$1/none from $2"}++;
     } elsif ( $ThisLine =~ m/^(fatal: )?Did not receive ident(ification)? string from (.+)/ ) { # ssh/openssh
        $name = LookupIP($3);
-@@ -151,6 +154,10 @@
+@@ -151,6 +151,10 @@
        $NoRevMap{$ThisLine}++;
     } elsif ( ($Address) = ($ThisLine =~ /^reverse mapping checking getaddrinfo for ([^ ]*) failed - POSSIBLE BREAKIN ATTEMPT!/)) {
        $NoRevMap{$Address}++;
@@ -47,36 +66,20 @@ diff -u -r1.37 sshd
     } elsif ( $ThisLine =~ m/subsystem request for sftp/ ) {
        $sftpRequests++;
     } elsif ( $ThisLine =~ m/refused connect from (.*)$/ ) {
-@@ -169,6 +176,8 @@
+@@ -169,6 +173,9 @@
        $TTYModesFail{$Reason}++;
     } elsif ( ($User,undef) = ($ThisLine =~ /^User ([^ ]*) not allowed because ([^ ]*) exists$/)) {
        $LoginLock{$User}++;
 +   } elsif ( ($Method,$User,$Host) = ($ThisLine =~ /^Postponed ([^ ]*) for (illegal user [^ ]*|[^ ]*) from ([^ ]*) port \d+ ssh/)) {
 +      $PostPonedAuth{"$User/$Method"}{$Host}++;
++      $IllegalUsers{"$User/$Method"}++;
     } elsif ( ($IP) = ($ThisLine =~ /^scanned from ([^ ]*)/) ) {
        push @Scanned, LookupIP($IP);
     } else {
-@@ -235,13 +244,6 @@
+@@ -263,6 +270,16 @@
     }
  }
  
--if (keys %TooManyFailures) {
--   print "\nDisconnecting after too many authentication failures for user:\n";
--   foreach $User (sort {$a cmp $b} keys %TooManyFailures) {
--      print "   $User : $TooManyFailures{$User} Time(s)\n";
--   }
--}
--
- if (keys %BadLogins) {
-    print "\nFailed logins from these:\n";
-    for (sort keys %BadLogins) {
-@@ -260,6 +262,16 @@
-    print "\nUser login attempt when nologin was set:\n";
-    foreach $User (sort {$a cmp $b} keys %LoginLock) {
-       print "   $User : $LoginLock{$User} Time(s)\n";
-+   }
-+}
-+
 +if (keys %PostPonedAuth) {
 +   print "\nPostponed authentication:\n";
 +   foreach $User (sort {$a cmp $b} keys %PostPonedAuth) {
@@ -84,6 +87,9 @@ diff -u -r1.37 sshd
 +      foreach $Host (sort {$a cmp $b} keys %{$PostPonedAuth{$User}}) {
 +         print "      $Host: $PostPonedAuth{$User}{$Host} Time(s)\n";
 +      }
-    }
- }
- 
++   }
++}
++
+ if (keys %Users) {
+    print "\nUsers logging in through sshd:\n";
+    foreach $user (sort {$a cmp $b} keys %Users) {
