@@ -13,6 +13,7 @@ Patch1:		%{name}-log_conf.patch
 Patch2:		%{name}-postfix.patch
 Patch3:		%{name}-pam_unix.patch
 Patch4:		%{name}-xscreensaver.patch
+Patch5:		%{name}-postfix2.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	perl-modules
@@ -40,6 +41,7 @@ u¿yciu i moze pracowaæ na wiêkszo¶ci systemów.
 %patch2 -p0
 %patch3 -p1
 %patch4 -p0
+%patch5 -p1
 
 %install
 rm -rf $RPM_BUILD_ROOT
