@@ -1,0 +1,320 @@
+Index: scripts/services/sshd
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/sshd,v
+retrieving revision 1.31
+diff -u -r1.31 sshd
+--- scripts/services/sshd	26 Nov 2003 14:36:30 -0000	1.31
++++ scripts/services/sshd	11 Dec 2003 11:52:25 -0000
+@@ -40,41 +40,45 @@
+ 		$DebugCounter++;
+ 	}
+ 	chomp($ThisLine);
+-	if ( 
+-		($ThisLine =~ m/^connect from \d+\.\d+\.\d+\.\d+/) or 
+-        ($ThisLine =~ m/Read from socket failed/)
+-      ) {
++	if (
++		($ThisLine =~ m/^(log: )?Closing connection to/) or 
++		($ThisLine =~ m/^Connection closed by/) or
++		($ThisLine =~ m/^(log: )?$/ ) or
++		($ThisLine =~ m/^(log: )?\^\[\[60G/ ) or
++		($ThisLine =~ m/^(log: )? succeeded$/ ) or
++		($ThisLine =~ m/^(log: )?Starting sshd:/ ) or
++		($ThisLine =~ m/^(log: )?sshd \-TERM succeeded/ ) or
++		($ThisLine =~ m/^Disconnecting: Command terminated on signal \d+/) or
++		($ThisLine =~ m/Bad protocol version identification .*:? [\d.]+/ ) or
++		($ThisLine =~ m/^connect from \d+\.\d+\.\d+\.\d+/) or
++		($ThisLine =~ m/Read from socket failed/) or
++		($ThisLine =~ m/^Bad protocol version identification.*Big-Brother-Monitor/ ) or
++		($ThisLine =~ m/^fatal: Timeout before authentication/ )
++	) {
+       # Ignore these
+    } elsif ($ThisLine =~ /^Accepted (\S+) for (\S+) from ([\d\.:a-f]+) port (\d+)/) {
+-      if ($Debug >= 5) {
+-         print STDERR "DEBUG: Found -$2 logged in from $3 using $1\n";
+-      }
+-      if ($Detail >= 20) {
+-		  $Users{$2}{$3}{$1}++;
+-	  } else {
+-		  $Users{$2}{$3}{"(all)"}++;
+-	  }
++	   if ($Debug >= 5) {
++		   print STDERR "DEBUG: Found -$2 logged in from $3 using $1\n";
++	   }
++	   if ($Detail >= 20) {
++		   $Users{$2}{$3}{$1}++;
++	   } else {
++		   $Users{$2}{$3}{"(all)"}++;
++	   }
+    } elsif ( $ThisLine =~ m/^Failed (\S+) for (\S+) from ([^ ]+) port (\d+)/ ) { #openssh
+-      if ( $Debug >= 5 ) {
+-         print STDERR "DEBUG: Found -Failed login- line\n";
+-      }
+-      $BadLogins{"$2/$1 from $3"}++;
++	   if ( $Debug >= 5 ) {
++		   print STDERR "DEBUG: Found -Failed login- line\n";
++	   }
++	   $BadLogins{"$2/$1 from $3"}++;
+    } elsif ( $ThisLine =~ m/^Failed (\S+) for illegal user (\S+) from ([^ ]+) port (\d+)/ ) { #openssh
+-      $BadLogins{"$2/$1 from $3"}++;
++	   $BadLogins{"$2/$1 from $3"}++;
+    } elsif ( $ThisLine =~ m/^Illegal user (\S+) from ([\d.]+)/ ) { #redhat thing
+-      $IllegalUsers{"$1/none from $2"}++;
++	   $IllegalUsers{"$1/none from $2"}++;
+    } elsif ( $ThisLine =~ m/^(fatal: )?Did not receive ident(ification)? string from (.+)/ ) { # ssh/openssh
+-      $name = LookupIP($3);
+-      $NoIdent{$name}++;
+-   } elsif ( $ThisLine =~ m/Bad protocol version identification .*:? [\d.]+/ ) { # ssh/openssh
+-      # not terribly useful, really
+-   } elsif ( ($ThisLine =~ m/^(log: )?Closing connection to/) or 
+-             ($ThisLine =~ m/^Connection closed by/) ) {
+-      # Don't care about this...
++	   $name = LookupIP($3);
++	   $NoIdent{$name}++;
+    } elsif ( $ThisLine =~ m/^fatal: Connection closed by remote host\./ ) {
+       $NetworkErrors++;
+-   } elsif ( $ThisLine =~ m/^fatal: Timeout before authentication/ ) { # ssh/openssh
+-      # Don't care about this...
+    } elsif ( $ThisLine =~ m/^fatal: Read error from remote host: Connection reset by peer/ ) {
+       $NetworkErrors++;
+    } elsif ( $ThisLine =~ m/^fatal: Write failed: Network is unreachable/ ) {
+@@ -88,57 +92,41 @@
+       if ( $Debug >= 5 ) {
+          print STDERR "DEBUG: Found -Signal 15 Terminating- line\n";
+       }
+-   } elsif ($ThisLine =~ m/^Disconnecting: Command terminated on signal \d+/) {
+-      # openssh emits thse, but they're not kills, oddly.
+-   }
+    elsif ( $ThisLine =~ m/^(log: )?Server listening on( [^ ]+)? port \d+/ ) { #ssh/openssh
+-      $Starts++;
+-      if ( $Debug >= 5 ) {
+-         print STDERR "DEBUG: Found -Listening on port 22- line\n";
+-      }
++	   $Starts++;
++	   if ( $Debug >= 5 ) {
++		   print STDERR "DEBUG: Found -Listening on port 22- line\n";
++	   }
+    }
+    elsif ( $ThisLine =~ m/^(log: )?Generating .* \w+ key\./ ) { # ssh/openssh
+-      # Don't care about this...
+-      if ( $Debug >= 5 ) {
+-         print STDERR "DEBUG: Found -Generating RSA key- line\n";
+-      }
++	   # Don't care about this...
++	   if ( $Debug >= 5 ) {
++		   print STDERR "DEBUG: Found -Generating RSA key- line\n";
++	   }
+    } elsif ( $ThisLine =~ m/^packet_set_maxsize: /) {
+-      if ( $Debug >= 5 ) {
+-         print STDERR "DEBUG: Found -packet_set_maxsize- line\n";
+-      }
+-
++	   if ( $Debug >= 5 ) {
++		   print STDERR "DEBUG: Found -packet_set_maxsize- line\n";
++	   }
+    }
+    elsif ( $ThisLine =~ m/^(log: )?\w+ key generation complete\./ ) { # ssh/openssh
+-      # Don't care about this...
+-      if ( $Debug >= 5 ) {
+-         print STDERR "DEBUG: Found -Keygen complete- line\n";
+-      }
++	   # Don't care about this...
++	   if ( $Debug >= 5 ) {
++		   print STDERR "DEBUG: Found -Keygen complete- line\n";
++	   }
+    } elsif ( $ThisLine =~ m/^Failed (\w+) for (\S+) from ([\d.]+) port (\d+)/ ) { #openssh
+-      # depending on log mode, openssh may not report these in connection context.
+-      if ( $Debug >= 5 ) {
+-         print STDERR "DEBUG: Found -Failed login- line\n";
+-      }
+-      $BadLogins{"$2/$1 from $3"}++;
+-   } elsif ($ThisLine =~ s/^(log: )?Could not reverse map address (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*$/$2/) {
+-      $NoRevMap{$ThisLine}++;
++	   # depending on log mode, openssh may not report these in connection context.
++	   if ( $Debug >= 5 ) {
++		   print STDERR "DEBUG: Found -Failed login- line\n";
++	   }
++	   $BadLogins{"$2/$1 from $3"}++;
++   } elsif ($ThisLine =~ s/^(log: )?Could not reverse map address ([^ ]*).*$/$2/) {
++	   $NoRevMap{$ThisLine}++;
+    } elsif ( $ThisLine =~ m/subsystem request for sftp/ ) {
+-      $sftpRequests++;
++	   $sftpRequests++;
+    } elsif ( $ThisLine =~ m/refused connect from (.*)$/ ) {
+-     $RefusedConnections{$1}++;
+-   } elsif ( ($IP) = ($ThisLine =~ /^scanned from (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/) ) {
+-     push @Scanned, LookupIP($IP);
+-   } elsif ( $ThisLine =~ m/^(log: )?sshd \-TERM succeeded/ ) { # openssh 3.4p1
+-      # Don't care about this...
+-   } elsif ( $ThisLine =~ m/^(log: )?Starting sshd:/ ) { # openssh 3.4p1
+-      # Don't care about this...
+-   } elsif ( $ThisLine =~ m/^(log: )? succeeded$/ ) { # openssh 3.4p1
+-      # Don't care about this...
+-   } elsif ( $ThisLine =~ m/^(log: )?\^\[\[60G/ ) { # openssh 3.4p1
+-      # Don't care about this...
+-   } elsif ( $ThisLine =~ m/^(log: )?$/ ) { # openssh 3.4p1
+-      # Don't care about this...
+-   } elsif ( $ThisLine =~ m/^Bad protocol version identification.*Big-Brother-Monitor/ ) {
+-      #Custom, added by WLS to ignore Big brother connects
++	   $RefusedConnections{$1}++;
++   } elsif ( ($IP) = ($ThisLine =~ /^scanned from ([^ ]*)/) ) {
++	   push @Scanned, LookupIP($IP);
+    } else {
+       # Report any unmatched entries...
+       unless ($ThisLine =~ /fwd X11 connect/) {
+@@ -148,96 +136,96 @@
+ }
+ 
+ if ($NetworkErrors) {
+-   print "\nNetwork Read Write Errors: " . $NetworkErrors . "\n";
++	print "\nNetwork Read Write Errors: " . $NetworkErrors . "\n";
+ }
+ if ($Kills) {
+-   print "\nSSHD Killed: " . $Kills . " Time(s)\n";
++	print "\nSSHD Killed: " . $Kills . " Time(s)\n";
+ }
+ if ($Starts) {
+-   print "\nSSHD Started: " . $Starts . " Time(s)\n";
++	print "\nSSHD Started: " . $Starts . " Time(s)\n";
+ }
+ 
+ if ($Detail >= 10) {
+-   if (keys %NoRevMap) {
+-      print "\nCouldn't resolve these IPs:\n";
+-      foreach $ThisOne (keys %NoRevMap) {
+-         print "   " . $ThisOne . ": " . $NoRevMap{$ThisOne} . " Time(s)\n";
+-      }
+-   }
+-   if (keys %NoIdent) {
+-      print "\nDidn't receive an ident from these IPs:\n";
+-      foreach $ThisOne (keys %NoIdent) {
+-         print "   " . $ThisOne . ": " . $NoIdent{$ThisOne} . " Time(s)\n";
+-      }
+-   }
++	if (keys %NoRevMap) {
++		print "\nCouldn't resolve these IPs:\n";
++		foreach $ThisOne (keys %NoRevMap) {
++			print "   " . $ThisOne . ": " . $NoRevMap{$ThisOne} . " Time(s)\n";
++		}
++	}
++	if (keys %NoIdent) {
++		print "\nDidn't receive an ident from these IPs:\n";
++		foreach $ThisOne (keys %NoIdent) {
++			print "   " . $ThisOne . ": " . $NoIdent{$ThisOne} . " Time(s)\n";
++		}
++	}
+ }
+ 
+ if ($#BadRSA >= 0) {
+-   print "\nReceived a bad response to RSA challenge from these:\n";
+-   foreach $ThisOne (@BadRSA) {
+-      print "   " . $ThisOne . "\n";
+-   }
++	print "\nReceived a bad response to RSA challenge from these:\n";
++	foreach $ThisOne (@BadRSA) {
++		print "   " . $ThisOne . "\n";
++	}
+ }
+ 
+ if (keys %BadLogins) {
+-   print "\nFailed logins from these:\n";
+-   for (sort keys %BadLogins) {
+-      print "   $_: $BadLogins{$_} Time(s)\n";
+-   }
++	print "\nFailed logins from these:\n";
++	for (sort keys %BadLogins) {
++		print "   $_: $BadLogins{$_} Time(s)\n";
++	}
+ }
+ 
+ if (keys %IllegalUsers) {
+-   print "\nIllegal users from these:\n";
+-   for (sort keys %IllegalUsers) {
+-      print "   $_: $IllegalUsers{$_} Time(s)\n";
+-   }
++	print "\nIllegal users from these:\n";
++	for (sort keys %IllegalUsers) {
++		print "   $_: $IllegalUsers{$_} Time(s)\n";
++	}
+ }
+ 
+ if (keys %Users) {
+-   print "\nUsers logging in through sshd:\n";
+-   foreach $user (sort keys %Users) {
+-      print "   $user:\n";
+-      my $totalSort = TotalCountOrder(%{$Users{$user}}, \&SortIP);
+-      foreach my $ip (sort $totalSort keys %{$Users{$user}}) {
+-	 my $name = LookupIP($ip);
+-	 if ($Detail >= 20) {
+-	    print "      $name:\n";
+-	    my $sort = CountOrder(%{$Users{$user}{$ip}});
+-	    foreach my $method (sort $sort keys %{$Users{$user}{$ip}}) {
+-	       my $val = $Users{$user}{$ip}{$method};
+-	       my $plural = ($val > 1) ? "s" : "";
+-	       print "         $method: $val time$plural\n";
+-	     }
+-	 } else {
+-	     my $val = (values %{$Users{$user}{$ip}})[0];
+-	     my $plural = ($val > 1) ? "s" : "";
+-	     print "      $name: $val time$plural\n";
+-	 }
+-      }
+-   }
++	print "\nUsers logging in through sshd:\n";
++	foreach $user (sort keys %Users) {
++		print "   $user:\n";
++		my $totalSort = TotalCountOrder(%{$Users{$user}}, \&SortIP);
++		foreach my $ip (sort $totalSort keys %{$Users{$user}}) {
++			my $name = LookupIP($ip);
++			if ($Detail >= 20) {
++				print "      $name:\n";
++				my $sort = CountOrder(%{$Users{$user}{$ip}});
++				foreach my $method (sort $sort keys %{$Users{$user}{$ip}}) {
++					my $val = $Users{$user}{$ip}{$method};
++					my $plural = ($val > 1) ? "s" : "";
++					print "         $method: $val time$plural\n";
++				}
++			} else {
++				my $val = (values %{$Users{$user}{$ip}})[0];
++				my $plural = ($val > 1) ? "s" : "";
++				print "      $name: $val time$plural\n";
++			}
++		}
++	}
+ }
+ 
+ if ($#Scanned >= 0) {
+-   print "\nScanned from these:\n";
+-   foreach $ThisOne (sort SortIP @Scanned) {
+-      print "   " . $ThisOne . "\n";
+-   }
++	print "\nScanned from these:\n";
++	foreach $ThisOne (sort SortIP @Scanned) {
++		print "   " . $ThisOne . "\n";
++	}
+ }
+ 
+ if (keys %RefusedConnections) {
+-  print "\nRefused incoming connections:\n";
+-  foreach my $badguy ( keys %RefusedConnections ) {
+-     print "      $badguy: " . $RefusedConnections{$badguy} . " Time(s)\n";
+-  }
++	print "\nRefused incoming connections:\n";
++	foreach my $badguy ( keys %RefusedConnections ) {
++		print "      $badguy: " . $RefusedConnections{$badguy} . " Time(s)\n";
++	}
+ }
+ 
+ if ($sftpRequests > 0) {
+-   print "\nSFTP subsystem requests: $sftpRequests Time(s)\n";
++	print "\nSFTP subsystem requests: $sftpRequests Time(s)\n";
+ }
+ 
+ if ($#OtherList >= 0) {
+-   print "\n**Unmatched Entries**\n";
+-   print @OtherList;
++	print "\n**Unmatched Entries**\n";
++	print @OtherList;
+ }
+ 
+ exit(0);
