@@ -6,7 +6,7 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	5.2.2
-Release:	7
+Release:	8
 License:	MIT
 Group:		Applications/System
 #Path for pre-versions:
@@ -99,34 +99,15 @@ fi
 %files
 %defattr(644,root,root,755)
 %doc README HOWTO-Make-Filter project/{CHANGES,TODO}
-%attr(700,root,root) %dir %{_logwatchconf}
-%attr(700,root,root) %dir %{_logwatchdir}
-%attr(700,root,root) %dir %{_logwatchdir}/scripts
+%attr(750,root,root) %dir %{_logwatchconf}
+%attr(750,root,root) %dir %{_logwatchconf}/logfiles
+%attr(750,root,root) %dir %{_logwatchconf}/services
+%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/logwatch.conf
+%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/services/*.conf
+%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/logfiles/*.conf
 
-%attr(700,root,root) %dir %{_logwatchconf}/logfiles
-%attr(700,root,root) %dir %{_logwatchconf}/services
+%attr(755,root,root) %{_logwatchdir}
 
-%attr(700,root,root) %dir %{_logwatchdir}/scripts/services
-%attr(700,root,root) %dir %{_logwatchdir}/scripts/shared
-%attr(700,root,root) %dir %{_logwatchdir}/scripts/logfiles
-%attr(700,root,root) %dir %{_logwatchdir}/scripts/logfiles/autorpm
-%attr(700,root,root) %dir %{_logwatchdir}/scripts/logfiles/cron
-%attr(700,root,root) %dir %{_logwatchdir}/scripts/logfiles/samba
-%attr(700,root,root) %dir %{_logwatchdir}/scripts/logfiles/up2date
-%attr(700,root,root) %dir %{_logwatchdir}/scripts/logfiles/xferlog
-%attr(700,root,root) %dir %{_logwatchdir}/lib
-
-%attr(700,root,root) %{_logwatchdir}/scripts/shared/*
-%attr(700,root,root) %{_logwatchdir}/scripts/services/*
-%attr(700,root,root) %{_logwatchdir}/scripts/logfiles/*/*
-%attr(700,root,root) %{_logwatchdir}/scripts/logwatch.pl
-
-%attr(600,root,root) %{_logwatchdir}/lib/*.pm
-
-%attr(600,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/logwatch.conf
-%attr(600,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/services/*.conf
-%attr(600,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/logfiles/*.conf
-
-%attr(700,root,root) %{_sbindir}/logwatch
-%attr(700,root,root) /etc/cron.daily/00-logwatch
+%attr(755,root,root) %{_sbindir}/logwatch
+%attr(755,root,root) /etc/cron.daily/00-logwatch
 %{_mandir}/man8/*
