@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.7
 diff -u -r1.7 postfix
 --- scripts/services/postfix	15 Dec 2003 18:35:03 -0000	1.7
-+++ scripts/services/postfix	31 Dec 2003 16:07:35 -0000
++++ scripts/services/postfix	31 Dec 2003 16:10:37 -0000
 @@ -61,12 +61,18 @@
  #
  ########################################################
@@ -229,7 +229,7 @@ diff -u -r1.7 postfix
 +}
 +
 +if (keys %TooManyErrors) {
-+   print "\n\nToo many errors in SMTP commands dialog:"
++   print "\n\nToo many errors in SMTP commands dialog:\n";
 +   foreach $Command(sort {$a cmp $b} keys %TooManyErrors) {
 +      print "   After command $Command:\n";
 +      foreach $Host (sort {$a cmp $b} keys %{$TooManyErrors{$Command}} ) {
