@@ -113,7 +113,7 @@ if ( ( $Detail >= 0 ) and (keys %LoginFailed)) {
    print "\n" . " " x $CountSpaceLength . "$ConnCount\n\n\n";
 }
 
-if ( ( $Detail >= 5 ) and (keys %Connection)) {
+if ( ( $Detail >= 0 ) and (keys %Connection)) {
    print     "\n[IMAPd] Connections:".
              "\n=========================".
              "\n                                  Host | Connections |    SSL   |   Total  ".
