@@ -4,8 +4,8 @@ RCS file: /var/cvs/logwatch/scripts/services/http,v
 retrieving revision 1.9
 diff -u -r1.9 http
 --- scripts/services/http	3 Feb 2004 02:45:26 -0000	1.9
-+++ scripts/services/http	1 Apr 2004 11:02:01 -0000
-@@ -79,39 +79,51 @@
++++ scripts/services/http	3 Apr 2004 13:36:02 -0000
+@@ -79,39 +79,52 @@
  my $wpad_bytes =     0;
  my $src_count =      0;
  my $src_bytes =      0;
@@ -38,7 +38,7 @@ diff -u -r1.9 http
  my $wpad_files =     '(wpad\.dat|wspad\.dat|proxy\.pac)';
 -my $program_src =    '(\.bas|\.c|\.diff|\.f|\.h|\.patch|\.cpp)';
 -my $images_types =   '(\.bin|\.cue|\.iso|\.run)';
-+my $program_src =    '(\.bas|\.c|\.cpp|\.diff|\.f|\.h|\.patch|\.spec)';
++my $program_src =    '(\.bas|\.c|\.cfg|\.conf|\.config|\.cpp|\.diff|\.f|\.h|\.init|\.patch|\.spec)';
 +my $images_types =   '(\.bin|\.cue|\.img|\.iso|\.run)';
 +my $logs_types =     '(\.log|\.logs)';
  
@@ -57,6 +57,7 @@ diff -u -r1.9 http
 +   '\\\x04\\\x01',
 +   '\\\x05\\\x01',
     '\/c\+dir',
++   'author.exe',
     'cmd.exe',
 +   'cltreq.asp',
     'default.ida',
@@ -68,7 +69,7 @@ diff -u -r1.9 http
     'win.ini'
  );
  
-@@ -238,9 +250,16 @@
+@@ -238,9 +251,16 @@
     } elsif ($field{base_url} =~ /$images_types$/) {
        $images_count += 1;
        $images_bytes += $field{bytes_transfered};
@@ -85,7 +86,7 @@ diff -u -r1.9 http
     } else {
        $other_count += 1;
        $other_bytes += $field{bytes_transfered};
-@@ -282,7 +301,7 @@
+@@ -282,7 +302,7 @@
     
  } ## End of while loop
  
@@ -94,7 +95,7 @@ diff -u -r1.9 http
  ##   output the results 
  ##
  
-@@ -293,18 +312,20 @@
+@@ -293,18 +313,20 @@
     print " responses ";
     print " (1xx $a1xx_resp, 2xx $a2xx_resp, 3xx $a3xx_resp,";
     print " 4xx $a4xx_resp, 5xx $a5xx_resp) \n";
@@ -127,7 +128,7 @@ diff -u -r1.9 http
  }
  
  #
-@@ -335,6 +356,12 @@
+@@ -335,6 +357,12 @@
     }	
  }
  
