@@ -4,8 +4,16 @@ RCS file: /var/cvs/logwatch/scripts/services/samba,v
 retrieving revision 1.12
 diff -u -r1.12 samba
 --- scripts/services/samba	26 Nov 2003 14:36:30 -0000	1.12
-+++ scripts/services/samba	7 Dec 2003 17:26:10 -0000
-@@ -57,6 +57,8 @@
++++ scripts/services/samba	7 Dec 2003 22:47:02 -0000
+@@ -48,6 +48,7 @@
+ 		($ThisLine =~ /Got SIGHUP/) or
+ 		($ThisLine =~ /current master browser/) or
+ 		($ThisLine =~ /debug_message/) or
++		($ThisLine =~ /process_name_refresh_request\(184\)  Error - should be sent to WINS server$/)or
+ 		($ThisLine =~ /===============================================================/)
+ 	) {
+ 		#Don't care about these...
+@@ -57,6 +58,8 @@
  		$NoServ{$NoService}++;
  	} elsif ($ThisLine =~ s/Denied connection from\s+(\S+)$/$1/) {
  		$Denied{$ThisLine}++;
@@ -14,7 +22,7 @@ diff -u -r1.12 samba
  	} elsif ( ($Ip,$Name,$Group,$Subnet) = ($ThisLine =~ /Denied connection from  \(([^ ]+)\)  Samba name server ([^ ]+) is now a local master browser for workgroup ([^ ]+) on subnet ([^ ]+)/ ) ) {
  		$Denied{$Ip}++;
  		$BeLocalMaster{$Subnet}{$Group}{$Name}++;
-@@ -88,9 +90,17 @@
+@@ -88,9 +91,17 @@
  		$Crash{$Temp}++;
  	} elsif ( ( $ThisLine =~ /get_domain_master_name_node_status_fail\(([^ ]+)\)/ ) ) {
  		$GetDomainMasterStatusFail++;
@@ -32,7 +40,7 @@ diff -u -r1.12 samba
  	}
  }
  
-@@ -120,7 +130,7 @@
+@@ -120,7 +131,7 @@
  
  if (keys %Denied) {
     print "\nConnections Denied:\n";
@@ -41,7 +49,7 @@ diff -u -r1.12 samba
        print "   $Line : $Denied{$Line} Time(s)\n";
     }
  }
-@@ -199,23 +209,30 @@
+@@ -199,23 +210,30 @@
  
  if (keys %InvalidUser) {
     print "\nInvalid Users:\n";
