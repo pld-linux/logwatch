@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.9
 diff -u -r1.9 postfix
 --- scripts/services/postfix	3 Feb 2004 03:25:02 -0000	1.9
-+++ scripts/services/postfix	31 Mar 2004 12:07:35 -0000
++++ scripts/services/postfix	20 Apr 2004 06:14:52 -0000
 @@ -82,27 +82,32 @@
  $QueueSizeExceeded = 0;
  $RejectedRBL = 0;
@@ -86,7 +86,7 @@ diff -u -r1.9 postfix
        $SaslAuthenticationFail{$Host}++;
     } elsif ( ($Domain) = ($ThisLine =~ /warning: malformed domain name in resource data of MX record (.*)$/)) {
        $MxError{$Domain}++;
-@@ -224,18 +231,31 @@
+@@ -224,45 +231,66 @@
        $DatabaseGeneration{$Source}++;
     } elsif ( ($Reason) = ($ThisLine =~ /warning: [a-zA-Z0-9]+: write queue file: (.*)$/)) {
        $QueueWriteError{$Reason}++;
@@ -120,7 +120,39 @@ diff -u -r1.9 postfix
  if ($MsgsSent > 0) {
     print "\n\n$BytesTransferred bytes transferred";
     print "\n$MsgsSent messages sent";
-@@ -262,7 +282,7 @@
+ }
+ 
+ if ($FourHourReturns > 0) {
+-   print "\n\n$FourHourReturns messages returned after 4 hours";
++   print "\n$FourHourReturns messages returned after 4 hours";
+ }
+ 
+ if ($ReturnedToSender >0) {
+-   print "\n\n$ReturnedToSender messages expired and returned to sender";
++   print "\n$ReturnedToSender messages expired and returned to sender";
+ }
+ 
+ if ($ResentMessages > 0) {
+-   print "\n\n$ResentMessages resent messages";
++   print "\n$ResentMessages resent messages";
+ }
+ 
+ if ($RemovedFromQueue > 0) {
+-   print "\n\n$RemovedFromQueue messages removed from queue";
++   print "\n$RemovedFromQueue messages removed from queue";
+ }
+ 
+ if ($QueueSizeExceeded > 0) {
+-   print "\n\n$QueueSizeExceeded messages exceeded queue or message file size limit and removed";
++   print "\n$QueueSizeExceeded messages exceeded queue or message file size limit and removed";
++}
++
++if ($TableChanged > 0) {
++   print "\n$TableChanged exited after table change detection";
++}
++
++if ($UnsuppertedFamily > 0) {
++   print "\nUnknown address family $UnsuppertedFamily Time(s)\n";
  }
  
  if (keys %QueueWriteError) {
@@ -129,9 +161,40 @@ diff -u -r1.9 postfix
     foreach $Reason (sort {$a cmp $b} keys %QueueWriteError) {
        print "   $Reason : $QueueWriteError{$Reason} Time(s)\n";
     }
-@@ -362,11 +382,16 @@
- #}
+@@ -275,10 +303,6 @@
+    }
+ }
  
+-if ($TableChanged > 0) {
+-   print "\n\n$TableChanged exited after table change detection";
+-}
+-
+ if (keys %DatabaseGeneration) {
+    print "\n\nDatabase files are not up-to-date (propably rehash is needed):\n";
+    foreach $Source (sort {$a cmp $b} keys %DatabaseGeneration) {
+@@ -286,10 +310,6 @@
+    }
+ }
+ 
+-if ($UnsuppertedFamily > 0) {
+-   print "\n\nUnknown address family $UnsuppertedFamily Time(s)\n";
+-}
+-
+ if (keys %PixWorkaround) {
+    print "\n\nEnabled PIX <CRLF>.<CRLF> workaround for:\n";
+    foreach $Host (sort {$a cmp $b} keys %PixWorkaround) {
+@@ -353,20 +373,17 @@
+    }
+ }
+ 
+-#changed to more generic Sender rejected
+-#if (keys %RejectDomain) {
+-#   print "\n\nNot found domain in address sent by:\n";
+-#   foreach $Host (sort {$a cmp $b} keys %RejectDomain) {
+-#      print "   $Host : $RejectDomain{$Host} Time(s)\n";
+-#   }
+-#}
+-
  if (keys %RejectSender) {
 -   print "\n\nMessages rejected from sender:\n";
 -   foreach $Sender (sort {$a cmp $b} keys %RejectSender) {
@@ -151,7 +214,7 @@ diff -u -r1.9 postfix
        }
     }
  }
-@@ -376,7 +401,7 @@
+@@ -376,7 +393,7 @@
     foreach $Recip (sort {$a cmp $b} keys %RejectRecip) {
        print "    $Recip:\n";
        foreach $Host (sort {$a cmp $b} keys %{$RejectRecip{$Recip}} ) {
@@ -160,7 +223,7 @@ diff -u -r1.9 postfix
        }
     }
  }
-@@ -508,7 +533,7 @@
+@@ -508,7 +525,7 @@
  if (keys %UnknownWarnings) {
     print "\n\nUnrecognized warning:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %UnknownWarnings) {
