@@ -4,7 +4,29 @@ RCS file: /var/cvs/logwatch/scripts/services/sshd,v
 retrieving revision 1.38
 diff -u -r1.38 sshd
 --- scripts/services/sshd	23 Jun 2004 15:01:17 -0000	1.38
-+++ scripts/services/sshd	23 Aug 2004 07:43:26 -0000
++++ scripts/services/sshd	22 Sep 2004 07:40:25 -0000
+@@ -92,16 +92,16 @@
+          print STDERR "DEBUG: Found -Failed login- line\n";
+       }
+       $BadLogins{"$2/$1 from $3"}++;
+-   } elsif ( $ThisLine =~ m/^Failed (\S+) for illegal user (.*) from ([^ ]+) port (\d+)/ ) { #openssh
+-      $Temp = "$2/$1 from $3";
++   } elsif ( ($Method, undef,$User,$Host,$Port) = ($ThisLine =~ m/^Failed (\S+) for (illegal|invalid) user (.*) from ([^ ]+) port (\d+)/ ) ) { #openssh
++      $Temp = "$User/$Method from $Host";
+       $BadLogins{$Temp}++;
+       $IllegalUsers{$Temp}++;
+    } elsif ( ($User) = ( $ThisLine =~ /Disconnecting: Too many authentication failures for ([^ ]+)/)) {
+       $TooManyFailures{$User}++;
+-   } elsif ( ($User) = ($ThisLine =~ /^input_userauth_request: illegal user (.*)$/ )) {
++   } elsif ( (undef,$User) = ($ThisLine =~ /^input_userauth_request: (illegal|invalid) user (.*)$/ )) {
+       $IllegalUsers{"$User/none from unknown"}++;
+-   } elsif ( $ThisLine =~ m/^Illegal user (.*) from ([^ ]+)/ ) { #redhat thing
+-      $IllegalUsers{"$1/none from $2"}++;
++   } elsif ( (undef,$User,$Host) =($ThisLine =~ m/^(Illegal|Invalid) user (.*) from ([^ ]+)/ ) ) { #redhat thing
++      $IllegalUsers{"$User/none from $Host"}++;
+    } elsif ( $ThisLine =~ m/^(fatal: )?Did not receive ident(ification)? string from (.+)/ ) { # ssh/openssh
+       $name = LookupIP($3);
+       $NoIdent{$name}++;
 @@ -179,6 +179,8 @@
     } elsif ( ($Method,$User,$Host) = ($ThisLine =~ /^Postponed ([^ ]*) for (illegal user [^ ]*|[^ ]*) from ([^ ]*) port \d+ ssh/)) {
        $PostPonedAuth{"$User/$Method"}{$Host}++;
