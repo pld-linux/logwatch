@@ -1,35 +1,11 @@
-Index: conf/logfiles/http.conf
-===================================================================
-RCS file: /var/cvs/logwatch/conf/logfiles/http.conf,v
-retrieving revision 1.2
-diff -u -r1.2 http.conf
---- conf/logfiles/http.conf	15 Dec 2003 18:35:01 -0000	1.2
-+++ conf/logfiles/http.conf	13 Apr 2004 20:16:21 -0000
-@@ -4,13 +4,16 @@
- 
- # What actual file?  Defaults to LogPath if not absolute path....
- LogFile = httpd/access_log
-+LogFile = httpd/*access_log
- 
- # If the archives are searched, here is one or more line
- # (optionally containing wildcards) that tell where they are...
- # Note: if these are gzipped, you need to end with a .gz even if
- #       you use wildcards...
- Archive = archiv/httpd/access_log.*
-+Archive = archiv/httpd/*access_log.*
- Archive = archiv/httpd/access_log.*.gz
-+Archive = archiv/httpd/*access_log.*.gz
- 
- # Expand the repeats (actually just removes them now)
- *ExpandRepeats
 Index: scripts/services/http
 ===================================================================
 RCS file: /var/cvs/logwatch/scripts/services/http,v
 retrieving revision 1.9
 diff -u -r1.9 http
 --- scripts/services/http	3 Feb 2004 02:45:26 -0000	1.9
-+++ scripts/services/http	13 Apr 2004 20:16:21 -0000
-@@ -79,39 +79,53 @@
++++ scripts/services/http	19 Apr 2004 06:57:45 -0000
+@@ -79,40 +79,55 @@
  my $wpad_bytes =     0;
  my $src_count =      0;
  my $src_bytes =      0;
@@ -44,7 +20,7 @@ diff -u -r1.9 http
 +my $host =           "";
 +
 +######################
-+my $image_types =    '(\.bmp|\.emz|\.gif|\.ico|\.jpeg|\.jpg|\.png|\.swf|\.sxd|\.tif|\.tiff|\.wmf|\.wmz|\.xdm)';
++my $image_types =    '(\.bmp|\.emz|\.gif|\.ico|\.jpeg|\.jpg|\.png|\.swf|\.sxd|\.tif|\.tiff|\.wbmp|\.wmf|\.wmz|\.xdm)';
  my $content_types =  '(';
     $content_types =  $content_types.'\/server-status|\/server-info';
     $content_types =  $content_types.'|\.htm|\.html|\.jhtml|\.phtml|\.shtml|\/';
@@ -55,7 +31,7 @@ diff -u -r1.9 http
 -my $docs_types =     '(\.doc|\.dvi|\.gnumeric|\.mcd|\.mso|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.tex|\.text|\.xls|\.xml)';
 -my $archive_types =  '(\.ace|\.bz2|\.cab|\.deb|\.gz|\.hqx|\.rar|\.rpm|\.tbz2|\.zip)';
 +my $docs_types =     '(\.asc|\.doc|\.dot|\.dvi|\.gnumeric|\.mcd|\.mso|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.tex|\.text|\.xls|\.xml)';
-+my $archive_types =  '(\.ace|\.bz2|\.cab|\.deb|\.ed2k|\.gz|\.hqx|\.rar|\.rpm|\.sign|\.tbz2|\.tgz|\.Z|\.zip)';
++my $archive_types =  '(\.ace|\.bz2|\.cab|\.deb|\.ed2k|\.gz|\.hqx|\.rar|\.rpm|\.sign|\.tar|\.tbz2|\.tgz|\.Z|\.zip)';
  my $sound_types =    '(\.mp3|\.ram|\.raw|\.rm|\.wav|\.wma|\.mid)';
 -my $movie_types =    '(\.asf|\.avi|\.mid|\.mpg|\.mpeg|\.mov)';
 +my $movie_types =    '(\.asf|\.ass|\.avi|\.idx|\.mid|\.mpg|\.mpeg|\.mov|\.qt|\.sub)';
@@ -91,11 +67,14 @@ diff -u -r1.9 http
 +   'owssvr.dll',
     'phpmyadmin',
     'root.exe',
+-   'win.ini'
 +   'shtml.exe',
-    'win.ini'
++   'win.ini',
++   'XXXXXXXXXXXXXXXXXXXXXX'
  );
  
-@@ -238,9 +252,16 @@
+ #
+@@ -238,9 +253,16 @@
     } elsif ($field{base_url} =~ /$images_types$/) {
        $images_count += 1;
        $images_bytes += $field{bytes_transfered};
@@ -112,7 +91,7 @@ diff -u -r1.9 http
     } else {
        $other_count += 1;
        $other_bytes += $field{bytes_transfered};
-@@ -282,7 +303,7 @@
+@@ -282,7 +304,7 @@
     
  } ## End of while loop
  
@@ -121,7 +100,7 @@ diff -u -r1.9 http
  ##   output the results 
  ##
  
-@@ -293,18 +314,20 @@
+@@ -293,18 +315,20 @@
     print " responses ";
     print " (1xx $a1xx_resp, 2xx $a2xx_resp, 3xx $a3xx_resp,";
     print " 4xx $a4xx_resp, 5xx $a5xx_resp) \n";
@@ -154,7 +133,7 @@ diff -u -r1.9 http
  }
  
  #
-@@ -335,6 +358,12 @@
+@@ -335,6 +359,12 @@
     }	
  }
  
@@ -167,3 +146,27 @@ diff -u -r1.9 http
  #
  #  List (wannabe) blackhat sites
  #
+Index: conf/logfiles/http.conf
+===================================================================
+RCS file: /var/cvs/logwatch/conf/logfiles/http.conf,v
+retrieving revision 1.2
+diff -u -r1.2 http.conf
+--- conf/logfiles/http.conf	15 Dec 2003 18:35:01 -0000	1.2
++++ conf/logfiles/http.conf	19 Apr 2004 06:57:46 -0000
+@@ -4,13 +4,16 @@
+ 
+ # What actual file?  Defaults to LogPath if not absolute path....
+ LogFile = httpd/access_log
++LogFile = httpd/*access_log
+ 
+ # If the archives are searched, here is one or more line
+ # (optionally containing wildcards) that tell where they are...
+ # Note: if these are gzipped, you need to end with a .gz even if
+ #       you use wildcards...
+ Archive = archiv/httpd/access_log.*
++Archive = archiv/httpd/*access_log.*
+ Archive = archiv/httpd/access_log.*.gz
++Archive = archiv/httpd/*access_log.*.gz
+ 
+ # Expand the repeats (actually just removes them now)
+ *ExpandRepeats
