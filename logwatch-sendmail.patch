@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sendmail,v
 retrieving revision 1.38
 diff -u -r1.38 sendmail
 --- scripts/services/sendmail	3 Feb 2004 18:39:34 -0000	1.38
-+++ scripts/services/sendmail	4 May 2004 05:56:45 -0000
++++ scripts/services/sendmail	11 May 2004 11:59:38 -0000
 @@ -54,6 +54,7 @@
  $OutdatedAliasdb = 0;
  $MaxLoadAvg = 0;
@@ -36,16 +36,27 @@ diff -u -r1.38 sendmail
     } elsif ($ThisLine=~ /reject=.*MESSAGE NOT ACCEPTED - (.+)/) {
        chomp($host=$1);
        $MailRejected{$host}++;
-@@ -417,6 +423,8 @@
+@@ -413,10 +419,16 @@
+       $ReturnReceipt++;
+    } elsif ($ThisLine=~ /Remote protocol error/) {
+       $RemoteProtocolError++;
+-   } elsif ( ($Host,$Attack) = ($ThisLine =~ /POSSIBLE ATTACK from ([^ ]+): (.*)/) ) {
+-      $AttackAttempt{$Host}{$Attack}++;
+-   } elsif ( ($Host,$Attack) = ($ThisLine =~ /([^ ]+ \[[^ ]+\]): possible SMTP attack: (.*)$/) ) {
++   } elsif (
++      (($Host,$Attack) = ($ThisLine =~ /POSSIBLE ATTACK from ([^ ]+): (.*)/)) or
++      (($Host,$Attack) = ($ThisLine =~ /([^ ]+ \[[^ ]+\]): possible SMTP attack: (.*)$/))
++   ) {
        $AttackAttempt{$Host}{$Attack}++;
-    } elsif ( ($Host,$Attack) = ($ThisLine =~ /([^ ]+ \[[^ ]+\]): possible SMTP attack: (.*)$/) ) {
-       $AttackAttempt{$Host}{$Attack}++;
-+   } elsif ( ($Attack) = ($ThisLine =~ /^(Fixed MIME MIME-Version header) \(possible attack\)$/) ) {
++   } elsif (
++      (($Attack) = ($ThisLine =~ /^(Fixed MIME MIME-Version header) \(possible attack\)$/)) or
++      (($Attack) = ($ThisLine =~ /^(Fixed MIME Content-Type header field) \(possible attack\)$/))
++   ) {
 +      $AttackAttempt{"UNKNOWN"}{$Attack}++;
     } elsif ( ($File,$Error) = ($ThisLine =~ /^safesasl\(([^ ]+)\) failed: (.*)$/) ) {
        $SaslError{$File}{$Error}++;
     } elsif ( $ThisLine =~ m/Can\'t create output/ ) {
-@@ -429,6 +437,12 @@
+@@ -429,6 +441,12 @@
     } elsif ( ($User,$Uid) = ($ThisLine =~ /^SYSERR\(([^ ]+)\): queueup: cannot create queue file [^ ]+, euid=(\d+): Disk quota exceeded/) ) {
        $Temp = "$User (uid=$Uid)";
        $QuotaExceed{$Temp}++;
@@ -58,7 +69,7 @@ diff -u -r1.38 sendmail
     } else {
        $ThisLine =~ s/.*\: (DSN\: .*)/$1/;
        $ThisLine =~ s/.*\: (postmaster notify\: .*)/$1/;
-@@ -557,7 +571,7 @@
+@@ -557,7 +575,7 @@
  }
  
  if (keys %LargeMsgs) {
@@ -67,7 +78,7 @@ diff -u -r1.38 sendmail
     foreach $ThisOne (sort keys %LargeMsgs) {
        print "    $ThisOne : ${LargeMsgs{$ThisOne}} Time(s)\n";
     }
-@@ -577,13 +591,17 @@
+@@ -577,13 +595,17 @@
        if ($Detail >=5) {
           print "    Load Avg $Load : $LoadAvg{$Load} Time(s)\n";
        }
@@ -86,7 +97,7 @@ diff -u -r1.38 sendmail
  if (keys %UnknownUsers) {
     foreach $Usr (sort keys %UnknownUsers) {
        foreach $QueueID (sort keys %{ $UnknownUsers{$Usr} }) {
-@@ -835,6 +853,16 @@
+@@ -835,6 +857,16 @@
     print "\n\nToo large headers from: \n";
     foreach $host ( sort {$largeHdrs{$b}<=>$largeHdrs{$a}} keys %largeHdrs ) {
        printf "    %-17s   %-3i Time(s)\n",$host, $largeHdrs{$host};
