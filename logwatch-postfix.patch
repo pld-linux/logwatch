@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.4
 diff -u -r1.4 postfix
 --- scripts/services/postfix	26 Nov 2003 14:36:30 -0000	1.4
-+++ scripts/services/postfix	7 Dec 2003 22:43:28 -0000
++++ scripts/services/postfix	8 Dec 2003 08:37:03 -0000
 @@ -55,6 +55,8 @@
  $BytesTransferred = 0;
  $FourHourReturns = 0;
@@ -40,7 +40,7 @@ diff -u -r1.4 postfix
  		# unknown user
  		# $Msg = " hello "
  		# print "bounce message from " . $Dest . " msg : " . $Relay . "\n";
-@@ -92,54 +93,66 @@
+@@ -92,139 +93,217 @@
  			$Temp = "To " . $Dest . " Msg=\"" . $Msg . "\"";
  			$ForeignBounce{$Temp}++;
  		}
@@ -106,15 +106,24 @@ diff -u -r1.4 postfix
 +		$PixWorkaround{$Host}++;
 +	} elsif ( ($Message) = ($ThisLine =~ /^warning: valid_hostname: (.*)$/)) {
 +		$ValidHostname{$Message}++;
++	} elsif ( ($Host,$MyName) = ($ThisLine =~ /^warning: ([^ ]*\[[^ ]*\]) greeted me with my own hostname ([^ ]*)$/)) {
++		$Temp = "$Host : greeted me with my own hostname \($MyName\)";
++		$HeloError{$Temp}++;
++	} elsif ( ($Host,$MyName) = ($ThisLine =~ /^warning: host ([^ ]*\[[^ ]*\]) replied to HELO\/EHLO with my own hostname ([^ ]*)$/)) {
++		$Temp = "$Host : replied to HELO\/EHLO with my own hostname\($MyName\)";
++		$HeloError{$Temp}++;
++	} elsif ( ($Host,$Reason) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 504 <[^ ]*>: Helo command rejected: (.*);/)) {
++		$Temp = "$Host : Helo command rejected \($Reason\)";
++		$HeloError{$Temp}++;
++	} elsif ( ($Size,$Host) = ($ThisLine =~ /^bad size limit "\(([^ ]*)\)" in EHLO reply from ([^ ]*\[[^ ]*\])$/)) {
++		$Temp = "$Host : bad size limit \($Size\) in EHLO reply";
++		$HeloError{$Temp}++;
 +	} else {
 +		push @OtherList,$ThisLine;
 +		#
 +		# TODO:
 +		#too many errors after RCPT from ta130.internetdsl.tpnet.pl[80.55.104.130]
 +		#warning: Illegal address syntax from f133.ds.univ.gda.pl[153.19.197.133] in MAIL command: <sseeds_pg@teamaffiliate.com onMouseOver=>
-+		#warning: bad size limit "(5120000)" in EHLO reply from relay.hwk-aachen.de[212.117.75.130]
-+		#warning: host 127.0.1.50[127.0.1.50] greeted me with my own hostname jol.task.gda.pl
-+		#warning: host 127.0.1.50[127.0.1.50] replied to HELO/EHLO with my own hostname jol.task.gda.pl
 +		#warning: mailer loop: best MX host for pager.icq.com is local
 +		#warning: malformed domain name in resource data of MX record for sfol.com:
 +		#warning: malformed domain name in resource data of MX record for kiri.com: \254\184\194\008
@@ -135,8 +144,10 @@ diff -u -r1.4 postfix
 +	($$RemovedFromQueue > 0) or
  	(keys %UnknownUsers) or
  	(keys %RelayDenied) or
- 	(keys %$HeaderReject) or
-@@ -148,83 +161,132 @@
+-	(keys %$HeaderReject) or
++	(keys %HeaderReject) or
+ 	(keys %ForeignBounce) or
+ 	(keys %LocalBounce) or
  	(keys %AuthWarns) or
  	(keys %ForwardErrors) or
  	(keys %SentBy) or
@@ -144,7 +155,8 @@ diff -u -r1.4 postfix
 +	(keys %ConnectionLost) or
 +	(keys %HostnameVerification) or
 +	(keys %PixWorkaround) or
-+	(keys %$ValidHostname)
++	(keys %ValidHostname) or
++	(keys %HeloError)
  ) {
  	print "\n\n --------------------- postfix Begin ------------------------ ";
  	
@@ -286,6 +298,13 @@ diff -u -r1.4 postfix
 +		print "\n\nHostname validation errors:\n";
 +		foreach $Message (sort {$a cmp $b} keys %ValidHostname) {
 +			print "    $Message : $ValidHostname{$Message} Times(s)\n";
++		}
++	}
++
++	if (keys %HeloError) {
++		print "\n\nErrors in HELO/EHLO conversation:\n";
++		foreach $Error (sort {$a cmp $b} keys %HeloError) {
++			print "    $Error : $HeloError{$Error} Times(s)\n";
  		}
  	}
  	
