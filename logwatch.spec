@@ -28,6 +28,7 @@ Patch11:	%{name}-amavisd-new-log_format.patch
 Patch12:	%{name}-scripts-services.diff
 Patch13:	%{name}-postfix_verbosity.patch
 Patch14:	%{name}-cisco.patch
+Patch15:	%{name}-postfix-revDNS.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	crondaemon
@@ -67,6 +68,7 @@ u¿yciu i mo¿e pracowaæ na wiêkszo¶ci systemów.
 %patch11 -p1
 %patch13 -p1
 %patch14 -p0
+%patch15 -p1
 
 cd scripts
 %patch7 -p0
