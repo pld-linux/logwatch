@@ -4,8 +4,17 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.7
 diff -u -r1.7 postfix
 --- scripts/services/postfix	15 Dec 2003 18:35:03 -0000	1.7
-+++ scripts/services/postfix	17 Dec 2003 08:35:27 -0000
-@@ -67,6 +67,9 @@
++++ scripts/services/postfix	18 Dec 2003 07:26:55 -0000
+@@ -61,12 +61,18 @@
+ #
+ ########################################################
+ 
++my $Detail = $ENV{'LOGWATCH_DETAIL_LEVEL'} || 0;
++my $Debug = $ENV{'LOGWATCH_DEBUG'} || 0;
++
+ $MsgsSent = 0;
+ $BytesTransferred = 0;
+ $FourHourReturns = 0;
  $ReturnedToSender = 0;
  $ResentMessages = 0;
  $RemovedFromQueue = 0;
@@ -15,7 +24,7 @@ diff -u -r1.7 postfix
  
  while (defined($ThisLine = <STDIN>)) {
     if ( ( $ThisLine =~ m/^connect/ ) or 
-@@ -83,7 +86,8 @@
+@@ -83,7 +89,8 @@
          ( $ThisLine =~ m/^daemon started$/ ) or
          ( $ThisLine =~ m/^terminating on signal 15$/ ) or
          ( $ThisLine =~ m/^warning: Mail system is down -- accessing queue directly$/ ) or
@@ -25,7 +34,7 @@ diff -u -r1.7 postfix
        ) {
        # We don't care about these
     } elsif ( ($Bytes) = ($ThisLine =~ /^[a-zA-Z0-9]+: from=.*size=([0-9]+).*$/) ) {
-@@ -124,7 +128,7 @@
+@@ -124,7 +131,7 @@
        $ConnectionLost{$Command}++;
     } elsif ( ($Rejected,undef,undef) = ($ThisLine =~ /^^[a-zA-Z0-9]+: reject: header (.*); from=<([^ ]*)> to=<([^ ]*)>: Message content rejected$/)) {
        $HeaderReject{$Rejected}++;
@@ -34,22 +43,23 @@ diff -u -r1.7 postfix
        $RejectDomain{$Host}++;
     } elsif ( ($Host,$Site,$Reason) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 554 Service unavailable; \[[^ ]*\] blocked using ([^ ]*), reason: (.*);/)) {
        $Temp = "$Host : $Reason";
-@@ -137,11 +141,11 @@
+@@ -137,11 +144,11 @@
        $PixWorkaround{$Host}++;
     } elsif ( ($Message) = ($ThisLine =~ /^warning: valid_hostname: (.*)$/)) {
        $ValidHostname{$Message}++;
 -   } elsif ( ($Host,$MyName) = ($ThisLine =~ /^warning: ([^ ]*\[[^ ]*\]) greeted me with my own hostname ([^ ]*)$/)) {
 -      $Temp = "$Host : greeted me with my own hostname \($MyName\)";
-+   } elsif ( ($Host,$MyName) = ($ThisLine =~ /^warning: host ([^ ]*\[[^ ]*\]) greeted me with my own hostname ([^ ]*)$/)) {
++   } elsif ( ($Host,$MyName) = ($ThisLine =~ /^warning: host ([^ ]*\[[^ ]*\]) greeted me with my own hostname ([^ ]*).$/)) {
 +      $Temp = "$Host : greeted me with my own hostname $MyName";
        $HeloError{$Temp}++;
-    } elsif ( ($Host,$MyName) = ($ThisLine =~ /^warning: host ([^ ]*\[[^ ]*\]) replied to HELO\/EHLO with my own hostname ([^ ]*)$/)) {
+-   } elsif ( ($Host,$MyName) = ($ThisLine =~ /^warning: host ([^ ]*\[[^ ]*\]) replied to HELO\/EHLO with my own hostname ([^ ]*)$/)) {
 -      $Temp = "$Host : replied to HELO\/EHLO with my own hostname\($MyName\)";
++   } elsif ( ($Host,$MyName) = ($ThisLine =~ /^warning: host ([^ ]*\[[^ ]*\]) replied to HELO\/EHLO with my own hostname ([^ ]*).$/)) {
 +      $Temp = "$Host : replied to HELO\/EHLO with my own hostname $MyName";
        $HeloError{$Temp}++;
     } elsif ( ($Host,$Reason) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 504 <[^ ]*>: Helo command rejected: (.*);/)) {
        $Temp = "$Host : Helo command rejected \($Reason\)";
-@@ -155,17 +159,25 @@
+@@ -155,17 +162,25 @@
        $MailerLoop{$Error}++;
     } elsif ( ($Host) = ($ThisLine =~ /^warning: ([^ ]*\[[^ ]*\]): SASL LOGIN authentication failed/)) {
        $SaslAuthenticationFail{$Host}++;
@@ -80,7 +90,7 @@ diff -u -r1.7 postfix
     }
  }
  
-@@ -190,75 +202,87 @@
+@@ -190,75 +205,87 @@
     print "\n\n$RemovedFromQueue messages removed from queue";
  }
  
@@ -180,7 +190,7 @@ diff -u -r1.7 postfix
        }
     }
  }
-@@ -266,29 +290,47 @@
+@@ -266,29 +293,47 @@
  if (keys %AuthWarns) {
     print "\n\nAuthentication warnings:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %AuthWarns) {
@@ -233,7 +243,7 @@ diff -u -r1.7 postfix
        }
     }
  }
-@@ -296,28 +338,28 @@
+@@ -296,28 +341,28 @@
  if (keys %HostnameVerification) {
     print "\n\nHostname verification errors:\n";
     foreach $Error (sort {$a cmp $b} keys %HostnameVerification) {
