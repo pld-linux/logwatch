@@ -1,12 +1,25 @@
-diff -urN logwatch-5.2.2/scripts/services/zz-disk_space logwatch-5.2.2.new/scripts/services/zz-disk_space
---- logwatch-5.2.2/scripts/services/zz-disk_space	2004-06-21 16:18:55.000000000 +0200
-+++ logwatch-5.2.2.new/scripts/services/zz-disk_space	2004-07-16 19:26:27.050636392 +0200
-@@ -17,7 +17,7 @@
-    echo
-    echo "------------------ Disk Space --------------------"
-    echo
--   df -h | grep '^/dev/'
-+   df -h | grep '^[/ ]'
-    echo
- elif [ "$PRINTING" = "y" ] ; then
-    echo
+Index: scripts/services/zz-disk_space
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/zz-disk_space,v
+retrieving revision 1.6
+diff -u -r1.6 zz-disk_space
+--- scripts/services/zz-disk_space	29 Oct 2004 21:19:01 -0000	1.6
++++ scripts/services/zz-disk_space	31 Oct 2004 15:23:55 -0000
+@@ -16,7 +16,7 @@
+       print "\n\n------------- Home Directory Sizes ---------------\n\n";
+     }
+    #print "\n\n------------------ Disk Space --------------------\n\n";
+-   system("df -h | grep '^/dev/'");
++   system("df -h | grep '^[/ ]'");
+    print "\n";
+ } elsif ($ENV{'PRINTING'} eq "y") {
+    if ($show_home_dir_sizes == 1) { #set in zz-disk_space.conf -mgt
+@@ -27,7 +27,7 @@
+       print "\n\n------------- Home Directory Sizes ---------------\n\n";
+     }
+    #print "\n\n------------------ Disk Space --------------------\n\n";
+-   system("df -k | grep '^/dev/'");
++   system("df -k | grep '^[/ ]'");
+    print "\n";
+ }
+ 
