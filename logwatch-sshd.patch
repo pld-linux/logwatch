@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sshd,v
 retrieving revision 1.33
 diff -u -r1.33 sshd
 --- scripts/services/sshd	15 Dec 2003 19:01:19 -0000	1.33
-+++ scripts/services/sshd	23 Dec 2003 22:47:34 -0000
++++ scripts/services/sshd	26 Dec 2003 00:47:19 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -14,7 +14,18 @@ diff -u -r1.33 sshd
  
  ########################################################
  # This was written and is maintained by:
-@@ -71,8 +73,11 @@
+@@ -53,7 +55,9 @@
+        ($ThisLine =~ m/^connect from \d+\.\d+\.\d+\.\d+/) or
+        ($ThisLine =~ m/Read from socket failed/) or
+        ($ThisLine =~ m/^Bad protocol version identification.*Big-Brother-Monitor/ ) or
+-       ($ThisLine =~ m/^fatal: Timeout before authentication/ )
++       ($ThisLine =~ m/^fatal: Timeout before authentication/ ) or
++       ($ThisLine =~ m/sshd startup\s+succeeded/) or
++       ($ThisLine =~ m/sshd shutdown\s+succeeded/)
+    ) {
+       # Ignore these
+    } elsif ($ThisLine =~ /^Accepted (\S+) for (\S+) from ([\d\.:a-f]+) port (\d+)/) {
+@@ -71,8 +75,11 @@
        }
        $BadLogins{"$2/$1 from $3"}++;
     } elsif ( $ThisLine =~ m/^Failed (\S+) for illegal user (\S+) from ([^ ]+) port (\d+)/ ) { #openssh
@@ -28,7 +39,7 @@ diff -u -r1.33 sshd
     } elsif ( ($User) = ($ThisLine =~ /^input_userauth_request: illegal user ([^ ]+)$/ )) {
        $IllegalUsers{"$User/none from unknown"}++;
     } elsif ( $ThisLine =~ m/^Illegal user (\S+) from ([^ ]+)/ ) { #redhat thing
-@@ -100,8 +105,10 @@
+@@ -100,8 +107,10 @@
        if ( $Debug >= 5 ) {
           print STDERR "DEBUG: Found -Listening on port 22- line\n";
        }
@@ -41,7 +52,7 @@ diff -u -r1.33 sshd
        # Don't care about this...
        if ( $Debug >= 5 ) {
           print STDERR "DEBUG: Found -Generating RSA key- line\n";
-@@ -129,6 +136,16 @@
+@@ -129,6 +138,16 @@
        $sftpRequests++;
     } elsif ( $ThisLine =~ m/refused connect from (.*)$/ ) {
        $RefusedConnections{$1}++;
@@ -58,7 +69,7 @@ diff -u -r1.33 sshd
     } elsif ( ($IP) = ($ThisLine =~ /^scanned from ([^ ]*)/) ) {
        push @Scanned, LookupIP($IP);
     } else {
-@@ -149,16 +166,31 @@
+@@ -149,16 +168,31 @@
     print "\nSSHD Started: " . $Starts . " Time(s)\n";
  }
  
@@ -92,7 +103,7 @@ diff -u -r1.33 sshd
           print "   " . $ThisOne . ": " . $NoIdent{$ThisOne} . " Time(s)\n";
        }
     }
-@@ -171,6 +203,13 @@
+@@ -171,6 +205,13 @@
     }
  }
  
@@ -106,7 +117,7 @@ diff -u -r1.33 sshd
  if (keys %BadLogins) {
     print "\nFailed logins from these:\n";
     for (sort keys %BadLogins) {
-@@ -187,7 +226,7 @@
+@@ -187,7 +228,7 @@
  
  if (keys %Users) {
     print "\nUsers logging in through sshd:\n";
@@ -115,7 +126,7 @@ diff -u -r1.33 sshd
        print "   $user:\n";
        my $totalSort = TotalCountOrder(%{$Users{$user}}, \&SortIP);
        foreach my $ip (sort $totalSort keys %{$Users{$user}}) {
-@@ -209,6 +248,23 @@
+@@ -209,6 +250,23 @@
     }
  }
  
@@ -139,7 +150,7 @@ diff -u -r1.33 sshd
  if ($#Scanned >= 0) {
     print "\nScanned from these:\n";
     foreach $ThisOne (sort SortIP @Scanned) {
-@@ -218,8 +274,15 @@
+@@ -218,8 +276,15 @@
  
  if (keys %RefusedConnections) {
     print "\nRefused incoming connections:\n";

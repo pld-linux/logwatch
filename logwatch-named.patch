@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/named,v
 retrieving revision 1.30
 diff -u -r1.30 named
 --- scripts/services/named	15 Dec 2003 18:09:23 -0000	1.30
-+++ scripts/services/named	25 Dec 2003 23:44:44 -0000
++++ scripts/services/named	26 Dec 2003 00:41:08 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -152,7 +152,7 @@ diff -u -r1.30 named
  if ( ( $Detail >= 5 ) and ($StartNamed) ) {
     print "Named started: $StartNamed Time(s)\n";
  }
-@@ -137,7 +149,28 @@
+@@ -137,7 +149,27 @@
  if ( ( $Detail >= 5 ) and (keys %ZoneLoaded) ) {
     print "\nLoaded Zones:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %ZoneLoaded) {
@@ -171,18 +171,17 @@ diff -u -r1.30 named
 +   }
 +}
 +
-+if ( ($Detail >= 5 and (keys %MasterFailure) ) {
-+      print "\nFailure trying to refresh zone:\n";
-+      foreach $Zone (sort {$a cmp $b} keys %MasterFailure) {
-+         print "   $Zone:\n";
-+         foreach $Reason (sort {$a cmp $b} keys %{$MasterFailure{$Zone}}) {
-+            print "      $Reason: $MasterFailure{$Zone}{$Reason}++ Time(s)\n";
-+         }
++if ( ($Detail >= 5) and (keys %MasterFailure) ) {
++   print "\nFailure trying to refresh zone:\n";
++   foreach $Zone (sort {$a cmp $b} keys %MasterFailure) {
++      print "   $Zone:\n";
++      foreach $Reason (sort {$a cmp $b} keys %{$MasterFailure{$Zone}}) {
++         print "      $Reason: $MasterFailure{$Zone}{$Reason}++ Time(s)\n";
 +      }
     }
  }
  
-@@ -155,16 +188,16 @@
+@@ -155,16 +187,16 @@
  if ( ( $Detail >= 5 ) and (keys %ZoneRemoved) ) {
     print "\nRemoved Zones:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %ZoneRemoved) {
@@ -202,7 +201,7 @@ diff -u -r1.30 named
        }
     }
  }
-@@ -172,30 +205,30 @@
+@@ -172,30 +204,30 @@
  if ( ( $Detail >= 5 ) and (keys %DeniedQuery) ) {
     print "\nQueries (cache) that were denied:\n";
     foreach $ThisOne (keys %DeniedQuery) {
@@ -238,7 +237,7 @@ diff -u -r1.30 named
        } 
     }
  }
-@@ -203,9 +236,9 @@
+@@ -203,9 +235,9 @@
  if ( ( $Detail >= 5 ) and (keys %ZoneUpdates) ) {
     print "\nZone Updates:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %ZoneUpdates) {
@@ -250,7 +249,7 @@ diff -u -r1.30 named
        } 
     }
  }
-@@ -213,7 +246,7 @@
+@@ -213,7 +245,7 @@
  if ( keys %UpdateDenied ) {
     print "\nZone update refused:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %UpdateDenied) {
