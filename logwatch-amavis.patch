@@ -1,0 +1,138 @@
+Index: scripts/services/amavis
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/amavis,v
+retrieving revision 1.10
+diff -u -r1.10 amavis
+--- scripts/services/amavis	3 Feb 2004 19:13:13 -0000	1.10
++++ scripts/services/amavis	31 Mar 2004 12:03:02 -0000
+@@ -17,6 +17,7 @@
+ $SpamMsgs = 0;
+ $BannedNames = 0;
+ $BadHeaders = 0;
++$IntentionallyDrop = 0;
+ 
+ # Parse logfile
+ while (defined($ThisLine = <STDIN>)) {
+@@ -33,41 +34,43 @@
+       $ThisLine .= $NextLine;
+    }
+    
+-   if ( ($ThisLine =~ /^do_ascii/) 
+-        or ($ThisLine =~ /^Found av scanner/) 
+-        or ($ThisLine =~ /^Found myself/)
+-        or ($ThisLine =~ /^Module/)
+-        or ($ThisLine =~ /^TIMING/)
+-        or ($ThisLine =~ /^Checking/)
+-        or ($ThisLine =~ /^(ESMTP|FWD|SEND) via/)
+-        or ($ThisLine =~ /^spam_scan/)
+-        or ($ThisLine =~ /^Not-Delivered/)
+-        or ($ThisLine =~ /^SpamControl/)
+-        or ($ThisLine =~ /^Net/)
+-        or ($ThisLine =~ /^Perl/)
+-        or ($ThisLine =~ /^ESMTP/)
+-        or ($ThisLine =~ /^.* code[ \t]+(NOT)? loaded/)
+-        or ($ThisLine =~ /^tempdir being removed/)
+-        or ($ThisLine =~ /^Found primary av scanner/)
+-        or ($ThisLine =~ /^Found \$[\S]+[\s]+at/)  
+-        or ($ThisLine =~ /^No \$[\S]+,[\s]+not using it/) 
+-        or ($ThisLine =~ /^Found secondary av scanner/)
+-        or ($ThisLine =~ /^Using internal av scanner code/)
+-        or ($ThisLine =~ /^mail_via_smtp/)
+-        or ($ThisLine =~ /^local delivery: /)
+-        or ($ThisLine =~ /^cached [a-zA-Z0-9]+ /)
+-        or ($ThisLine =~ /^starting.  amavisd at/) ) {
+-       # We don't care about these
++   if (
++      ($ThisLine =~ /^do_ascii/)
++         or ($ThisLine =~ /^Found av scanner/)
++         or ($ThisLine =~ /^Found myself/)
++         or ($ThisLine =~ /^Module/)
++         or ($ThisLine =~ /^TIMING/)
++         or ($ThisLine =~ /^Checking/)
++         or ($ThisLine =~ /^(ESMTP|FWD|SEND) via/)
++         or ($ThisLine =~ /^spam_scan/)
++         or ($ThisLine =~ /^Not-Delivered/)
++         or ($ThisLine =~ /^SpamControl/)
++         or ($ThisLine =~ /^Net/)
++         or ($ThisLine =~ /^Perl/)
++         or ($ThisLine =~ /^ESMTP/)
++         or ($ThisLine =~ /^.* code[ \t]+(NOT)? loaded/)
++         or ($ThisLine =~ /^tempdir being removed/)
++         or ($ThisLine =~ /^Found primary av scanner/)
++         or ($ThisLine =~ /^Found \$[\S]+[\s]+at/)
++         or ($ThisLine =~ /^No \$[\S]+,[\s]+not using it/)
++         or ($ThisLine =~ /^Found secondary av scanner/)
++         or ($ThisLine =~ /^Using internal av scanner code/)
++         or ($ThisLine =~ /^mail_via_smtp/)
++         or ($ThisLine =~ /^local delivery: /)
++         or ($ThisLine =~ /^cached [a-zA-Z0-9]+ /)
++         or ($ThisLine =~ /^starting.  amavisd at/)
++   ) {
++      # We don't care about these
+    } elsif ($ThisLine =~ /^Passed, /) {
+       $CleanMsgs++;
+-   } elsif (($FileName, $From) = ( $ThisLine =~ /^BANNED name\/type \(([^\)]+)\)\, \<([^\>]+)\>/ )) { 
++   } elsif (($FileName, $From) = ( $ThisLine =~ /^BANNED name\/type \(([^\)]+)\)\, \<([^\>]*)\>/ )) { 
+       $BannedNames++;
+ 
+       if ($Detail >= 10) {
+           $Banned{$FileName}{$From}++;
+       }; # if 
+ 
+-   } elsif (($Virus, $From) = ( $ThisLine =~ /^(Virus found - quarantined|INFECTED) \(([^\)]+)\)\, [\(\<]([^\>\)]+)[\)\>]/ )) {
++   } elsif (($Virus, $From) = ( $ThisLine =~ /^(Virus found - quarantined|INFECTED) \(([^\)]+)\)\, [\(\<]([^\>\)]*)[\)\>]/ )) {
+ 
+       $InfectedMsgs++;
+ 
+@@ -79,8 +82,7 @@
+         $Viruses{$Virus}{$From}++;
+       }; # if
+ 
+-   } # elsif
+-   elsif (($Fromspam, $Towards) = ( $ThisLine =~ /^SPAM, [\(\<]([^\>\)]+)[\)\>] -\> [\(\<]([^\>\)]+)[\)\>]/ )) {
++   } elsif (($Fromspam, $Towards) = ( $ThisLine =~ /^SPAM, [\(\<]([^\>\)]+)[\)\>] -\> [\(\<]([^\>\)]+)[\)\>]/ )) {
+       $SpamMsgs++;
+ 
+       if ($Detail >= 5) {
+@@ -91,16 +93,15 @@
+         $Spams{$Towards}{$Fromspam}++;
+       }; # if
+ 
+-   } # elsif
+-   elsif (($From, $Why) = ( $ThisLine =~ /^BAD HEADER from [\(\<]([^\>\)]+)[\)\>]: (.*) in message header/ )) {
++   } elsif (($From, $Why) = ( $ThisLine =~ /^BAD HEADER from [\(\<]([^\>\)]+)[\)\>]: (.*) in message header/ )) {
+       $BadHeaders++;
+ 
+       if ($Detail >= 10) {
+         $Headers{$From}{$Why}++;
+       }; # if
+-
+-   } # elsif
+-   else {
++   } elsif ( $ThisLine =~ /^NOTICE: DSN contains VIRUS(| & BANNED NAME); bounce is not bouncable, mail intentionally dropped/ ) {
++      $IntentionallyDrop++;
++   } else {
+       # Report any unmatched entries...
+       chomp($ThisLine);
+       $OtherList{$ThisLine}++;        
+@@ -108,7 +109,9 @@
+ } # while
+ 
+ 
++#######################################################
+ # Output report
++
+ if ($CleanMsgs > 0) {
+    print "\n$CleanMsgs messages checked and passed.\n";
+ }; # if 
+@@ -128,6 +131,10 @@
+ if ($BadHeaders > 0) {
+    print "$BadHeaders messages with bad headers were found.\n"; 
+ }; # if
++
++if ($IntentionallyDrop > 0) {
++   print "$IntentionallyDrop messages intentionally dropped (bad DSN).\n";
++};
+ 
+ if ((keys %Viruses)) {
+    print "\nViruses Detected:\n";
