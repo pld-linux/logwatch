@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/http,v
 retrieving revision 1.5
 diff -u -r1.5 http
 --- scripts/services/http	12 Nov 2003 04:09:08 -0000	1.5
-+++ scripts/services/http	11 Dec 2003 09:17:07 -0000
++++ scripts/services/http	11 Dec 2003 09:48:08 -0000
 @@ -39,6 +39,16 @@
  	my $a1xx_resp = 0;
  	my $image_count = 0;
@@ -22,7 +22,7 @@ diff -u -r1.5 http
  	my $content_count = 0;
  	my $content_bytes = 0;
  	my $redirect_count = 0;
-@@ -46,12 +56,18 @@
+@@ -46,22 +56,31 @@
  	my $other_count = 0;
  	my $other_bytes = 0;
  	my $total_hack_count = 0;
@@ -37,15 +37,33 @@ diff -u -r1.5 http
 +		$content_types = $content_types.'|\.php|\.php3|\.asp|\.pl|\.wml|\/';
 +		$content_types = $content_types.'|\.css|\.js|\.cgi|\.txt|\/';
 +		$content_types = $content_types.'|\.class|\.jsp|\.jar|\.java)';
-+	my $docs_types = '(\.doc|\.pdf|\.rtf|\.xls|\.tex|\.gnumeric)';
-+	my $archive_types = '(\.ace|\.bz2|\.gz|\.rar|\.rpm|\.zip)';
++	my $docs_types = '(\.doc|\.dvi|\.gnumeric|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.tex|\.xls)';
++	my $archive_types = '(\.ace|\.bz2|\.deb|\.gz|\.rar|\.rpm|\.zip)';
 +	my $sound_types = '(\.mp3|\.wav|\.wma|\.mid)';
-+	my $movie_types = '(\.avi|\.mpg|\.mpeg|\.mov)';
-+	my $winexec_types = '(\.exe)';
++	my $movie_types = '(\.avi|\.mid|\.mpg|\.mpeg|\.mov)';
++	my $winexec_types = '(\.com|\.exe)';
  
  #
  #   what to look for as an attack  USE LOWER CASE!!!!!!
-@@ -152,26 +168,38 @@
+ #
+ 	my @exploits = (
+-					'root.exe',
+-					'cmd.exe',
+-					'nsiislog.dll',
+-					'phpmyadmin',
+-					'default.ida');
++		'\/c\+dir',
++		'cmd.exe',
++		'default.ida',
++		'nsiislog.dll',
++		'phpmyadmin',
++		'root.exe',
++		'win.ini'
++	);
+ 
+ #
+ #  Define some usefull RE paterns
+@@ -152,26 +171,38 @@
  	if ($field{lc_url} =~ /$image_types$/) {
  		$image_count += 1;
  		$image_bytes += $field{bytes_transfered};
@@ -103,7 +121,7 @@ diff -u -r1.5 http
  ##
  ## Do the > 4 stuff
  ## 
-@@ -202,6 +230,11 @@
+@@ -202,6 +233,11 @@
  		print  " (1xx $a1xx_resp, 2xx $a2xx_resp, 3xx $a3xx_resp,";
  		print  " 4xx $a4xx_resp, 5xx $a5xx_resp) \n";
  		print	" ".$image_count." Images (".$image_bytes." bytes),\n"; 
@@ -115,7 +133,7 @@ diff -u -r1.5 http
  		print	" ".$content_count." Content pages (".$content_bytes." bytes),\n"; 
  		print	" ".$redirect_count." Redirects (".$redirect_bytes." bytes),\n"; 
  		print	" ".$other_count." Other (".$other_bytes." bytes) \n";
-@@ -270,3 +303,5 @@
+@@ -270,3 +306,5 @@
  	}
  
  exit (0);
