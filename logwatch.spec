@@ -3,13 +3,14 @@ Summary:    	Analyzes system logs
 Summary(pl): 	Logwatch - analizator logów systemowych
 Name:        	logwatch
 Version:     	4.2.1
-Release:     	2
+Release:     	3
 License:   	MIT
 Group:       	Applications/System
 Source:      	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:    	perl
+Requires:	perl-modules
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Buildarch:   	noarch
 
