@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.9
 diff -u -r1.9 postfix
 --- scripts/services/postfix	3 Feb 2004 03:25:02 -0000	1.9
-+++ scripts/services/postfix	7 Jun 2004 10:00:30 -0000
++++ scripts/services/postfix	7 Jun 2004 10:05:27 -0000
 @@ -82,32 +82,39 @@
  $QueueSizeExceeded = 0;
  $RejectedRBL = 0;
@@ -135,7 +135,7 @@ diff -u -r1.9 postfix
 +   } elsif ( $ThisLine =~ /reject: RCPT from [^ ]*\[[^ ]*\]: \d+ Insufficient system storage; from=<.*> to=<.*>/) {
 +      $NoFreeSpace++;
 +   } elsif ( ($Process,$Status) = ($ThisLine =~ /^warning: process ([^ ]*) pid \d+ exit status (\d+)$/)) {
-+      $ProcessExit{$Process}{$Status}++;
++      $ProcessExit{$Status}{$Process}++;
     } elsif ( ($Warn) = ($ThisLine =~ /^warning: (.*)/)) {
        # keep this as the next to last condition
        $UnknownWarnings{$Warn}++;
@@ -271,10 +271,10 @@ diff -u -r1.9 postfix
  
 +if (keys %ProcessExit) {
 +   print "\n\nProcess exited:\n";
-+   foreach $Process (sort {$a cmp $b} keys %ProcessExit) {
-+      print "   $Process:\n";
-+      foreach $Status (sort {$a cmp $b} keys %{$ProcessExit{$Process}} ) {
-+         print "   Exit status $Status: $ProcessExit{$Process}{$Status} Time(s)\n";
++   foreach $Status (sort {$a cmp $b} keys %ProcessExit) {
++      print "   Exit status $Status:\n";
++      foreach $Process (sort {$a cmp $b} keys %{$ProcessExit{$Status}} ) {
++         print "      $Process: $ProcessExit{$Status}{$Process} Time(s)\n";
 +      }
 +   }
 +}
