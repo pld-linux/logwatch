@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/pam_unix,v
 retrieving revision 1.14
 diff -u -r1.14 pam_unix
 --- scripts/services/pam_unix	21 Jun 2004 14:59:05 -0000	1.14
-+++ scripts/services/pam_unix	19 Aug 2004 14:29:18 -0000
++++ scripts/services/pam_unix	2 Oct 2004 11:17:04 -0000
 @@ -86,6 +86,8 @@
     } elsif ($service eq 'gdm') {
        if ($line =~ s/^session opened for user (.+) by \(uid=\d+\)/$1/) {
@@ -14,3 +14,16 @@ diff -u -r1.14 pam_unix
        } elsif ($line =~ /session closed for user/) {
           # ignore this line
        } else {
+@@ -121,6 +123,12 @@
+ 	   } else {
+ 		   $data{$service}{'Unknown Entries'}{$line}++;
+ 	   }
++   } elsif ($service eq 'tpop3d') {
++      if ($line =~ s/^authentication failure; .*rhost=(.+)  user=(.+)$/$2 ($1)/) {
++         $data{$service}{'Authentication Failures'}{$line}++;
++      } else {
++         $data{$service}{'Unknown Entries'}{$line}++;
++      }
+    } elsif ($service eq 'pure-ftpd') {
+       if ($line =~ s/^session opened for user (.+)/$1/) {
+          $data{$service}{'Sessions Opened'}{$line}++;
