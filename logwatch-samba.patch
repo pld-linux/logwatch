@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/samba,v
 retrieving revision 1.17
 diff -u -r1.17 samba
 --- scripts/services/samba	15 Dec 2003 22:03:55 -0000	1.17
-+++ scripts/services/samba	26 Jan 2004 15:38:00 -0000
++++ scripts/services/samba	28 Jan 2004 08:22:11 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -14,7 +14,7 @@ diff -u -r1.17 samba
  
  ########################################################
  # This was written and is maintained by:
-@@ -13,51 +15,57 @@
+@@ -13,51 +15,58 @@
  
  $Debug = $ENV{'LOGWATCH_DEBUG'};
  $Detail = $ENV{'LOGWATCH_DETAIL_LEVEL'} || 0;
@@ -91,6 +91,7 @@ diff -u -r1.17 samba
 +      ($ThisLine =~ /lib\/access.c:check_access\(\d+\)$/) or
 +      ($ThisLine =~ /smbd\/process.c:process_smb\(\d+\)$/) or
 +      ($ThisLine =~ /nmbd\/nmbd_incomingdgrams.c:process_local_master_announce\(\d+\)$/) or
++      ($ThisLine =~ /nmbd_namelistdb.c:standard_success_release\(\d+\)  standard_success_release: Name release for name/) or
  		($ThisLine =~ /===============================================================/)
 -	) {
 -		#Don't care about these...
@@ -101,11 +102,11 @@ diff -u -r1.17 samba
  	} elsif ( ($NoService) = ( $ThisLine =~ /couldn't find service (\S+)/ ) ) {
  		$NoServ{$NoService}++;
 -	} elsif ($ThisLine =~ s/Denied connection from\s+(\S+)$/$1/) {
-+	} elsif ($ThisLine =~ s/Denied connection from\s+(\S+)[ *]+$/$1/) {
++	} elsif ($ThisLine =~ s/Denied connection from\s+\((\S+)\)([ *]+|)$/$1/) {
  		$Denied{$ThisLine}++;
     } elsif ($ThisLine =~ s/ Connection denied from\s+(\S+)$/$1/) {
        $Denied{$ThisLine}++;
-@@ -65,7 +73,10 @@
+@@ -65,7 +74,10 @@
        $Temp = "$Where  ($Ip)";
        $Denied{$Temp}++;
        $CantGetGroup{$Browser}++;
@@ -117,7 +118,7 @@ diff -u -r1.17 samba
        $Temp = "$Where  ($Ip)";
        $Denied{$Temp}++;
        $BeLocalMaster{$Subnet}{$Group}{$Name}++;
-@@ -75,9 +86,16 @@
+@@ -75,9 +87,16 @@
  		$NotFoundUser{$User}++;
  	} elsif (($User) = $ThisLine =~ /Rejecting user '([^ ]+)'/) {
  		$RejectedUser{$User}++;
@@ -135,7 +136,16 @@ diff -u -r1.17 samba
  	} elsif ( ( $ThisLine =~ /unable to open passdb database.$/ ) ) {
  		$DbOpenFail++;
  	} elsif ( ($Server,$Ip,$Group) = ($ThisLine =~ /Server ([^ ]+) at IP ([^ ]+) is announcing itself as a local master browser for workgroup ([^ ]+) and we think we are master. Forcing election.$/ ) ) {
-@@ -107,15 +125,40 @@
+@@ -95,6 +114,8 @@
+ 	} elsif ( ($Signal,undef,$Version) = ($ThisLine =~ /INTERNAL ERROR: Signal ([^ ]+) in pid ([^ ]+) \(([^ ]+)\)  Please read the file BUGS.txt in the distribution$/ ) ) {
+ 		$Temp = "Version $Version with signal $Signal";
+ 		$Crash{$Temp}++;
++   } elsif ( ($Error) = ($ThisLine =~ /util.c:smb_panic\(\d+\)  (PANIC: internal error)$/ ) ) {
++      $Crash{$Error}++;
+ 	} elsif ( ( $ThisLine =~ /get_domain_master_name_node_status_fail\(([^ ]+)\)/ ) ) {
+ 		$GetDomainMasterStatusFail++;
+    } elsif ( ($User) = ($ThisLine =~ /pass_check_smb\(552\)  Account for user '([^ ]+)' was disabled.$/) ) {
+@@ -107,15 +128,40 @@
  		$RootLoggedIn{$user}++;
  	} elsif ( ($file,$function) = ($ThisLine =~ /([a-zA-Z_\/():\.0-9-]+)  ([a-zA-Z0-9_-]+): Not yet implemented.$/)) {
  		$NotImplemented{$file}{$function}++;
@@ -180,7 +190,7 @@ diff -u -r1.17 samba
        #lib/util_sock.c:read_data(436)  read_data: read failure for 4. Error = Brak drogi do systemu
  	}
  }
-@@ -131,6 +174,21 @@
+@@ -131,6 +177,21 @@
  	}
  }
  
@@ -202,7 +212,7 @@ diff -u -r1.17 samba
  if (keys %DiscardWins) {
     print "\nDiscarded invalid wins.dat file with version:\n";
     foreach $Version (sort {$a cmp $b} keys %DiscardWins) {
-@@ -169,6 +227,16 @@
+@@ -169,6 +230,16 @@
     }
  }
  
@@ -219,7 +229,7 @@ diff -u -r1.17 samba
  if (($Detail >= 5) and (keys %RootLoggedIn)) {
     print "\nAdmin logins (root privileges):\n";
     foreach $user (sort {$a cmp $b} keys %RootLoggedIn) {
-@@ -186,13 +254,6 @@
+@@ -186,13 +257,6 @@
  }
       
  
@@ -233,7 +243,7 @@ diff -u -r1.17 samba
  if (keys %ForceElection) {
  	print "\nForced Election:\n";
  	foreach $Group (sort {$a cmp $b} keys %ForceElection) {
-@@ -227,6 +288,13 @@
+@@ -227,6 +291,13 @@
  	print "\nFailed to get Domain Master node name: $GetDomainMasterStatusFail Time(s)\n";
  }
  
@@ -247,7 +257,7 @@ diff -u -r1.17 samba
  if (($Detail >= 5) and (keys %NoServ)) {
     print "\nCouldn't find services:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %NoServ) {
-@@ -293,8 +361,28 @@
+@@ -293,8 +364,28 @@
      }
  }
  
