@@ -39,7 +39,10 @@ while (defined($ThisLine = <STDIN>)) {
    if (
       ($ThisLine =~ /^Initializing */) or
       ($ThisLine =~ /^Installing */) or
-      ($ThisLine =~ /^read: Broken pipe$/)
+      ($ThisLine =~ /^open: Permission denied$/) or
+      ($ThisLine =~ /^read: Broken pipe$/) or
+      ($ThisLine =~ /^read: Connection reset by peer$/) or
+      ($ThisLine =~ /^spgetpwnam: can't find user: */)
    ) {
       # Don't care about these...
    } elsif ( ($User, $Host) = ( $ThisLine =~ /^user (.*?) authenticated - (.*)$/ ) ) {
@@ -59,6 +62,10 @@ while (defined($ThisLine = <STDIN>)) {
       $LoginFailed{"$Host (UNKNOWN: $User)"}++;
    } elsif ( ($Mechanism) = ( $ThisLine =~ /^sptls: TLS connection established: (.*)$/ ) ) {
       $sslMechanism{$Mechanism}++;
+   } elsif ( ($Host) = ( $ThisLine =~ /^autologout time elapsed - (.*)$/ ) ) {
+      $AutoLogout{$Host}++;
+   } elsif ( ($File) = ( $ThisLine =~ /^can't open or create file: (.*)$/ ) ) {
+      $PermissionDenied{$File}++;
    } else {
       # Report any unmatched entries...
       # remove PID from named messages
@@ -72,8 +79,16 @@ while (defined($ThisLine = <STDIN>)) {
 
 ################################################
 
+if ( ( $Detail >= 0 ) and (keys %PermissionDenied)) {
+   print "WARNING:\n";
+   print "Can't open or create files:\n";
+   foreach $File (sort {$a cmp $b} keys %PermissionDenied) {
+      print "   $File: $PermissionDenied{$File} Time(s)\n";
+   }
+}
+
 if ( ( $Detail >= 0 ) and (keys %LoginFailed)) {
-   print     "\n[POP3] Failures:".
+   print     "\n\n[POP3] Login failures:".
              "\n=========================".
              "\n                                                  Host (user) |          # ".
              "\n------------------------------------------------------------- | -----------";
@@ -129,14 +144,14 @@ if (keys %Logout2) {
    $DownAll = 0;
    foreach $User (sort keys %Logout2) {
       $Conns = $Logout2{$User};
-      $Size = $MboxSize{$User};
       $UserLength = length($User);
       $UserSpaceLength = 39 - $UserLength;
       $CountLength = length("$Conns");
       $CountSpaceLength = 8 - $CountLength;
-      $SizeSpaceLength = 12 - length($Size);
       $Down = $DownloadedMessagesSize{$User};
       $DownSpaceLength = 11 - length($Down);
+      $Size = $MboxSize{$User};
+      $SizeSpaceLength = 11 - length($Size);
       print "\n" ." " x $UserSpaceLength . $User . " |" . " " x $CountSpaceLength .  $Conns . " |" . 
                   " " x $DownSpaceLength . $Down . " |" . " " x $SizeSpaceLength . $Size;
       $ConnCount += $Conns;
@@ -148,8 +163,8 @@ if (keys %Logout2) {
    $DownLength = length($DownAll);
    $DownSpaceLength = 11 - $DownLength;
    $SizeLength = length($SizeAll);
-   $SizeSpaceLength = 12 - $SizeLength;
-   print "\n" . "-" x 76;
+   $SizeSpaceLength = 11 - $SizeLength;
+   print "\n" . "-" x 75;
    print "\n" . " " x $CountSpaceLength . "$ConnCount" . " |" . " " x $DownSpaceLength . $DownAll . " |" .
                 " " x $SizeSpaceLength  .  $SizeAll    . "\n\n\n";
 }
@@ -181,6 +196,13 @@ if ( ( $Detail >= 5 ) and (keys %sslMechanism)) {
       $TotalConnections += $sslMechanism{$Mechanism};
    }
    print "Total TLS connections: $TotalConnections Time(s)\n";
+}
+
+if ( ( $Detail >= 5 ) and (keys %AutoLogout)) {
+   print "\nAutologout:\n";
+   foreach $Host (sort {$a cmp $b} keys %AutoLogout) {
+      print "   $Host: $AutoLogout{$Host} Time(s)\n";
+   }
 }
 
 if (keys %OtherList) {
