@@ -46,7 +46,8 @@ while (defined($ThisLine = <STDIN>)) {
       ($ThisLine =~ /^read: Broken pipe$/) or
       ($ThisLine =~ /^read: Connection reset by peer$/) or
       ($ThisLine =~ /^spgetpwnam: can't find user: */) or
-      ($ThisLine =~ /^sptls: SSL_accept error: (-|)\d+$/)
+      ($ThisLine =~ /^sptls: SSL_accept error: (-|)\d+$/) or
+      ($ThisLine =~ /^sptls: do need at least RSA or DSA cert/key data$/)
    ) {
       # Don't care about these...
    } elsif ( ($User, $Host) = ( $ThisLine =~ /^user (.*?) authenticated - (.*)$/ ) ) {
@@ -60,12 +61,17 @@ while (defined($ThisLine = <STDIN>)) {
       $Logout{$User}{$Host}++;
       $Logout2{$User}++;
       $Connection{$Host}++;
+   } elsif  ( ($Host) = ( $ThisLine =~ /^session ended - (.*)$/) ) {
+      $Logout{"UNKNOWN"}{$Host}++;
+      $Connection{$Host}++;
    } elsif ( ($User,$Host) = ( $ThisLine =~ /^authentication failed for user (.*?) - (.*)/ ) ) {
       $LoginFailed{"$Host ($User)"}++;
    } elsif ( ($User,$Host) = ( $ThisLine =~ /^authentication failed: no such user: (.*?) - (.*)/ ) ) {
       $LoginFailed{"$Host (UNKNOWN: $User)"}++;
    } elsif ( ($Mechanism) = ( $ThisLine =~ /^sptls: TLS connection established: (.*)$/ ) ) {
       $sslMechanism{$Mechanism}++;
+   } elsif ($ThisLine =~ /^sptls: created \d+bit temporary [^ ].* key$/ ) {
+      $sslTempkey++;
    } elsif ( ($Host) = ( $ThisLine =~ /^autologout time elapsed - (.*)$/ ) ) {
       $AutoLogout{$Host}++;
    } elsif (
@@ -73,7 +79,11 @@ while (defined($ThisLine = <STDIN>)) {
       (($File) = ( $ThisLine =~ /^mailbox: can't open mailbox file: (.*)$/ ))
    ) {
       $PermissionDenied{$File}++;
-      
+   } elsif ( ($User, $Host) = ( $ThisLine =~ /^can't find APOP secret for user adamek - 153.19.213.85$/ ) ) {
+      $NoApopSecret{$User}++;
+      $Logout{$User}{$Host}++;
+      $Connection{$Host}++;
+      $Logout2{$User}++;
    } else {
       # Report any unmatched entries...
       # remove PID from named messages
@@ -196,6 +206,10 @@ if ( ( $Detail >= 10 ) and (keys %Login)) {
    print "Total $LoginCount successful logins\n\n\n";
 }
 
+if ($sslTempkey > 0) {
+   print "\nTemporary SSL key created and used $sslTempkey Time(s)\n";
+}
+
 if ( ( $Detail >= 5 ) and (keys %sslMechanism)) {
    print "\nTLS Connection types:\n";
    $TotalConnections = 0;
@@ -211,6 +225,16 @@ if ( ( $Detail >= 5 ) and (keys %AutoLogout)) {
    foreach $Host (sort {$a cmp $b} keys %AutoLogout) {
       print "   $Host: $AutoLogout{$Host} Time(s)\n";
    }
+}
+
+if ( ( $Detail >= 5 ) and (keys %NoApopSecret)) {
+   print "\nCan't find APOP secret:\n";
+   $TotalAPOP = 0;
+   foreach $User (keys %NoApopSecret) {
+      print "   $User: $NoApopSecret{$User} Time(s)\n";
+      $TotalAPOP += $NoApopSecret{$User};
+   }
+   print "Total APOP errors: $TotalAPOP Time(s)\n";
 }
 
 if (keys %OtherList) {
