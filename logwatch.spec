@@ -6,7 +6,7 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	6.0
-Release:	0.pre.0.2
+Release:	0.pre.0.3
 License:	MIT
 Group:		Applications/System
 #Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
@@ -17,23 +17,19 @@ Source1:	%{name}-saslauthd
 Source2:	%{name}-saslauthd.conf
 Patch0:		%{name}-config.patch
 Patch1:		%{name}-log_conf.patch
-Patch2:		%{name}-clam-update.patch
-Patch3:		%{name}-postfix.patch
-Patch4:		%{name}-samba.patch
-Patch5:		%{name}-http.patch
-Patch6:		%{name}-zz-disk_space.patch
-Patch8:		%{name}-pam_unix.patch
-Patch9:		%{name}-sshd.patch
-Patch10:	%{name}-pop3.patch
-Patch11:	%{name}-amavisd-new-log_format.patch
-Patch12:	%{name}-scripts-services.diff
-Patch13:	%{name}-postfix_verbosity.patch
-Patch15:	%{name}-postfix-revDNS.patch
-Patch16:	%{name}-named.patch
-Patch17:	%{name}-pam_unix.conf.patch
-Patch18:	%{name}-secure.patch
-Patch19:	%{name}-secure.conf.patch
-Patch20:	%{name}-pop3.conf.patch
+Patch2:		%{name}-postfix.patch
+Patch3:		%{name}-http.patch
+Patch4:		%{name}-zz-disk_space.patch
+Patch5:		%{name}-pam_unix.patch
+Patch6:		%{name}-sshd.patch
+Patch7:		%{name}-pop3.patch
+Patch8:		%{name}-amavisd-new-log_format.patch
+Patch9:		%{name}-postfix_verbosity.patch
+Patch10:	%{name}-postfix-revDNS.patch
+Patch11:	%{name}-pam_unix.conf.patch
+Patch12:	%{name}-secure.patch
+Patch13:	%{name}-secure.conf.patch
+Patch14:	%{name}-pop3.conf.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	crondaemon
@@ -60,23 +56,21 @@ u¿yciu i mo¿e pracowaæ na wiêkszo¶ci systemów.
 
 %prep
 %setup -q -n %{name}-pre%{version}
-#%patch0 -p1	--has to be updated!!!
+%patch0 -p0
 %patch1 -p1
-#%patch2 -p0	--applied?
-#%patch3 -p1	--to be checked
-#%patch4 -p0	--applied?
-#%patch5 -p0	--to be checked
-#%patch6 -p1	--applied? script has changed
-#%patch8 -p0	--applied?
-#%patch9 -p0	--to be checked
-#%patch10 -p0	--to be checked
-#%patch11 -p1	--to be checked
-%patch13 -p1
-%patch15 -p1
-%patch17 -p0
-#%patch18 -p0
-%patch19 -p0
-%patch20 -p0
+%patch2 -p0
+%patch3 -p0
+%patch4 -p0
+%patch5 -p0
+%patch6 -p0
+%patch7 -p0
+%patch8 -p0
+%patch9 -p1
+%patch10 -p1
+%patch11 -p0
+%patch12 -p0
+%patch13 -p0
+%patch14 -p0
 
 %install
 rm -rf $RPM_BUILD_ROOT
