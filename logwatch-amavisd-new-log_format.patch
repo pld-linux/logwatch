@@ -18,7 +18,7 @@ diff -dur logwatch-5.2.2.orig/scripts/services/amavis logwatch-5.2.2/scripts/ser
        }; # if 
  
 -   } elsif (($Virus, $From) = ( $ThisLine =~ /^(Virus found - quarantined|INFECTED) \(([^\)]+)\)\, [\(\<]([^\>\)]*)[\)\>]/ )) {
-+   } elsif (($Virus, $FromIP, $From) = ( $ThisLine =~ /^(Virus found - quarantined|INFECTED|Blocked INFECTED) \(([^\)]+)\)\, (?:\[([^\]]*)\] )?[\(\<]([^\>\)]*)[\)\>]/ )[1,2]) {
++   } elsif (($Virus, $FromIP, $From) = ( $ThisLine =~ /^(?:Virus found - quarantined|INFECTED|Blocked INFECTED) \(([^\)]+)\)\, (?:\[([^\]]*)\] )?[\(\<]([^\>\)]*)[\)\>]/ )) {
  
        $InfectedMsgs++;
  
@@ -37,7 +37,7 @@ diff -dur logwatch-5.2.2.orig/scripts/services/amavis logwatch-5.2.2/scripts/ser
        }; # if
  
 -   } elsif (($Fromspam, $Towards) = ( $ThisLine =~ /^SPAM, [\(\<]([^\>\)]+)[\)\>] -\> [\(\<]([^\>\)]+)[\)\>]/ )) {
-+   } elsif (($FromIP, $Fromspam, $Towards) = ( $ThisLine =~ /^(SPAM|Blocked SPAM), (?:\[([^\]]*)\] )?[\(\<]([^\>\)]+)[\)\>] -\> [\(\<]([^\>\)]+)[\)\>]/ )[1,2]) {
++   } elsif (($FromIP, $Fromspam, $Towards) = ( $ThisLine =~ /^(?:SPAM|Blocked SPAM), (?:\[([^\]]*)\] )?[\(\<]([^\>\)]+)[\)\>] -\> [\(\<]([^\>\)]+)[\)\>]/ )) {
        $SpamMsgs++;
  
 +      if (defined($Fromspam)){
