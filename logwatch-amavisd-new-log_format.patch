@@ -1,29 +1,72 @@
---- /home/gotar/cvs/logwatch/scripts/services/amavis	2004-06-21 16:59:05.000000000 +0200
-+++ amavis	2004-09-05 23:57:48.000000000 +0200
-@@ -60,7 +60,7 @@
+diff -dur logwatch-5.2.2.orig/scripts/services/amavis logwatch-5.2.2/scripts/services/amavis
+--- logwatch-5.2.2.orig/scripts/services/amavis	2004-06-21 16:59:05.000000000 +0200
++++ logwatch-5.2.2/scripts/services/amavis	2004-09-08 13:03:18.297297146 +0200
+@@ -60,9 +60,9 @@
          or ($ThisLine =~ /^cached [a-zA-Z0-9]+ /)
          or ($ThisLine =~ /^starting.  amavisd at/) ) {
         # We don't care about these
 -   } elsif ($ThisLine =~ /^Passed, /) {
 +   } elsif ($ThisLine =~ /^Passed,? /) {
        $CleanMsgs++;
-    } elsif (($FileName, $From) = ( $ThisLine =~ /^BANNED name\/type \(([^\)]+)\)\, \<([^\>]*)\>/ )) {
+-   } elsif (($FileName, $From) = ( $ThisLine =~ /^BANNED name\/type \(([^\)]+)\)\, \<([^\>]*)\>/ )) {
++   } elsif (($FileName, $From) = ( $ThisLine =~ /^(?:Blocked )?BANNED (?:name\/type )?\(([^\)]+)\)\, (?:\[([^\]]*)\] )?\<([^\>]*)\>/ )) {
  
-@@ -70,7 +70,7 @@
+       $BannedNames++;
+ 
+@@ -70,10 +70,17 @@
            $Banned{$FileName}{$From}++;
        }; # if 
  
 -   } elsif (($Virus, $From) = ( $ThisLine =~ /^(Virus found - quarantined|INFECTED) \(([^\)]+)\)\, [\(\<]([^\>\)]*)[\)\>]/ )) {
-+   } elsif (($Virus, $From) = ( $ThisLine =~ /^(Virus found - quarantined|INFECTED|Blocked INFECTED) \(([^\)]+)\)\, [\(\<]([^\>\)]*)[\)\>]/ )[1,2]) {
++   } elsif (($Virus, $FromIP, $From) = ( $ThisLine =~ /^(Virus found - quarantined|INFECTED|Blocked INFECTED) \(([^\)]+)\)\, (?:\[([^\]]*)\] )?[\(\<]([^\>\)]*)[\)\>]/ )[1,2]) {
  
        $InfectedMsgs++;
  
-@@ -82,7 +82,7 @@
++      if (defined($From)){
++         $From="$From [$FromIP]" if defined($FromIP);
++      }
++      else {
++         $From="[$FromIP]";
++      }
++
+       if ($Detail >= 5) {
+         $Virustypes{$Virus}++;
+       }; # if
+@@ -82,9 +89,16 @@
          $Viruses{$Virus}{$From}++;
        }; # if
  
 -   } elsif (($Fromspam, $Towards) = ( $ThisLine =~ /^SPAM, [\(\<]([^\>\)]+)[\)\>] -\> [\(\<]([^\>\)]+)[\)\>]/ )) {
-+   } elsif (($Fromspam, $Towards) = ( $ThisLine =~ /^(SPAM|Blocked SPAM), [\(\<]([^\>\)]+)[\)\>] -\> [\(\<]([^\>\)]+)[\)\>]/ )[1,2]) {
++   } elsif (($FromIP, $Fromspam, $Towards) = ( $ThisLine =~ /^(SPAM|Blocked SPAM), (?:\[([^\]]*)\] )?[\(\<]([^\>\)]+)[\)\>] -\> [\(\<]([^\>\)]+)[\)\>]/ )[1,2]) {
        $SpamMsgs++;
  
++      if (defined($Fromspam)){
++         $Fromspam="$Fromspam [$FromIP]" if defined($FromIP);
++      }
++      else {
++         $Fromspam="[$FromIP]";
++      }
++
        if ($Detail >= 5) {
+         $Spamtypes{$Towards}++;
+       }; # if
+@@ -93,9 +107,18 @@
+         $Spams{$Towards}{$Fromspam}++;
+       }; # if
+ 
+-   } elsif (($From, $Why) = ( $ThisLine =~ /^BAD HEADER from [\(\<]([^\>\)]+)[\)\>]: (.*) in message header/ )) {
++   } elsif (($FromIP, $From, $Why) = ( $ThisLine =~ /^(?:Blocked )?BAD[ -]HEADER(?: from|\,) (?:\[([^\]]*)\] )?[\(\<]([^\>\)]+)[\)\>](?: -\> [\(\<](?:[^\>\)]+)[\)\>])[^\:]*(?:\: (.*) in message header)?/ )) {
+       $BadHeaders++;
+ 
++      if (defined($From)){
++         $From="$From [$FromIP]" if defined($FromIP);
++      }
++      else {
++         $From="[$FromIP]";
++      }
++
++      $Why="" if not defined($Why);
++
+       if ($Detail >= 10) {
+         $Headers{$From}{$Why}++;
+       }; # if
