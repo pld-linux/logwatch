@@ -4,12 +4,13 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.9
 diff -u -r1.9 postfix
 --- scripts/services/postfix	3 Feb 2004 03:25:02 -0000	1.9
-+++ scripts/services/postfix	11 May 2004 12:38:32 -0000
-@@ -82,27 +82,33 @@
++++ scripts/services/postfix	4 Jun 2004 10:21:41 -0000
+@@ -82,27 +82,34 @@
  $QueueSizeExceeded = 0;
  $RejectedRBL = 0;
  $ErrorRBL = 0;
 +$NoFreeSpace = 0;
++$RejectClients = 0;
  
  while (defined($ThisLine = <STDIN>)) {
 -   if ( ( $ThisLine =~ m/^connect/ ) or 
@@ -58,7 +59,7 @@ diff -u -r1.9 postfix
        # We don't care about these
     } elsif ( ($Bytes) = ($ThisLine =~ /^[a-zA-Z0-9]+: from=.*size=([0-9]+).*$/) ) {
        $MsgsSent++;
-@@ -154,9 +160,11 @@
+@@ -154,9 +161,11 @@
     #} elsif ( ($Host,undef) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <([^ ]*)>: Sender address rejected: Domain not found;/)) {
     #   $RejectDomain{$Host}++;
     # above two lines included in generic reject sender on next condition
@@ -73,7 +74,17 @@ diff -u -r1.9 postfix
        $Temp = "$Host : $Reason";
        $RejectRecip{$Recip}{$Temp}++;
     } elsif ( ($Host,undef) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): 554 <(.*)>: Sender address rejected: Access denied;/)) {
-@@ -186,7 +194,7 @@
+@@ -168,6 +177,9 @@
+    } elsif ( ($Host,$Site) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): 554 Service unavailable; \[[^ ]*\] blocked using ([^ ]*);/)) {
+       $RejectRBL{$Site}{$Host}++;
+       $RejectedRBL++;
++   } elsif ( ($Host) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): 554 <[^ ]*\[[^ ]*\]>: Client host rejected: Access denied;/)) {
++      $RejectClientHost{$Host}++;
++      $RejectClients++;
+    } elsif ( ($Host,$Site,$Reason) = ($ThisLine =~ /warning: ([^ ]*): RBL lookup error: Name service error for \d+\.\d+\.\d+\.\d+\.([^ ]*): (.*)$/)) {
+       $Temp = "$Host : $Reason";
+       $RBLError{$Site}{$Temp}++;
+@@ -186,7 +198,7 @@
     } elsif ( ($Host,$MyName) = ($ThisLine =~ /warning: host ([^ ]*\[[^ ]*\]) replied to HELO\/EHLO with my own hostname ([^ ]*)$/)) {
        $Temp = "$Host : replied to HELO\/EHLO with my own hostname $MyName";
        $HeloError{$Temp}++;
@@ -82,7 +93,7 @@ diff -u -r1.9 postfix
        $Temp = "$Host : Helo command rejected \($Reason\)";
        $HeloError{$Temp}++;
     } elsif ( ($Size,$Host) = ($ThisLine =~ /bad size limit "\(([^ ]*)\)" in EHLO reply from ([^ ]*\[[^ ]*\])$/)) {
-@@ -196,7 +204,7 @@
+@@ -196,7 +208,7 @@
        $IllegalAddressSyntax{$Command}{$Host}++;
     } elsif ( ($Error) = ($ThisLine =~ /warning: mailer loop: (.*)$/)) {
        $MailerLoop{$Error}++;
@@ -91,7 +102,7 @@ diff -u -r1.9 postfix
        $SaslAuthenticationFail{$Host}++;
     } elsif ( ($Domain) = ($ThisLine =~ /warning: malformed domain name in resource data of MX record (.*)$/)) {
        $MxError{$Domain}++;
-@@ -224,45 +232,66 @@
+@@ -224,45 +236,66 @@
        $DatabaseGeneration{$Source}++;
     } elsif ( ($Reason) = ($ThisLine =~ /warning: [a-zA-Z0-9]+: write queue file: (.*)$/)) {
        $QueueWriteError{$Reason}++;
@@ -166,7 +177,7 @@ diff -u -r1.9 postfix
     foreach $Reason (sort {$a cmp $b} keys %QueueWriteError) {
        print "   $Reason : $QueueWriteError{$Reason} Time(s)\n";
     }
-@@ -275,10 +304,6 @@
+@@ -275,10 +308,6 @@
     }
  }
  
@@ -177,7 +188,7 @@ diff -u -r1.9 postfix
  if (keys %DatabaseGeneration) {
     print "\n\nDatabase files are not up-to-date (propably rehash is needed):\n";
     foreach $Source (sort {$a cmp $b} keys %DatabaseGeneration) {
-@@ -286,10 +311,6 @@
+@@ -286,10 +315,6 @@
     }
  }
  
@@ -188,7 +199,7 @@ diff -u -r1.9 postfix
  if (keys %PixWorkaround) {
     print "\n\nEnabled PIX <CRLF>.<CRLF> workaround for:\n";
     foreach $Host (sort {$a cmp $b} keys %PixWorkaround) {
-@@ -353,20 +374,17 @@
+@@ -353,20 +378,24 @@
     }
  }
  
@@ -199,7 +210,13 @@ diff -u -r1.9 postfix
 -#      print "   $Host : $RejectDomain{$Host} Time(s)\n";
 -#   }
 -#}
--
++if ($RejectClients > 0) {
++   print "\n\nClient hosts rejected $RejectClients Time(s)\n";
++   foreach $Host (sort {$a cmp $b} keys %RejectClientHost) {
++      print "   $Host $RejectClientHost{$Host} Time(s)\n";
++   }
++}
+ 
  if (keys %RejectSender) {
 -   print "\n\nMessages rejected from sender:\n";
 -   foreach $Sender (sort {$a cmp $b} keys %RejectSender) {
@@ -219,7 +236,7 @@ diff -u -r1.9 postfix
        }
     }
  }
-@@ -376,7 +394,7 @@
+@@ -376,7 +405,7 @@
     foreach $Recip (sort {$a cmp $b} keys %RejectRecip) {
        print "    $Recip:\n";
        foreach $Host (sort {$a cmp $b} keys %{$RejectRecip{$Recip}} ) {
@@ -228,7 +245,7 @@ diff -u -r1.9 postfix
        }
     }
  }
-@@ -508,7 +526,7 @@
+@@ -508,7 +537,7 @@
  if (keys %UnknownWarnings) {
     print "\n\nUnrecognized warning:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %UnknownWarnings) {
