@@ -4,8 +4,8 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.7
 diff -u -r1.7 postfix
 --- scripts/services/postfix	15 Dec 2003 18:35:03 -0000	1.7
-+++ scripts/services/postfix	6 Jan 2004 09:02:10 -0000
-@@ -61,12 +61,18 @@
++++ scripts/services/postfix	14 Jan 2004 07:31:22 -0000
+@@ -61,12 +61,20 @@
  #
  ########################################################
  
@@ -21,21 +21,24 @@ diff -u -r1.7 postfix
 +$UnsuppertedFamily = 0;
 +$TableChanged = 0;
 +$QueueSizeExceeded = 0;
++$RejectedRBL = 0;
++$ErrorRBL = 0;
  
  while (defined($ThisLine = <STDIN>)) {
     if ( ( $ThisLine =~ m/^connect/ ) or 
-@@ -83,7 +89,9 @@
+@@ -83,7 +91,10 @@
          ( $ThisLine =~ m/^daemon started$/ ) or
          ( $ThisLine =~ m/^terminating on signal 15$/ ) or
          ( $ThisLine =~ m/^warning: Mail system is down -- accessing queue directly$/ ) or
 -        ( $ThisLine =~ m/^Deleted: \d message$/ )
 +        ( $ThisLine =~ m/^Deleted: \d message$/ ) or
 +        ( $ThisLine =~ m/^warning: [a-zA-Z0-9]+: skipping further client input$/ ) or
-+        ( $ThisLine =~ m/^warning: premature end-of-input from cleanup socket while reading input attribute name$/ )
++        ( $ThisLine =~ m/^warning: premature end-of-input from cleanup socket while reading input attribute name$/ ) or
++        ( $ThisLine =~ m/^warning: uid=\d: Broken pipe$/ )
        ) {
        # We don't care about these
     } elsif ( ($Bytes) = ($ThisLine =~ /^[a-zA-Z0-9]+: from=.*size=([0-9]+).*$/) ) {
-@@ -124,7 +132,7 @@
+@@ -124,11 +135,16 @@
        $ConnectionLost{$Command}++;
     } elsif ( ($Rejected,undef,undef) = ($ThisLine =~ /^^[a-zA-Z0-9]+: reject: header (.*); from=<([^ ]*)> to=<([^ ]*)>: Message content rejected$/)) {
        $HeaderReject{$Rejected}++;
@@ -44,7 +47,16 @@ diff -u -r1.7 postfix
        $RejectDomain{$Host}++;
     } elsif ( ($Host,$Site,$Reason) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 554 Service unavailable; \[[^ ]*\] blocked using ([^ ]*), reason: (.*);/)) {
        $Temp = "$Host : $Reason";
-@@ -137,11 +145,11 @@
+       $RejectRBL{$Site}{$Temp}++;
++      $RejectedRBL++;
++   } elsif ( ($Host,$Site,$Reason) = ($ThisLine =~ /^warning: ([^ ]*): RBL lookup error: Name service error for \d+\.\d+\.\d+\.\d+\.([^ ]*): (.*)$/)) {
++      $Temp = "$Host : $Reason";
++      $RBLError{$Site}{$Temp}++;
++      $ErrorRBL++;
+    } elsif ( (undef,undef,$Error) = ($ThisLine =~ /^warning: ([^ ]*): hostname ([^ ]*) verification failed: (.*)$/)) {
+       $HostnameVerification{$Error}++;
+    } elsif ( $ThisLine =~ /^[a-zA-Z0-9]+: removed$/) {
+@@ -137,11 +153,11 @@
        $PixWorkaround{$Host}++;
     } elsif ( ($Message) = ($ThisLine =~ /^warning: valid_hostname: (.*)$/)) {
        $ValidHostname{$Message}++;
@@ -59,7 +71,7 @@ diff -u -r1.7 postfix
        $HeloError{$Temp}++;
     } elsif ( ($Host,$Reason) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 504 <[^ ]*>: Helo command rejected: (.*);/)) {
        $Temp = "$Host : Helo command rejected \($Reason\)";
-@@ -155,17 +163,29 @@
+@@ -155,17 +171,38 @@
        $MailerLoop{$Error}++;
     } elsif ( ($Host) = ($ThisLine =~ /^warning: ([^ ]*\[[^ ]*\]): SASL LOGIN authentication failed/)) {
        $SaslAuthenticationFail{$Host}++;
@@ -68,12 +80,18 @@ diff -u -r1.7 postfix
 +   } elsif ( ($Host,$Command) = ($ThisLine =~ /^warning: ([^ ]*\[[^ ]*\]) sent message header instead of ([^ ]*) command: /)) {
 +      $Error = "Sent message header instead of $Command command";
 +      $SmtpConversationError{$Error}{$Host}++;
-+   } elsif ( ($ThisLine =~ m/warning: smtp_connect_addr: socket: Address family not supported by protocol/) or
-+      ($ThisLine =~ m/warning: smtp_addr_one: unknown address family \d for [^ ]*/)) {
++   } elsif (
++         ($ThisLine =~ m/warning: smtp_connect_addr: socket: Address family not supported by protocol/) or
++         ($ThisLine =~ m/warning: smtp_addr_one: unknown address family \d for [^ ]*/)
++      ) {
 +      $UnsuppertedFamily++;
 +   } elsif ($ThisLine =~ m/(lookup |)table has changed -- exiting$/) {
 +      $TableChanged++;
-+   } elsif ($ThisLine =~ m/^warning: [a-zA-Z0-9]+: queue file size limit exceeded$/) {
++   } elsif (
++         ($ThisLine =~ m/^fatal: [^ ]*\(\d+\): Message file too big$/) or
++         ($ThisLine =~ m/^warning: [a-zA-Z0-9]+: queue file size limit exceeded$/) or
++         ($ThisLine =~ m/^warning: uid=\d+: File too large$/)
++      ) {
 +      $QueueSizeExceeded++;
 +   } elsif ( ($Command,$Host) = ($ThisLine =~ /^too many errors after ([^ ]*) from ([^ ]*\[[^ ]*\])$/)) {
 +      $TooManyErrors{$Command}{$Host}++;
@@ -81,6 +99,10 @@ diff -u -r1.7 postfix
 +      $SizeLimit{"$From -> $To"}++;
 +   } elsif ( (undef,$Source) = ($ThisLine =~ /^warning: database ([^ ]*) is older than source file ([a-zA-Z0-9\/]+)$/)) {
 +      $DatabaseGeneration{$Source}++;
++   } elsif ( ($Reason) = ($ThisLine =~ /^warning: [a-zA-Z0-9]+: write queue file: (.*)$/)) {
++      $QueueWriteError{$Reason}++;
++   } elsif ( ($Reason) = ($ThisLine =~ /^warning: [^ ]*\/[a-zA-Z0-9]+: (Error writing message file)$/)) {
++      $MessageWriteError{$Reason}++;
     } else {
        push @OtherList,$ThisLine;
        # TODO:
@@ -92,16 +114,29 @@ diff -u -r1.7 postfix
 -      #warning: smtp_connect_addr: socket: Address family not supported by protocol
 -      #warning: smtp_addr_one: unknown address family 1 for localhost
 -      #warning: unknown[203.197.217.137] sent message header instead of SMTP command: From:"Bailey" <sanchez_24@canada.com>
-+      #warning: 201.251.19.153.bl.spamcop.net: RBL lookup error: Name service error for 201.251.19.153.bl.spamcop.net: Host not found, try again
     }
  }
  
-@@ -190,75 +210,101 @@
+@@ -190,75 +227,127 @@
     print "\n\n$RemovedFromQueue messages removed from queue";
  }
  
 +if ($QueueSizeExceeded > 0) {
-+   print "\n\n$QueueSizeExceeded messages exceeded queue file size limit and removed";
++   print "\n\n$QueueSizeExceeded messages exceeded queue or message file size limit and removed";
++}
++
++if (keys %QueueWriteError) {
++   print "\n\nError writing queue file:\n";
++   foreach $Reason (sort {$a cmp $b} keys %QueueWriteError) {
++      print "   $Reason : $QueueWriteError{$Reason} Time(s)\n";
++   }
++}
++
++if (keys %MessageWriteError) {
++   print "\n\nError writing message file:\n";
++   foreach $Reason (sort {$a cmp $b} keys %MessageWriteError) {
++      print "   $Reason : $MessageWriteError{$Reason} Time(s)\n";
++   }
 +}
 +
 +if ($TableChanged > 0) {
@@ -135,7 +170,8 @@ diff -u -r1.7 postfix
     }
  }
  
- if (keys %UnknownUsers) {
+-if (keys %UnknownUsers) {
++if (($Detail >= 5) and (keys %UnknownUsers)) {
     print "\n\nUnknown users:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %UnknownUsers) {
 -      print "    $ThisOne : $UnknownUsers{$ThisOne} Times(s)\n";
@@ -200,17 +236,30 @@ diff -u -r1.7 postfix
  }
  
  if (keys %RejectRBL) {
-    print "\n\nMessages rejected using Anti-Spam site:\n";
+-   print "\n\nMessages rejected using Anti-Spam site:\n";
++   print "\n\nMessages rejected using Anti-Spam site $RejectedRBL Time(s)\n";
     foreach $Site (sort {$a cmp $b} keys %RejectRBL) {
 -      print "    $Site:\n";
 +      print "   $Site:\n";
        foreach $Host (sort {$a cmp $b} keys %{$RejectRBL{$Site}} ) {
 -         print "        $Host : $RejectRBL{$Site}{$Host} Times(s)\n";
 +         print "      $Host : $RejectRBL{$Site}{$Host} Time(s)\n";
++      }
++   }
++}
++
++if (keys %RBLError) {
++   print "\n\nRBL lookup errors $ErrorRBL Time(s)\n";
++   foreach $Site (sort {$a cmp $b} keys %RBLError) {
++      print "   $Site\n";
++      if ($Detail >= 5) {
++         foreach $Error (sort {$a cmp $b} keys %{$RBLError{$Site}} ) {
++            print "      $Error : $RBLError{$Site}{$Error} Time(s)\n";
++         }
        }
     }
  }
-@@ -266,29 +312,57 @@
+@@ -266,29 +355,57 @@
  if (keys %AuthWarns) {
     print "\n\nAuthentication warnings:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %AuthWarns) {
@@ -273,7 +322,7 @@ diff -u -r1.7 postfix
        }
     }
  }
-@@ -296,28 +370,28 @@
+@@ -296,28 +413,28 @@
  if (keys %HostnameVerification) {
     print "\n\nHostname verification errors:\n";
     foreach $Error (sort {$a cmp $b} keys %HostnameVerification) {
