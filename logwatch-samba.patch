@@ -4,8 +4,17 @@ RCS file: /var/cvs/logwatch/scripts/services/samba,v
 retrieving revision 1.12
 diff -u -r1.12 samba
 --- scripts/services/samba	26 Nov 2003 14:36:30 -0000	1.12
-+++ scripts/services/samba	2 Dec 2003 08:13:00 -0000
-@@ -88,6 +88,8 @@
++++ scripts/services/samba	7 Dec 2003 17:26:10 -0000
+@@ -57,6 +57,8 @@
+ 		$NoServ{$NoService}++;
+ 	} elsif ($ThisLine =~ s/Denied connection from\s+(\S+)$/$1/) {
+ 		$Denied{$ThisLine}++;
++	} elsif ($ThisLine =~ s/ Connection denied from\s+(\S+)$/$1/) {
++		$Denied{$ThisLine}++;
+ 	} elsif ( ($Ip,$Name,$Group,$Subnet) = ($ThisLine =~ /Denied connection from  \(([^ ]+)\)  Samba name server ([^ ]+) is now a local master browser for workgroup ([^ ]+) on subnet ([^ ]+)/ ) ) {
+ 		$Denied{$Ip}++;
+ 		$BeLocalMaster{$Subnet}{$Group}{$Name}++;
+@@ -88,9 +90,17 @@
  		$Crash{$Temp}++;
  	} elsif ( ( $ThisLine =~ /get_domain_master_name_node_status_fail\(([^ ]+)\)/ ) ) {
  		$GetDomainMasterStatusFail++;
@@ -14,7 +23,16 @@ diff -u -r1.12 samba
  	} else {
  		# Report any unmatched entries...
  		$OtherList{$ThisLine}++;
-@@ -120,7 +122,7 @@
++		#
++		#TODO:
++		#lib/util_sock.c:get_socket_addr(1012)  getpeername failed. Error was Transport endpoint is not connected
++		#lib/util_sock.c:send_smb(704)  Error writing 4 bytes to client. -1. (Broken pipe)
++		#lib/util_sock.c:write_socket(524)  write_socket: Error writing 4 bytes to socket 5: ERRNO = Broken pipe
++		#lib/util_sock.c:write_socket_data(499)  write_socket_data: write failure. Error = Broken pipe
+ 	}
+ }
+ 
+@@ -120,7 +130,7 @@
  
  if (keys %Denied) {
     print "\nConnections Denied:\n";
@@ -23,7 +41,7 @@ diff -u -r1.12 samba
        print "   $Line : $Denied{$Line} Time(s)\n";
     }
  }
-@@ -199,23 +201,30 @@
+@@ -199,23 +209,30 @@
  
  if (keys %InvalidUser) {
     print "\nInvalid Users:\n";
