@@ -1,4 +1,4 @@
---- ./scripts/services/modprobe.kernel	Wed Apr  2 22:09:38 2003
+--- ./scripts/services/modprobe.kernel	Sun Apr 13 10:33:11 2003
 +++ ./scripts/services/modprobe	Wed Apr  2 22:21:01 2003
 @@ -16,9 +16,12 @@
  while (defined($ThisLine = <STDIN>)) {
@@ -10,7 +10,23 @@
 +	   $Modules{$ThisLine}++;
 +   } elsif ( $ThisLine =~ s/^FATAL: Module (.*) not found./$1/) {
 +	   $Modules{$ThisLine}++;
++   } elsif ( $ThisLine =~ s/FATAL: Module (.*) already in kernel./$1/) {
++	   $Loaded{$ThisLine}++;
 +   } else {
        $OtherList{$ThisLine}++;
     }
  }
+@@ -30,6 +33,13 @@
+    }
+ }
+ 
++if (keys $Loaded) {
++	print "\nAlready loaded modules:\n";
++	foreach my $ThisOne (keys $Loaded) {
++		print "   " . $ThisOne . ": " . $Loaded{$ThisOne} . " Time(s)\n";
++	}
++}
++
+ if (keys %OtherList) {
+    print "\n**Unmatched Entries**\n";
+    foreach $line (sort {$a cmp $b} keys %OtherList) {
