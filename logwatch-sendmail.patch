@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sendmail,v
 retrieving revision 1.32
 diff -u -r1.32 sendmail
 --- scripts/services/sendmail	15 Dec 2003 18:09:23 -0000	1.32
-+++ scripts/services/sendmail	16 Dec 2003 09:44:04 -0000
++++ scripts/services/sendmail	16 Dec 2003 10:01:24 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -14,7 +14,18 @@ diff -u -r1.32 sendmail
  
  ########################################################
  # This was written and is maintained by:
-@@ -234,6 +236,8 @@
+@@ -130,7 +132,9 @@
+ 		( $ThisLine =~ m/AUTH=server, relay=/ ) or
+ 		( $ThisLine =~ m/discarded/ ) or
+ 		( $ThisLine =~ m/headers too large/ ) or
+-		( $ThisLine =~ m/^clone [a-zA-Z0-9]+, owner=/ ) ) {
++		( $ThisLine =~ m/^clone [a-zA-Z0-9]+, owner=/ ) or
++      ( $ThisLine =~ m/^DSN: Can't create output/ )
++   ) {
+ 		# We don't care about these
+ 	} elsif ( ($FromUser, $FromDomain, $Bytes, $NumRcpts, $RelayHost) = ($ThisLine =~ /^from=[\<]?([^@]+)[@]?([^\> ]+).*size=([0-9]+).*nrcpts=([0-9]+).*relay=(\[[0-9\.]+\]|[^ ]* \[[0-9\.]+\]|[^ ]+).*$/) ) {
+ 		if ($NumRcpts > 0) {
+@@ -234,6 +238,8 @@
        # following in /etc/mail/access...
        # From:worduphosting.com	ERROR:550 5.7.1 Relaying Denied (Spammer)
        $KnownSpammer{$1}++;
@@ -23,7 +34,7 @@ diff -u -r1.32 sendmail
     } elsif ( ($User) = ($ThisLine =~ /^ruleset=check_rcpt, arg1=<([^ ]*)>, relay=[^,]*, reject=550\s*[\d.]*\s*<[^ ]*>\.\.\. Mailbox disabled for this recipient/) ) {
        $DisabledMailbox{$User}{$QueueID}++;
     # test for unknown relay users (users we would have relayed elsewhere)
-@@ -368,8 +372,10 @@
+@@ -368,8 +374,10 @@
        $ReturnReceipt++;
     } elsif ($ThisLine=~ /Remote protocol error/) {
        $RemoteProtocolError++;
@@ -35,14 +46,23 @@ diff -u -r1.32 sendmail
    } else {
  	  $ThisLine =~ s/.*\: (DSN\: .*)/$1/;
  	  $ThisLine =~ s/.*\: (postmaster notify\: .*)/$1/;
-@@ -434,6 +440,16 @@
+@@ -426,7 +434,7 @@
+ }
+ 
+ if (keys %AttackAttempt) {
+-	print "\nWARNING!!!!\n";
++	print "\n\nWARNING!!!!\n";
+ 	print "Possible Attack:\n";
+ 	foreach $Host (sort {$a cmp $b} keys %AttackAttempt) {
+ 		print "   Attempt from $Host with:\n";
+@@ -434,6 +442,16 @@
  			print "      $Attack : $AttackAttempt{$Host}{$Attack} Time(s)\n";
  		}
  	}
 +}
 +
 +if (keys %SaslError) {
-+   print "\nSASL database Errors:\n";
++   print "\n\nSASL database Errors:\n";
 +   foreach $File (sort {$a cmp $b} keys %SaslError) {
 +      print "   In file $File :\n";
 +      foreach $Error (sort {$a cmp $b} keys %{$SaslError{$File}}) {
