@@ -27,6 +27,10 @@ wiêkszo¶ci systemów.
 
 %build
 
+mv scripts/services/zz-fortune scripts/services/zz-fortune.
+sed -e s/bash/sh/ scripts/services/zz-fortune. > scripts/services/zz-fortune
+rm -f scripts/services/zz-fortune.
+
 %install
 rm -rf $RPM_BUILD_ROOT
 
