@@ -44,9 +44,9 @@ works right out of the package on almost all systems.
 
 %description -l pl
 Pakiet zawiera logwatch - program przeznaczony do automatycznego
-analizowania logów systemowych i przesy³aniu ich po wstêpnjej obróbce
+analizowania logów systemowych i przesy³aniu ich po wstêpnej obróbce
 poczt± elektroniczn± do administratora systemu. Logwatch jest ³atwy w
-u¿yciu i moze pracowaæ na wiêkszo¶ci systemów.
+u¿yciu i mo¿e pracowaæ na wiêkszo¶ci systemów.
 
 %prep
 %setup -q
