@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.13
 diff -u -r1.13 postfix
 --- scripts/services/postfix	23 Jun 2004 15:01:17 -0000	1.13
-+++ scripts/services/postfix	1 Jul 2004 06:51:31 -0000
++++ scripts/services/postfix	1 Jul 2004 06:55:16 -0000
 @@ -188,8 +188,10 @@
     } elsif ( ($Command,$Host) = ($ThisLine =~ /timeout after ([^ ]*) from ([^ ]*)$/)) {
        # Make some better summary with hosts
@@ -33,7 +33,7 @@ diff -u -r1.13 postfix
 +}
 +
 +if (($Detail >= 5) and (keys %HeaderWarning)) {
-+   print "\n\nHeader content reject:\n";
++   print "\n\nHeader content warning (but passed):\n";
 +   foreach $Reason (sort {$a cmp $b} keys %HeaderWarning) {
 +      print "   $Reason:";
 +      foreach $Warning (sort {$a cmp $b} keys %{$HeaderWarning{$Reason}} ) {
