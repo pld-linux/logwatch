@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/samba,v
 retrieving revision 1.17
 diff -u -r1.17 samba
 --- scripts/services/samba	15 Dec 2003 22:03:55 -0000	1.17
-+++ scripts/services/samba	23 Dec 2003 21:46:50 -0000
++++ scripts/services/samba	23 Dec 2003 21:51:52 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -22,7 +22,7 @@ diff -u -r1.17 samba
  		($ThisLine =~ /response packet id \d+ received with no matching record/) or
  		($ThisLine =~ /matchname/i) or
  		# Ignore entries in smbmount logfile
-@@ -45,11 +46,12 @@
+@@ -45,11 +46,13 @@
  		($ThisLine =~ /Multiple .+ responses received for a query/) or
  		($ThisLine =~ /Connection timed out/) or
  		($ThisLine =~ /closed connection to/) or
@@ -33,10 +33,11 @@ diff -u -r1.17 samba
        ($ThisLine =~ /cli_connect\(783\)  Error connecting to [^ ]+ \(Operation already in progress\)$/) or
 +      ($ThisLine =~ /nmbd_incomingrequests\.c:process_name_refresh_request\([0-9]+\)$/) or
 +      ($ThisLine =~ /Got SIGHUP dumping debug info.$/) or
++      ($ThisLine =~ /Got SIGTERM: going down/) or
  		($ThisLine =~ /===============================================================/)
  	) {
  		#Don't care about these...
-@@ -107,6 +109,21 @@
+@@ -107,6 +110,21 @@
  		$RootLoggedIn{$user}++;
  	} elsif ( ($file,$function) = ($ThisLine =~ /([a-zA-Z_\/():\.0-9-]+)  ([a-zA-Z0-9_-]+): Not yet implemented.$/)) {
  		$NotImplemented{$file}{$function}++;
@@ -58,7 +59,7 @@ diff -u -r1.17 samba
  	} else {
  		# Report any unmatched entries...
  		$OtherList{$ThisLine}++;
-@@ -116,7 +133,7 @@
+@@ -116,7 +134,7 @@
        #lib/util_sock.c:send_smb(704)  Error writing 4 bytes to client. -1. (Broken pipe)
        #lib/util_sock.c:write_socket(524)  write_socket: Error writing 4 bytes to socket 5: ERRNO = Broken pipe
        #lib/util_sock.c:write_socket_data(499)  write_socket_data: write failure. Error = Broken pipe
@@ -67,7 +68,7 @@ diff -u -r1.17 samba
  	}
  }
  
-@@ -131,6 +148,21 @@
+@@ -131,6 +149,21 @@
  	}
  }
  
@@ -89,7 +90,7 @@ diff -u -r1.17 samba
  if (keys %DiscardWins) {
     print "\nDiscarded invalid wins.dat file with version:\n";
     foreach $Version (sort {$a cmp $b} keys %DiscardWins) {
-@@ -169,6 +201,13 @@
+@@ -169,6 +202,13 @@
     }
  }
  
@@ -103,7 +104,7 @@ diff -u -r1.17 samba
  if (($Detail >= 5) and (keys %RootLoggedIn)) {
     print "\nAdmin logins (root privileges):\n";
     foreach $user (sort {$a cmp $b} keys %RootLoggedIn) {
-@@ -186,13 +225,6 @@
+@@ -186,13 +226,6 @@
  }
       
  
@@ -117,7 +118,7 @@ diff -u -r1.17 samba
  if (keys %ForceElection) {
  	print "\nForced Election:\n";
  	foreach $Group (sort {$a cmp $b} keys %ForceElection) {
-@@ -227,6 +259,13 @@
+@@ -227,6 +260,13 @@
  	print "\nFailed to get Domain Master node name: $GetDomainMasterStatusFail Time(s)\n";
  }
  
@@ -131,7 +132,7 @@ diff -u -r1.17 samba
  if (($Detail >= 5) and (keys %NoServ)) {
     print "\nCouldn't find services:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %NoServ) {
-@@ -291,6 +330,19 @@
+@@ -291,6 +331,19 @@
      foreach $User (sort {$a cmp $b} keys %AccountDisabled) {
          print "   $User : $AccountDisabled{$User} Time(s)\n";
      }
