@@ -163,8 +163,8 @@ if ( ( $Detail >= 5 ) and (keys %Connection)) {
 
 
 if (keys %Logout2) {
-   print     "\n[POP3] Logout stats:".
-             "\n====================".
+   print     "\n[POP3] Logout stats (in MB):".
+             "\n============================".
              "\n                                   User | Logouts | Downloaded |  Mbox Size".
              "\n--------------------------------------- | ------- | ---------- | ----------";
   
@@ -173,29 +173,25 @@ if (keys %Logout2) {
    $DownAll = 0;
    foreach $User (sort keys %Logout2) {
       $Conns = $Logout2{$User};
-      $UserLength = length($User);
-      $UserSpaceLength = 39 - $UserLength;
-      $CountLength = length("$Conns");
-      $CountSpaceLength = 8 - $CountLength;
-      $Down = $DownloadedMessagesSize{$User};
-      $DownSpaceLength = 11 - length($Down);
-      $Size = $MboxSize{$User};
-      $SizeSpaceLength = 11 - length($Size);
-      print "\n" ." " x $UserSpaceLength . $User . " |" . " " x $CountSpaceLength .  $Conns . " |" . 
-                  " " x $DownSpaceLength . $Down . " |" . " " x $SizeSpaceLength . $Size;
+      $Down = $DownloadedMessagesSize{$User}/(1024*1024);
+      $Size = $MboxSize{$User}/(1024*1024);
+      printf "\n%39s | %7d | ", $User, $Conns;
+      if ($Down > 0) {
+         printf "%10.2f | ",$Down;
+      } else {
+         printf "%10.0f | ",$Down;
+      }
+      if ($Size > 0) {
+         printf "%10.2f",$Size;
+      } else {
+         printf "%10.0f",$Size;
+      }
       $ConnCount += $Conns;
       $SizeAll += $Size;
       $DownAll += $Down;
    }
-   $CountLength = length("$ConnCount");
-   $CountSpaceLength = 49 - $CountLength;
-   $DownLength = length($DownAll);
-   $DownSpaceLength = 11 - $DownLength;
-   $SizeLength = length($SizeAll);
-   $SizeSpaceLength = 11 - $SizeLength;
    print "\n" . "-" x 75;
-   print "\n" . " " x $CountSpaceLength . "$ConnCount" . " |" . " " x $DownSpaceLength . $DownAll . " |" .
-                " " x $SizeSpaceLength  .  $SizeAll    . "\n\n\n";
+   printf "\n%49d | %10.2f | %10.2f\n\n\n",$ConnCount,$DownAll,$SizeAll;
 }
 
 
