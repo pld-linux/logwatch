@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/http,v
 retrieving revision 1.17
 diff -u -r1.17 http
 --- scripts/services/http	24 Feb 2005 22:51:45 -0000	1.17
-+++ scripts/services/http	6 Mar 2005 11:32:50 -0000
++++ scripts/services/http	12 Mar 2005 22:32:12 -0000
 @@ -110,6 +110,10 @@
  my $fonts_bytes =    0;
  my $config_count =   0;
@@ -34,7 +34,7 @@ diff -u -r1.17 http
  my $wpad_files =     '(wpad\.dat|wspad\.dat|proxy\.pac)';
  my $program_src =    '(';
 -   $program_src =    $program_src.'\.bas|\.c|\.cpp|\.diff|\.f|\.h|\.init|\.m|\.pas|\.patch|\.spec';
-+   $program_src =    $program_src.'\.bas|\.c|\.cpp|\.diff|\.f|\.h|\.init|\.m|\.pas|\.patch|\.sh|\.spec';
++   $program_src =    $program_src.'\.bas|\.c|\.cpp|\.diff|\.f|\.h|\.init|\.m|\.mo|\.pas|\.patch|\.po|\.pot|\.sh|\.spec';
     $program_src =    $program_src.'|Makefile|Makefile_c|Makefile_f77)';
  my $images_types =   '(\.bin|\.cue|\.img|\.iso|\.run)';
  my $logs_types =     '(\.log|_log|-log|\.logs|\.out|\.wyniki)';
