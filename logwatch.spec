@@ -92,22 +92,3 @@ echo
 %attr(600,root,root) %config(noreplace) %verify(not size mtime md5) /etc/log.d/logwatch.conf
 %attr(700,root,root) /etc/cron.daily/00-logwatch
 %attr(644,root, man) /usr/man/man8/*
-
-%changelog
-* Sat Sep 12 1998 Wojtek ¦lusarczyk <wojtek@shadow.eu.org>
-[1.1-2]
-- build against PLD,
-- added buildroot suport,
-- translation modified for pl,
-- fixed files permissions,
-- build from non root's account,
-- made a noarch package,
-- minor changes of spec file.
-
-* Sun Feb 23 1998 Kirk Bauer <kirk@kaybee.org>
-
-- Minor changes and addition of man-page
-
-* Sun Feb 22 1998 Kirk Bauer <kirk@kaybee.org>
-
-- initial release
