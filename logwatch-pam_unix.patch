@@ -1,0 +1,106 @@
+Index: scripts/services/pam_unix
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/pam_unix,v
+retrieving revision 1.9
+diff -u -r1.9 pam_unix
+--- scripts/services/pam_unix	18 Nov 2003 04:04:22 -0000	1.9
++++ scripts/services/pam_unix	10 Dec 2003 07:39:03 -0000
+@@ -19,23 +19,23 @@
+ my ($service, $line, %data);
+ 
+ while ($line = <STDIN>) {
+-   chomp $line;
+-   $service = $line;
+-   if ($line =~ s/^... .. ..:..:.. .+ .+\(pam_unix\)\[\d+\]: //) {
+-      $service =~ s/^... .. ..:..:.. .+ (.+)\(pam_unix\)\[\d+\]: .*$/$1/;
+-   } else {
+-      next;
+-   }
+-   if (($service eq 'sshd') or ($service eq 'login') or ($service eq 'ftp')) {
+-      if ($line =~ s/^session opened for user (.+) by \(uid=\d+\)/$1/) {
+-         ($Detail >= 5) && $data{$service}{'Sessions Opened'}{$line}++;
+-      } elsif ($line =~ s/^session opened for user (.+) by LOGIN\(uid=\d+\)/$1/) {
+-         $data{$service}{'Sessions Opened'}{$line}++;
+-      } elsif ($line =~ /session closed for user/) {
+-         # ignore this line
+-      } elsif ($line =~ s/^authentication failure; .*rhost=(.+)\s+user=(.+)$/$2 ($1)/) {
+-         $data{$service}{'Authentication Failures'}{$line}++;
+-      } elsif ($line =~ s/^authentication failure; .*rhost=(.+)$/unknown ($1)/) {
++	chomp $line;
++	$service = $line;
++	if ($line =~ s/^... .. ..:..:.. .+ .+\(pam_unix\)\[\d+\]: //) {
++		$service =~ s/^... .. ..:..:.. .+ (.+)\(pam_unix\)\[\d+\]: .*$/$1/;
++	} else {
++		next;
++	}
++	if (($service eq 'sshd') or ($service eq 'login') or ($service eq 'ftp')) {
++		if ($line =~ s/^session opened for user (.+) by \(uid=\d+\)/$1/) {
++			($Detail >= 5) && $data{$service}{'Sessions Opened'}{$line}++;
++		} elsif ($line =~ s/^session opened for user (.+) by LOGIN\(uid=\d+\)/$1/) {
++			$data{$service}{'Sessions Opened'}{$line}++;
++		} elsif ($line =~ /session closed for user/) {
++			# ignore this line
++		} elsif ($line =~ s/^authentication failure; .*rhost=([^ ]*)\s+user=([^ ]*)$/$2 ($1)/) {
++			$data{$service}{'Authentication Failures'}{$line}++;
++      } elsif ($line =~ s/^authentication failure; .*rhost=([^ ]*)$/unknown ($1)/) {
+          $data{$service}{'Authentication Failures'}{$line}++;
+       } elsif ($line =~ s/^(\d+) more authentication failure; .*rhost=(.+)\s+user=(.+)$/$2 ($1)/) {
+          $data{$service}{'Authentication Failures'}{$line}++;
+@@ -120,29 +120,37 @@
+       if ($line =~ s/^authentication failure; .*uid=(\d+) euid=(\d+) tty=(.+) ruser= rhost=  user=(.+)$/$4($1,$2) on display $3/) {
+          $data{$service}{'Authentication Failures'}{$line}++;
+       }
+-   } elsif ($service eq 'cron') {
+-	   if ($line =~ s/^session opened for user (.+) by \(uid=\d+\)/$1/) {
+-		   ($Detail >= 5) && $data{$service}{'Sessions Opened'}{$line}++;
+-	   } elsif ($line =~ /session closed for user/) {
+-		   # ignore this line
++	} elsif ($service eq 'cron') {
++		if ($line =~ s/^session opened for user (.+) by \(uid=\d+\)/$1/) {
++			($Detail >= 5) && $data{$service}{'Sessions Opened'}{$line}++;
++		} elsif ($line =~ /session closed for user/) {
++			# ignore this line
+ 	   } else {
+-		   $data{$service}{'Unknown Entries'}{$line}++;
+-	   }
+-   } else {
+-      $data{$service}{'Unknown Entries'}{$line}++;
+-   }
++			$data{$service}{'Unknown Entries'}{$line}++;
++		}
++	} elsif ($service eq 'cyrus') {
++		if ($line =~ /check pass; user unknown/) {
++			$data{$service}{'Invalid Users'}{'Unknown Account'}++;
++		} elsif ($line =~ /authentication failure; logname= uid=0 euid=0 tty= ruser= rhost=/) {
++			# ignore this line
++		} else {
++			$data{$service}{'Unknown Entries'}{$line}++;
++		}
++	} else {
++		$data{$service}{'Unknown Entries'}{$line}++;
++	}
+ }
+ 
+-foreach my $service (keys %data) {
+-   print "$service:\n";
+-   foreach my $type (keys %{$data{$service}}) {
+-      print "   $type:\n";
+-      my $sort = CountOrder(%{$data{$service}{$type}});
+-      foreach my $entry (sort $sort keys %{$data{$service}{$type}}) {
+-         print "      $entry: $data{$service}{$type}{$entry} Time(s)\n";
+-      }
+-   }
+-   print "\n";
++foreach my $service (sort {$a cmp $b} keys %data) {
++	print "$service:\n";
++	foreach my $type (sort {$a cmp $b} keys %{$data{$service}}) {
++		print "   $type:\n";
++		my $sort = CountOrder(%{$data{$service}{$type}});
++		foreach my $entry (sort $sort keys %{$data{$service}{$type}}) {
++			print "      $entry: $data{$service}{$type}{$entry} Time(s)\n";
++		}
++	}
++	print "\n";
+ }
+ 
+ exit(0);
