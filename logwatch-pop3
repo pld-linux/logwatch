@@ -40,8 +40,13 @@ while (defined($ThisLine = <STDIN>)) {
       ($ThisLine =~ /^Initializing */) or
       ($ThisLine =~ /^Installing */) or
       ($ThisLine =~ /^auth: PAM error: Authentication failure$/) or
-      ($ThisLine =~ /^mailbox: open: No such file or directory$/) or
+      ($ThisLine =~ /^(mailbox: )?open: No such file or directory$/) or
       ($ThisLine =~ /^(sktbuff|maildrop): write: Broken pipe$/) or
+      ($ThisLine =~ /^maildrop: can't read message$/) or
+      ($ThisLine =~ /^maildrop: can't write to socket$/) or
+      ($ThisLine =~ /^mailbox: mailbox content has been changed$/) or
+      ($ThisLine =~ /^maildrop: write: Connection reset by peer$/) or
+      ($ThisLine =~ /^(sktbuff|maildrop): write: Connection timed out$/) or
       ($ThisLine =~ /^open: Permission denied$/) or
       ($ThisLine =~ /^read: Broken pipe$/) or
       ($ThisLine =~ /^read: Connection reset by peer$/) or
@@ -79,11 +84,13 @@ while (defined($ThisLine = <STDIN>)) {
       (($File) = ( $ThisLine =~ /^mailbox: can't open mailbox file: (.*)$/ ))
    ) {
       $PermissionDenied{$File}++;
-   } elsif ( ($User, $Host) = ( $ThisLine =~ /^can't find APOP secret for user adamek - 153.19.213.85$/ ) ) {
+   } elsif ( ($User, $Host) = ( $ThisLine =~ /^can't find APOP secret for user (.*?) - (.*)$/ ) ) {
       $NoApopSecret{$User}++;
       $Logout{$User}{$Host}++;
       $Connection{$Host}++;
       $Logout2{$User}++;
+   } elsif ($ThisLine =~ /^mailbox: no memory available$/ ) {
+      $OutOfMemory++;
    } else {
       # Report any unmatched entries...
       # remove PID from named messages
@@ -103,6 +110,10 @@ if ( ( $Detail >= 0 ) and (keys %PermissionDenied)) {
    foreach $File (sort {$a cmp $b} keys %PermissionDenied) {
       print "   $File: $PermissionDenied{$File} Time(s)\n";
    }
+}
+
+if ( ( $Detail >= 0 ) and ($OutOfMemory > 0) ) {
+   print "\nPOP3 processes were running out of memory $OutOfMemory Time(s)\n";
 }
 
 if ( ( $Detail >= 0 ) and (keys %LoginFailed)) {
