@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/http,v
 retrieving revision 1.5
 diff -u -r1.5 http
 --- scripts/services/http	12 Nov 2003 04:09:08 -0000	1.5
-+++ scripts/services/http	10 Dec 2003 07:38:17 -0000
++++ scripts/services/http	11 Dec 2003 09:17:07 -0000
 @@ -39,6 +39,16 @@
  	my $a1xx_resp = 0;
  	my $image_count = 0;
@@ -27,7 +27,7 @@ diff -u -r1.5 http
  	my $other_bytes = 0;
  	my $total_hack_count = 0;
 -	my $image_types = '(\.jpg|\.gif|\.png|\.ico|\.swf|\.wav)';
-+	my $image_types = '(\.bmp|\.gif|\.ico|\.jpg|\.png|\.swf)';
++	my $image_types = '(\.bmp|\.gif|\.ico|\.jpeg|\.jpg|\.png|\.swf)';
  	my $content_types = '(';
  		$content_types = $content_types.'\/server-status|\/server-info';
 -		$content_types = $content_types.'|\.css|\.htm|\.html|\.txt|\/';
@@ -38,9 +38,9 @@ diff -u -r1.5 http
 +		$content_types = $content_types.'|\.css|\.js|\.cgi|\.txt|\/';
 +		$content_types = $content_types.'|\.class|\.jsp|\.jar|\.java)';
 +	my $docs_types = '(\.doc|\.pdf|\.rtf|\.xls|\.tex|\.gnumeric)';
-+	my $archive_types = '(\.zip|\.bz2|\.gz|\.rpm|\.ace)';
++	my $archive_types = '(\.ace|\.bz2|\.gz|\.rar|\.rpm|\.zip)';
 +	my $sound_types = '(\.mp3|\.wav|\.wma|\.mid)';
-+	my $movie_types = '(\.avi|\.mpeg|\.mov)';
++	my $movie_types = '(\.avi|\.mpg|\.mpeg|\.mov)';
 +	my $winexec_types = '(\.exe)';
  
  #
