@@ -1,5 +1,5 @@
 %include	/usr/lib/rpm/macros.perl
-Summary:    	Analyzes system logs 
+Summary:    	Analyzes system logs
 Summary(pl): 	Logwatch - analizator logów systemowych
 Name:        	logwatch
 Version:     	4.2.1
@@ -40,7 +40,7 @@ done
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT/etc/log.d/ \
 	$RPM_BUILD_ROOT{%{_sbindir},%{_mandir}/man8,%{_datadir}/logwatch} \
-	$RPM_BUILD_ROOT/etc/cron.daily 
+	$RPM_BUILD_ROOT/etc/cron.daily
 
 cp -a scripts $RPM_BUILD_ROOT/%{_datadir}/logwatch
 cp -a conf $RPM_BUILD_ROOT/etc/log.d/
@@ -50,9 +50,9 @@ mv $RPM_BUILD_ROOT%{_datadir}/logwatch/scripts/logwatch.pl $RPM_BUILD_ROOT%{_sbi
 ln -sf %{_datadir}/logwatch/scripts/ $RPM_BUILD_ROOT/etc/log.d/scripts
 ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT%{_datadir}/logwatch/scripts/logwatch.pl
 
-ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT/etc/log.d/logwatch 
-ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT/etc/cron.daily/00-logwatch 
-ln -sf /etc/log.d/conf/logwatch.conf $RPM_BUILD_ROOT/etc/log.d/logwatch.conf 
+ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT/etc/log.d/logwatch
+ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT/etc/cron.daily/00-logwatch
+ln -sf /etc/log.d/conf/logwatch.conf $RPM_BUILD_ROOT/etc/log.d/logwatch.conf
 
 install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
 
