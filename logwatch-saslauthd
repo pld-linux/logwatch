@@ -3,6 +3,9 @@
 # $Id$
 ##########################################################################
 # $Log$
+# Revision 1.1  2004/10/02 14:16:50  blues
+# - initial version of saslauthd filter.
+#
 #
 ##########################################################################
 
@@ -52,12 +55,8 @@ if ($Shutdowns > 0) {
    print "Shutdowns: $Shutdowns\n";
 }
 
-if ($AuthFailures > 0) {
-   print "Authentification failures $AuthFailures Time(s)\n";
-}
-
 if (keys %AuthFail) {
-   print "\nSASL Authentications failed:\n";
+   print "\nSASL Authentications failed $AuthFailures Time(s)\n";
    foreach $Service (sort {$a cmp $b} keys %AuthFail) {
       print "Service $Service - $AuthFailServiceCount{$Service} Time(s):\n";
       foreach $Realm (sort {$a cmp $b} keys %{$AuthFail{$Service}} ) {
