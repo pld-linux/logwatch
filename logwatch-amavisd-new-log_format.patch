@@ -1,43 +1,43 @@
-[1;37mIndex: scripts/services/amavis[0;0m
-[1;37m===================================================================[0;0m
-[1;37mRCS file: /var/cvs/logwatch/scripts/services/amavis,v[0;0m
-[1;37mretrieving revision 1.13[0;0m
-[1;37mdiff -u -r1.13 amavis[0;0m
-[1;31m--- scripts/services/amavis	29 Oct 2004 21:19:00 -0000	1.13[0;0m
-[1;34m+++ scripts/services/amavis	31 Oct 2004 16:09:08 -0000[0;0m
-[1;35m@@ -65,7 +65,7 @@[0;0m
-[1;37m        # We don't care about these[0;0m
-[1;37m    } elsif ($ThisLine =~ /^Passed,? /) {[0;0m
-[1;37m       $CleanMsgs++;[0;0m
-[1;31m-   } elsif (($FileName, $From) = ( $ThisLine =~ /^(?:Blocked )?BANNED (?:name\/type )?\(([^\)]+)\)\, (?:\[([^\]]*)\] )?\<([^\>]*)\>/ )) {[0;0m
-[1;34m+   } elsif (($FileName, $From) = ( $ThisLine =~ /^(?:Blocked )?BANNED (?:name\/type )?\(([^\)]+)\)\, (?:\[([^\]]*)\] )*\<([^\>]*)\>/ )) {[0;0m
-[1;37m [0;0m
-[1;37m       $BannedNames++;[0;0m
-[1;37m [0;0m
-[1;35m@@ -73,7 +73,7 @@[0;0m
-[1;37m           $Banned{$FileName}{$From}++;[0;0m
-[1;37m       }; # if [0;0m
-[1;37m [0;0m
-[1;31m-   } elsif (($Virus, $FromIP, $From) = ( $ThisLine =~ /^(?:Virus found - quarantined|INFECTED|Blocked INFECTED) \(([^\)]+)\)\, (?:\[([^\]]*)\] )?[\(\<]([^\>\)]*)[\)\>]/ )) {[0;0m
-[1;34m+   } elsif (($Virus, $FromIP, $From) = ( $ThisLine =~ /^(?:Virus found - quarantined|INFECTED|Blocked INFECTED) \(([^\)]+)\)\, (?:\[([^\]]*)\] )*[\(\<]([^\>\)]*)[\)\>]/ )) {[0;0m
-[1;37m [0;0m
-[1;37m       $InfectedMsgs++;[0;0m
-[1;37m [0;0m
-[1;35m@@ -92,7 +92,7 @@[0;0m
-[1;37m         $Viruses{$Virus}{$From}++;[0;0m
-[1;37m       }; # if[0;0m
-[1;37m [0;0m
-[1;31m-   } elsif (($FromIP, $Fromspam, $Towards) = ( $ThisLine =~ /^(?:SPAM|Blocked SPAM), (?:\[([^\]]*)\] )?[\(\<]([^\>\)]+)[\)\>] -\> [\(\<]([^\>\)]+)[\)\>]/ )) {[0;0m
-[1;34m+   } elsif (($FromIP, $Fromspam, $Towards) = ( $ThisLine =~ /^(?:SPAM|Blocked SPAM), (?:\[([^\]]*)\] )*[\(\<]([^\>\)]+)[\)\>] -\> [\(\<]([^\>\)]+)[\)\>]/ )) {[0;0m
-[1;37m       $SpamMsgs++;[0;0m
-[1;37m [0;0m
-[1;37m       if (defined($Fromspam)){[0;0m
-[1;35m@@ -121,7 +121,7 @@[0;0m
-[1;37m         $Spams{$Towards}{"<>"}++;[0;0m
-[1;37m       }; # if[0;0m
-[1;37m [0;0m
-[1;31m-   } elsif (($FromIP, $From, $Why) = ( $ThisLine =~ /^(?:Blocked )?BAD[ -]HEADER(?: from|\,) (?:\[([^\]]*)\] )?[\(\<]([^\>\)]+)[\)\>](?: -\> [\(\<](?:[^\>\)]+)[\)\>])[^\:]*(?:\: (.*) in message header)?/ )) {[0;0m
-[1;34m+   } elsif (($FromIP, $From, $Why) = ( $ThisLine =~ /^(?:Blocked )?BAD[ -]HEADER(?: from|\,) (?:\[([^\]]*)\] )*[\(\<]([^\>\)]+)[\)\>](?: -\> [\(\<](?:[^\>\)]+)[\)\>])[^\:]*(?:\: (.*) in message header)?/ )) {[0;0m
-[1;37m       $BadHeaders++;[0;0m
-[1;37m [0;0m
-[1;37m       if (defined($From)){[0;0m
+Index: scripts/services/amavis
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/amavis,v
+retrieving revision 1.13
+diff -u -r1.13 amavis
+--- scripts/services/amavis	29 Oct 2004 21:19:00 -0000	1.13
++++ scripts/services/amavis	31 Oct 2004 16:10:00 -0000
+@@ -65,7 +65,7 @@
+        # We don't care about these
+    } elsif ($ThisLine =~ /^Passed,? /) {
+       $CleanMsgs++;
+-   } elsif (($FileName, $From) = ( $ThisLine =~ /^(?:Blocked )?BANNED (?:name\/type )?\(([^\)]+)\)\, (?:\[([^\]]*)\] )?\<([^\>]*)\>/ )) {
++   } elsif (($FileName, $From) = ( $ThisLine =~ /^(?:Blocked )?BANNED (?:name\/type )?\(([^\)]+)\)\, (?:\[([^\]]*)\] )*\<([^\>]*)\>/ )) {
+ 
+       $BannedNames++;
+ 
+@@ -73,7 +73,7 @@
+           $Banned{$FileName}{$From}++;
+       }; # if 
+ 
+-   } elsif (($Virus, $FromIP, $From) = ( $ThisLine =~ /^(?:Virus found - quarantined|INFECTED|Blocked INFECTED) \(([^\)]+)\)\, (?:\[([^\]]*)\] )?[\(\<]([^\>\)]*)[\)\>]/ )) {
++   } elsif (($Virus, $FromIP, $From) = ( $ThisLine =~ /^(?:Virus found - quarantined|INFECTED|Blocked INFECTED) \(([^\)]+)\)\, (?:\[([^\]]*)\] )*[\(\<]([^\>\)]*)[\)\>]/ )) {
+ 
+       $InfectedMsgs++;
+ 
+@@ -92,7 +92,7 @@
+         $Viruses{$Virus}{$From}++;
+       }; # if
+ 
+-   } elsif (($FromIP, $Fromspam, $Towards) = ( $ThisLine =~ /^(?:SPAM|Blocked SPAM), (?:\[([^\]]*)\] )?[\(\<]([^\>\)]+)[\)\>] -\> [\(\<]([^\>\)]+)[\)\>]/ )) {
++   } elsif (($FromIP, $Fromspam, $Towards) = ( $ThisLine =~ /^(?:SPAM|Blocked SPAM), (?:\[([^\]]*)\] )*[\(\<]([^\>\)]+)[\)\>] -\> [\(\<]([^\>\)]+)[\)\>]/ )) {
+       $SpamMsgs++;
+ 
+       if (defined($Fromspam)){
+@@ -121,7 +121,7 @@
+         $Spams{$Towards}{"<>"}++;
+       }; # if
+ 
+-   } elsif (($FromIP, $From, $Why) = ( $ThisLine =~ /^(?:Blocked )?BAD[ -]HEADER(?: from|\,) (?:\[([^\]]*)\] )?[\(\<]([^\>\)]+)[\)\>](?: -\> [\(\<](?:[^\>\)]+)[\)\>])[^\:]*(?:\: (.*) in message header)?/ )) {
++   } elsif (($FromIP, $From, $Why) = ( $ThisLine =~ /^(?:Blocked )?BAD[ -]HEADER(?: from|\,) (?:\[([^\]]*)\] )*[\(\<]([^\>\)]+)[\)\>](?: -\> [\(\<](?:[^\>\)]+)[\)\>])[^\:]*(?:\: (.*) in message header)?/ )) {
+       $BadHeaders++;
+ 
+       if (defined($From)){
