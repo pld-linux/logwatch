@@ -6,7 +6,7 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	6.0
-Release:	0.pre.1
+Release:	0.pre.1.3
 License:	MIT
 Group:		Applications/System
 #Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
@@ -15,6 +15,8 @@ Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
 # Source0-md5:	591d6e4480db79d5a2f9f397bbf565eb
 Source1:	%{name}-saslauthd
 Source2:	%{name}-saslauthd.conf
+Source3:	http://www.stellarcore.net/downloads/mailscanner
+# Source3-md5:	d79724b0f5373b135770f3a8be23d58f
 Patch0:		%{name}-config.patch
 Patch1:		%{name}-log_conf.patch
 Patch2:		%{name}-postfix.patch
@@ -30,6 +32,7 @@ Patch11:	%{name}-pam_unix.conf.patch
 Patch12:	%{name}-secure.patch
 Patch13:	%{name}-secure.conf.patch
 Patch14:	%{name}-pop3.conf.patch
+Patch15:	%{name}-proftpd-messages.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	crondaemon
@@ -71,6 +74,7 @@ u¿yciu i mo¿e pracowaæ na wiêkszo¶ci systemów.
 %patch12 -p0
 %patch13 -p0
 %patch14 -p0
+%patch15 -p0
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -96,6 +100,9 @@ install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
 # saslauthd:
 install %{SOURCE1} $RPM_BUILD_ROOT%{_logwatchdir}/scripts/services/saslauthd
 install %{SOURCE2} $RPM_BUILD_ROOT%{_logwatchconf}/services/saslauthd.conf
+
+# mailscanner:
+install %{SOURCE3} $RPM_BUILD_ROOT%{_logwatchdir}/scripts/services/
 
 %clean
 rm -rf $RPM_BUILD_ROOT
