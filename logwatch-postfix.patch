@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.9
 diff -u -r1.9 postfix
 --- scripts/services/postfix	3 Feb 2004 03:25:02 -0000	1.9
-+++ scripts/services/postfix	19 Mar 2004 08:53:42 -0000
++++ scripts/services/postfix	19 Mar 2004 09:04:02 -0000
 @@ -82,6 +82,7 @@
  $QueueSizeExceeded = 0;
  $RejectedRBL = 0;
@@ -33,6 +33,15 @@ diff -u -r1.9 postfix
        $Temp = "$Host : Helo command rejected \($Reason\)";
        $HeloError{$Temp}++;
     } elsif ( ($Size,$Host) = ($ThisLine =~ /bad size limit "\(([^ ]*)\)" in EHLO reply from ([^ ]*\[[^ ]*\])$/)) {
+@@ -196,7 +199,7 @@
+       $IllegalAddressSyntax{$Command}{$Host}++;
+    } elsif ( ($Error) = ($ThisLine =~ /warning: mailer loop: (.*)$/)) {
+       $MailerLoop{$Error}++;
+-   } elsif ( ($Host) = ($ThisLine =~ /warning: ([^ ]*\[[^ ]*\]): SASL LOGIN authentication failed/)) {
++   } elsif ( ($Host,undef) = ($ThisLine =~ /warning: ([^ ]*\[[^ ]*\]): SASL (LOGIN|NTLM) authentication failed/)) {
+       $SaslAuthenticationFail{$Host}++;
+    } elsif ( ($Domain) = ($ThisLine =~ /warning: malformed domain name in resource data of MX record (.*)$/)) {
+       $MxError{$Domain}++;
 @@ -226,6 +229,8 @@
        $QueueWriteError{$Reason}++;
     } elsif ( ($Reason) = ($ThisLine =~ /warning: [^ ]*\/[a-zA-Z0-9]+: (Error writing message file)$/)) {
