@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/http,v
 retrieving revision 1.8
 diff -u -r1.8 http
 --- scripts/services/http	15 Dec 2003 19:01:19 -0000	1.8
-+++ scripts/services/http	23 Dec 2003 23:15:41 -0000
++++ scripts/services/http	24 Dec 2003 00:10:56 -0000
 @@ -1,4 +1,19 @@
  #!/usr/bin/perl
 +##########################################################################
@@ -25,7 +25,7 @@ diff -u -r1.8 http
  use strict;
  # use re "debug";
  #
-@@ -8,79 +23,82 @@
+@@ -8,100 +23,110 @@
  #  Build tables of the log format to parse it and determine whats what
  #
  
@@ -145,7 +145,7 @@ diff -u -r1.8 http
 +my $archive_types = '(\.ace|\.bz2|\.deb|\.gz|\.rar|\.rpm|\.zip)';
 +my $sound_types = '(\.mp3|\.wav|\.wma|\.mid)';
 +my $movie_types = '(\.asf|\.avi|\.mid|\.mpg|\.mpeg|\.mov)';
-+my $winexec_types = '(\.com|\.exe)';
++my $winexec_types = '(\.com|\.exe|\.dll)';
 +my $wpad_files = '(wpad\.dat|wspad\.dat|proxy\.pac)';
  
  #
@@ -161,6 +161,11 @@ diff -u -r1.8 http
 -      'win.ini'
 -   );
 +my @exploits = (
++   '\\x90\\x02\\xb1\\x02\\xb1',
++   '\\x02\\xb1\\x02\\xb1',
++   '\\x90\\x90\\x90\\x90',
++   '\\x04\\x01',
++   '\\x05\\x01',
 +   '\/c\+dir',
 +   'cmd.exe',
 +   'default.ida',
@@ -172,7 +177,41 @@ diff -u -r1.8 http
  
  #
  #  Define some usefull RE paterns
-@@ -110,200 +128,242 @@
+ #
+ 
+-		my %re_pattern = (space => '(.*)',
+-					brace => '\[(.*)\]',
+-					quote => '\"(.*)\"');
+-
+-	
++my %re_pattern = (space => '(.*)',
++   brace => '\[(.*)\]',
++   quote => '\"(.*)\"');
+ 
+ #
+ #  Build the regex to parse the line
+ #
+-	for (my $i = 0; $i < @log_format; $i++) {
+-#		print "$i $log_format[$i] $re_pattern{$log_format[$i]} \n";
+-		$pattern = $pattern.$re_pattern{$log_format[$i]}.'\\s';
+-	}
++
++for (my $i = 0; $i < @log_format; $i++) {
++   # print "$i $log_format[$i] $re_pattern{$log_format[$i]} \n";
++   $pattern = $pattern.$re_pattern{$log_format[$i]}.'\\s';
++}
++
+ # this is easier than coding last element logic in the loop
+- 	chop($pattern);
+- 	chop($pattern);
++
++
++chop($pattern);
++chop($pattern);
+ 
+ #################   print "RE pattern     = $pattern \n";
+ 
+@@ -110,200 +135,245 @@
  #
  
  while (my $line = <STDIN>) {
@@ -217,10 +256,9 @@ diff -u -r1.8 http
 -# Apache uses "-" to represent 0 bytes transfered
 -#
 -	if ($field{bytes_transfered} eq "-") {$field{bytes_transfered} = 0};
-+   #
-+   # hash the results so we can identify the fields
-+   #
 +   
++   # hash the results so we can identify the fields
++   # 
 +   for (my $i = 0; $i < @log_fields; $i++) {
 +      #		print "$i $log_fields[$i] $parsed_line[$i] \n";
 +      $field{$log_fields[$i]} = $parsed_line[$i];
@@ -325,7 +363,7 @@ diff -u -r1.8 http
 -	if ($field{lc_url} =~ /^\/robots.txt$/) {
 -		$robots{$field{agent}} +=1;
 -	}
-+      #		print "$i $exploits[$i] $field{lc_url} \n";
++      # print "$i $exploits[$i] $field{lc_url} \n";
 +      if ($field{lc_url} =~ /$exploits[$i]/) {
 +         $hacks{$exploits[$i]} {$field{client_ip}} += 1;
 +         $total_hack_count += 1;
@@ -496,7 +534,7 @@ diff -u -r1.8 http
 +         my $x1 = $hacks{$i};
 +         my %x2 = %$x1;
 +         foreach my $j ( keys (%$x1)) {
-+            print "          ".$j." ".$x2{$j}." time(s) \n" ;
++            print "          $j $x2{$j} time(s) \n" ;
 +         }
 +      } else {
 +         print "\n";
@@ -518,7 +556,8 @@ diff -u -r1.8 http
 +$flag = 1;
 +foreach my $i (keys %ban_ip) {
 +   if ($flag) {
-+      print "\nA total of ".scalar(keys %ban_ip)." sites probed the server \n"; $flag = 0;
++      print "\nA total of ".scalar(keys %ban_ip)." sites probed the server \n";
++      $flag = 0;
 +   }
 +   #if ($detail > 4) {
 +      print "  $i  \n";
@@ -537,9 +576,10 @@ diff -u -r1.8 http
 +$flag = 1;
 +foreach my $i (keys %hack_success) {
 +   if ($flag) {
-+      print "\n!!!! ".scalar(keys %hack_success)." possible successful probes \n"; $flag = 0;
++      print "\n!!!! ".scalar(keys %hack_success)." possible successful probes \n";
++      $flag = 0;
 +   }
-+   print " ".$i." HTTP Response ".$hack_success{$i}."  \n";
++   print " $i HTTP Response $hack_success{$i} \n";
 +}
 +
  #
@@ -554,9 +594,10 @@ diff -u -r1.8 http
 +$flag = 1;
 +foreach my $i (keys %needs_exam) {
 +   if ($flag) {
-+      print "\nA total of ".scalar(keys %needs_exam)." unidentified \'other\' records logged\n"; $flag = 0;
++      print "\nA total of ".scalar(keys %needs_exam)." unidentified \'other\' records logged\n";
++      $flag = 0;
 +   }
-+   print "  ".$i." with response code(s) ".$needs_exam{$i}." \n";
++   print "  $i with response code(s) $needs_exam{$i}\n";
 +}
 +
  #
@@ -576,10 +617,11 @@ diff -u -r1.8 http
 +   $flag = 1;
 +   foreach my $i (keys %robots) {
 +      if ($flag) {
-+         print "\nA total of ".scalar(keys %robots)." ROBOTS were logged \n"; $flag = 0;
++         print "\nA total of ".scalar(keys %robots)." ROBOTS were logged \n";
++         $flag = 0;
 +      }
 +      if ($detail > 9) {
-+         print "      ".$i." ".$robots{$i}." time(s) \n";
++         print "      $i $robots{$i} time(s) \n";
 +      }
 +   }
 +}
