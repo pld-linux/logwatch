@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/http,v
 retrieving revision 1.17
 diff -u -r1.17 http
 --- scripts/services/http	24 Feb 2005 22:51:45 -0000	1.17
-+++ scripts/services/http	6 Mar 2005 11:17:48 -0000
++++ scripts/services/http	6 Mar 2005 11:32:50 -0000
 @@ -110,6 +110,10 @@
  my $fonts_bytes =    0;
  my $config_count =   0;
@@ -16,10 +16,31 @@ diff -u -r1.17 http
  my $proxy_count =    0;
  my $proxy_bytes =    0;
  my %proxy_host =     ();
-@@ -141,6 +145,8 @@
+@@ -125,22 +129,24 @@
+    $content_types =  $content_types.'|^\/announce|^\/scrape'; # BitTorrent tracker mod_bt
+    $content_types =  $content_types.'|\.torrent';
+    $content_types =  $content_types.'|\.css|\.js|\.cgi';
+-   $content_types =  $content_types.'|\.fla|\.swf';
++   $content_types =  $content_types.'|\.fla|\.swf|\.rdf';
+    $content_types =  $content_types.'|\.class|\.jsp|\.jar|\.java';
+    $content_types =  $content_types.'|COPYRIGHT|readme|README|FAQ|INSTALL|\.txt)';
+-my $docs_types =     '(\.asc|\.djvu|\.doc|\.dot|\.dvi|\.gnumeric|\.mcd|\.mso|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.sxi|\.tex|\.text|\.tm|\.xls|\.xml)';
++my $docs_types =     '(\.asc|\.djvu|\.doc|\.dot|\.dtd|\.dvi|\.gnumeric|\.mcd|\.mso|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.sxi|\.tex|\.text|\.tm|\.xls|\.xml)';
+ my $archive_types =  '(\.ace|\.bz2|\.cab|\.deb|\.dsc|\.ed2k|\.gz|\.hqx|\.md5|\.rar|\.rpm|\.sig|\.sign|\.tar|\.tbz2|\.tgz|\.vl2|\.Z|\.zip)';
+-my $sound_types =    '(\.au|\.mid|\.mp3|\.ogg|\.pls|\.ram|\.raw|\.rm|\.wav|\.wma|\.wmv|\.xsm)';
++my $sound_types =    '(\.au|\.aud|\.mid|\.mp3|\.ogg|\.pls|\.ram|\.raw|\.rm|\.wav|\.wma|\.wmv|\.xsm)';
+ my $movie_types =    '(\.asf|\.ass|\.avi|\.idx|\.mid|\.mpg|\.mpeg|\.mov|\.qt|\.psb|\.srt|\.ssa|\.smi|\.sub)';
+ my $winexec_types =  '(\.bat|\.com|\.exe|\.dll)';
+ my $wpad_files =     '(wpad\.dat|wspad\.dat|proxy\.pac)';
+ my $program_src =    '(';
+-   $program_src =    $program_src.'\.bas|\.c|\.cpp|\.diff|\.f|\.h|\.init|\.m|\.pas|\.patch|\.spec';
++   $program_src =    $program_src.'\.bas|\.c|\.cpp|\.diff|\.f|\.h|\.init|\.m|\.pas|\.patch|\.sh|\.spec';
+    $program_src =    $program_src.'|Makefile|Makefile_c|Makefile_f77)';
+ my $images_types =   '(\.bin|\.cue|\.img|\.iso|\.run)';
  my $logs_types =     '(\.log|_log|-log|\.logs|\.out|\.wyniki)';
  my $fonts_types =    '(\.aft|\.ttf)';
- my $config_types =   '(\.cfg|\.conf|\.config|\.ini)';
+-my $config_types =   '(\.cfg|\.conf|\.config|\.ini)';
++my $config_types =   '(\.cfg|\.conf|\.config|\.ini|\.properties)';
 +my $xpcomext_types = '(\.xpt)';
 +my $mozext_types =   '(\.xul)';
  
