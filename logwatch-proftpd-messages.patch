@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/proftpd-messages,v
 retrieving revision 1.13
 diff -u -r1.13 proftpd-messages
 --- scripts/services/proftpd-messages	26 Nov 2003 14:36:30 -0000	1.13
-+++ scripts/services/proftpd-messages	7 Dec 2003 23:33:29 -0000
++++ scripts/services/proftpd-messages	15 Dec 2003 16:27:33 -0000
 @@ -35,7 +35,7 @@
  		$Temp = "   " . $Host . " (" . $IP . ")";
  		$AnonLogins{$Temp}++;
@@ -14,7 +14,7 @@ diff -u -r1.13 proftpd-messages
  		$UserLogins{$Temp}++;
  	} elsif ( ($Host,$IP,$User) = ( $ThisLine =~ /\((.*)\[(.*)\]\) - USER (.+): Login successful/ ) ) {
  		$Temp = "   " . $Host . ": " . $User . " - ";
-@@ -44,19 +44,21 @@
+@@ -44,22 +44,26 @@
  	   $Temp = "   " . "Unknown" . " (" . "Unknown.IP" . "): " . $User . " - ";
  	   $BadUsers{$Temp}++;
     } elsif ( ($User,$Host,$IP) = ( $ThisLine =~ /USER (.*): no such user found from (.*) \[(.*)\] to/ ) ) {
@@ -34,12 +34,19 @@ diff -u -r1.13 proftpd-messages
  	   $BadShell{$Temp}++;
     } elsif ( ($Host,$Ip) = ( $ThisLine =~ /\((.*)\[(.*)\]\) - SECURITY VIOLATION: root login attempted./ ) ) {
  	   $RootLoginAttempt{$Host}++;
+-   }elsif ( ($Host,$Reason) = ( $ThisLine =~ /\[(.*)\]\) - Refused PORT [\d,]+ \((.*)\)/ ) ) {
+-	   $Temp = "   " . $Host . ": " . $Reason . " - ";
 +   } elsif ( ($Host) = ( $ThisLine =~ /\(((.*)\[(.*)\])\) - Maximum login attempts exceeded./ ) ) {
 +	   $MaxLoginAttempts{$Host}++;
-    }elsif ( ($Host,$Reason) = ( $ThisLine =~ /\[(.*)\]\) - Refused PORT [\d,]+ \((.*)\)/ ) ) {
- 	   $Temp = "   " . $Host . ": " . $Reason . " - ";
++   } elsif ( ($Host,$Reason) = ( $ThisLine =~ /\[(.*)\]\) - Refused PORT [\d,]+ \((.*)\)/ ) ) {
++	   $Temp = "   $Host : $Reason - ";
  	   $RefusedPorts{$Temp}++;
-@@ -98,6 +100,13 @@
++   } elsif ( ($Host,$Reason) = ( $ThisLine =~ /\(((.*)\[(.*)\])\) - Connection refused \((.*)\)./ ) ) {
++	   $ConnectionRefused{$Reason}{$Host}++;
+    } else {
+ 	   # Report any unmatched entries...
+ 	   push @OtherList,$ThisLine;
+@@ -98,6 +102,24 @@
  	}
  }
  
@@ -50,10 +57,21 @@ diff -u -r1.13 proftpd-messages
 +	}
 +}
 +
++if (keys %ConnectionRefused) {
++	print "\nConnection refused with reason:\n";
++	foreach $Reason (sort {$a cmp $b} keys %ConnectionRefused) {
++		print "  $Reason :\n";
++		foreach $Host (sort {$a cmp $b} keys %{$ConnectionRefused{$Reason}) {
++				print "      $Host : $ConnectionRefused{$Reason}{$Host} Time(s)\n";
++			}
++		}
++	}
++}
++
  if ( ( (keys %BadUsers) or (keys %BadPasswds) ) and ($Detail >= 5) ) {
  	print "\nFailed FTP Logins:\n";
  	
-@@ -127,15 +136,15 @@
+@@ -127,15 +149,15 @@
  }
  
  if ( (keys %RefusedPorts) and ($Detail >= 5) ) {
