@@ -1,0 +1,54 @@
+--- ./scripts/services/pam_unix.org	Sat Oct 12 04:08:19 2002
++++ ./scripts/services/pam_unix	Fri Mar 21 09:56:07 2003
+@@ -60,6 +60,36 @@
+       } else {
+          $data{$service}{'Unknown Entries'}{$line}++;
+       }
++   } elsif ($service eq 'imap') {
++	   if ($line =~ s/^authentication failure; logname=(.+) uid=(\d+) .*user=(.+)$/$1($2) -> $3/) {
++		   $data{$service}{'Authentication Failures'}{$line}++;
++	   } else {
++		   $data{$service}{'Unknown Entries'}{$line}++;
++	   }
++   } elsif ($service eq 'spop3d') {
++	   if ($line =~ s/^session opened for user (.+)/$1/) {
++		   $data{$service}{'Sessions Opened'}{$line}++;
++	   } elsif ($line =~ /session closed for user/) {
++		   # ignore this line
++	   } elsif ($line =~ s/^authentication failure; logname=(.+) uid=(\d+) .*user=(.+)$/$1($2) -> $3/) {
++		   $data{$service}{'Authentication Failures'}{$line}++;
++	   } else {
++		   $data{$service}{'Unknown Entries'}{$line}++;
++	   }
++   } elsif ($service eq 'cron') {
++	   if ($line =~ s/^session opened for user (.+) by \(uid=\d+\)/$1/) {
++		   ($Detail >= 5) && $data{$service}{'Sessions Opened'}{$line}++;
++	   } elsif ($line =~ /session closed for user/) {
++		   # ignore this line
++	   } else {
++		   $data{$service}{'Unknown Entries'}{$line}++;
++	   }
++   } elsif ($service eq 'pure-ftpd') {
++	   if ($line =~ s/^session opened for user (.+)/$1/) {
++		   $data{$service}{'Sessions Opened'}{$line}++;
++	   } else {
++		   $data{$service}{'Unknown Entries'}{$line}++;
++	   }
+    } else {
+       $data{$service}{'Unknown Entries'}{$line}++;
+    }
+--- ./scripts/services/secure.org	Tue Feb 18 16:34:53 2003
++++ ./scripts/services/secure	Fri Mar 21 10:12:36 2003
+@@ -103,8 +103,12 @@
+       push @NewUsers, "   $ThisLine\n";
+    } elsif ( $ThisLine =~ s/^userdel\[\d+\]: remove group `(.+)'/$1/ ) {
+       push @DeletedGroups, "   $ThisLine\n";
++   } elsif ( $ThisLine =~ s/^groupdel\[\d+\]: remove group `(.+)'/$1/ ) {
++      push @DeletedGroups, "   $ThisLine\n";
+    } elsif ( $ThisLine =~ s/^useradd\[\d+\]: new group: name=(.+), gid=(\d+).*$/$1 ($2)/ ) {
+       push @NewGroups, "   $ThisLine\n";
++   } elsif ( $ThisLine =~ s/^groupadd\[\d+\]: new group: name=(.+), gid=(\d+).*$/$1 ($2)/ ) {
++      push @NewGroups, "   $ThisLine\n";
+    } elsif ( $ThisLine =~ /^userdel\[\d+\]: delete `.+' from (shadow )?group `.+'$/ ) {
+       # Ignore for now
+    } elsif ( $ThisLine =~ /^xinetd\[\d+\]: USERID: ([^ ]+) (.+)$/ ) {
