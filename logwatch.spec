@@ -79,7 +79,7 @@ install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
 %pre
 # needed for smooth upgrade from < 4.3.2 package
 if [ -d /etc/log.d/conf ]; then
-	mv -f /etc/log.d/conf/logwatch.conf /etc/log.d/logwatch.conf
+	mv -f /etc/log.d/conf/logwatch.conf* /etc/log.d/
 	mv -f /etc/log.d/conf/services /etc/log.d/
 	mv -f /etc/log.d/conf/logfiles /etc/log.d/
 fi
