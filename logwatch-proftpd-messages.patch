@@ -1,0 +1,39 @@
+Index: scripts/services/proftpd-messages
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/proftpd-messages,v
+retrieving revision 1.15
+diff -u -r1.15 proftpd-messages
+--- scripts/services/proftpd-messages	15 Dec 2003 19:01:19 -0000	1.15
++++ scripts/services/proftpd-messages	6 Jan 2004 09:03:11 -0000
+@@ -2,6 +2,8 @@
+ ##########################################################################
+ # $Id$
+ ##########################################################################
++# $Log$
++##########################################################################
+ 
+ ########################################################
+ # This was written and is maintained by:
+@@ -64,6 +66,8 @@
+ 	   $RefusedPorts{$Temp}++;
+    } elsif ( ($Host,$Reason) = ( $ThisLine =~ /\(((.*)\[(.*)\])\) - Connection refused \((.*)\)./ ) ) {
+       $ConnectionRefused{$Reason}{$Host}++;
++   } elsif ( ($Host) = ( $ThisLine =~ /\(((.*)\[(.*)\])\) - Data transfer stall timeout/ ) ) {
++      $TransferTimeout{$Host}++;
+    } else {
+ 	   # Report any unmatched entries...
+ 	   push @OtherList,$ThisLine;
+@@ -152,6 +156,13 @@
+ 	foreach $ThisOne (sort {$a cmp $b} keys %RefusedPorts) {
+ 		print $ThisOne . $RefusedPorts{$ThisOne} . " Time(s)\n";
+ 	}
++}
++
++if ( (keys %TransferTimeout) and ($Detail >= 5) ) {
++   print "\nData transfer stall timeout:\n";
++   foreach $Host (sort {$a cmp $b} keys %TransferTimeout) {
++      print "   $Host : $TransferTimeout{$Host} Time(s)\n";
++   }
+ }
+ 
+ if (($#OtherList >= 0) and (not $IngoreUnmatched)) {
