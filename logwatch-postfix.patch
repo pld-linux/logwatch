@@ -1,11 +1,12 @@
 diff -dur logwatch-5.2.2.orig/scripts/services/postfix logwatch-5.2.2/scripts/services/postfix
 --- logwatch-5.2.2.orig/scripts/services/postfix	2004-06-23 17:01:17.000000000 +0200
-+++ logwatch-5.2.2/scripts/services/postfix	2004-09-08 14:49:14.251461186 +0200
-@@ -112,11 +112,13 @@
++++ logwatch-5.2.2/scripts/services/postfix	2004-09-09 09:31:49.820640459 +0200
+@@ -112,11 +112,15 @@
        ( $ThisLine =~ m/^[a-zA-Z0-9]+: message-id/ ) or
        ( $ThisLine =~ m/^[a-zA-Z0-9]+: skipped, still being delivered/ ) or
        ( $ThisLine =~ m/^[a-zA-Z0-9]+: to\=\<.*>, relay\=.*, delay\=[0-9]+, status\=(sent|deferred)/ ) or
 +      ( $ThisLine =~ m/^[a-zA-Z0-9]+: host [^ ]*\[[^ ]*\] said: 4[0-9][0-9]/ ) or
++      ( $ThisLine =~ m/^[a-zA-Z0-9]+: host [^ ]*\[[^ ]*\] refused to talk to me: 4[0-9][0-9]/ ) or
        ( $ThisLine =~ m/^Deleted: \d message$/ ) or
 -      ( $ThisLine =~ m/^Peer certificate could not be verified$/ ) or
        ( $ThisLine =~ m/^Peer certficate could not be verified$/ ) or #postfix typo
@@ -13,10 +14,11 @@ diff -dur logwatch-5.2.2.orig/scripts/services/postfix logwatch-5.2.2/scripts/se
        ( $ThisLine =~ m/^Peer verification:/ ) or
        ( $ThisLine =~ m/^SSL_accept error from/ ) or
 +      ( $ThisLine =~ m/^Verified: / ) or
++      ( $ThisLine =~ m/^cert has expired/ ) or 
        ( $ThisLine =~ m/^connect/ ) or 
        ( $ThisLine =~ m/^daemon started$/ ) or
        ( $ThisLine =~ m/^daemon started -- version / ) or
-@@ -128,8 +130,10 @@
+@@ -128,8 +132,10 @@
        ( $ThisLine =~ m/^setting up TLS connection (from|to)/ ) or
        ( $ThisLine =~ m/^terminating on signal 15$/ ) or
        ( $ThisLine =~ m/^warning: [a-zA-Z0-9]+: skipping further client input$/ ) or
@@ -29,7 +31,7 @@ diff -dur logwatch-5.2.2.orig/scripts/services/postfix logwatch-5.2.2/scripts/se
        ( $ThisLine =~ m/^warning: Mail system is down -- accessing queue directly$/ ) or
        ( $ThisLine =~ m/^warning: SASL authentication failure: Password verification failed$/ ) or
        ( $ThisLine =~ m/^warning: SASL authentication failure: no secret in database$/ ) or
-@@ -143,22 +147,22 @@
+@@ -143,22 +149,22 @@
     } elsif ( ($Bytes) = ($ThisLine =~ /^[a-zA-Z0-9]+: from=.*size=([0-9]+).*$/) ) {
        $MsgsSent++;
        $BytesTransferred += $Bytes;
@@ -56,7 +58,7 @@ diff -dur logwatch-5.2.2.orig/scripts/services/postfix logwatch-5.2.2/scripts/se
        # unknown user
        # $Msg = " hello "
        # print "bounce message from " . $Dest . " msg : " . $Relay . "\n";
-@@ -188,8 +192,10 @@
+@@ -188,8 +194,10 @@
     } elsif ( ($Command,$Host) = ($ThisLine =~ /timeout after ([^ ]*) from ([^ ]*)$/)) {
        # Make some better summary with hosts
        $ConnectionLost{$Command}++;
@@ -69,7 +71,7 @@ diff -dur logwatch-5.2.2.orig/scripts/services/postfix logwatch-5.2.2/scripts/se
     #} elsif ( ($Host,undef) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <([^ ]*)>: Sender address rejected: Domain not found;/)) {
     #   $RejectDomain{$Host}++;
     # above two lines included in generic reject sender on next condition
-@@ -205,17 +211,19 @@
+@@ -205,17 +213,19 @@
        $RejectRecip{$Recip}{$Temp}++;
     } elsif ( ($Host,undef) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): 554 <(.*)>: Sender address rejected: Access denied;/)) {
        $RejectAddress{$Host}++;
@@ -91,7 +93,7 @@ diff -dur logwatch-5.2.2.orig/scripts/services/postfix logwatch-5.2.2/scripts/se
     } elsif ( (undef,undef,$Error) = ($ThisLine =~ /warning: ([^ ]*): hostname ([^ ]*) verification failed: (.*)$/)) {
        $HostnameVerification{$Error}++;
     } elsif ( $ThisLine =~ /^[a-zA-Z0-9]+: removed$/) {
-@@ -249,6 +257,8 @@
+@@ -249,6 +259,8 @@
        $TLSconnectFrom{$Host}++; 
     } elsif ( ($Host) = ($ThisLine =~ /TLS connection established to ([^ ]*):/)) {
        $TLSconnectTo{$Host}++; 
@@ -100,7 +102,7 @@ diff -dur logwatch-5.2.2.orig/scripts/services/postfix logwatch-5.2.2/scripts/se
     } elsif ( ($Domain) = ($ThisLine =~ /warning: malformed domain name in resource data of MX record (.*)$/)) {
        $MxError{$Domain}++;
     } elsif ( ($Host,$Command) = ($ThisLine =~ /warning: ([^ ]*\[[^ ]*\]) sent .* header instead of ([^ ]*) command: /)) {
-@@ -432,6 +442,13 @@
+@@ -432,6 +444,13 @@
     }
  }
  
@@ -114,7 +116,7 @@ diff -dur logwatch-5.2.2.orig/scripts/services/postfix logwatch-5.2.2/scripts/se
  if (keys %RelayDenied) {
     print "\n\nRelaying denied:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %RelayDenied) {
-@@ -462,8 +479,21 @@
+@@ -462,8 +481,21 @@
  
  if (($Detail >= 5) and (keys %HeaderReject)) {
     print "\n\nHeader content reject:\n";
@@ -138,7 +140,7 @@ diff -dur logwatch-5.2.2.orig/scripts/services/postfix logwatch-5.2.2/scripts/se
     }
  }
  
-@@ -537,6 +567,16 @@
+@@ -537,6 +569,16 @@
     }
  }
  
