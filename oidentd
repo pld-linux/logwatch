@@ -3,6 +3,10 @@
 # $Id$
 ##########################################################################
 # $Log$
+# Revision 1.1  2004/01/23 20:47:20  blues
+# - basic support for oidentd. It's full support for me, but I know that
+#   something is missing. If you have some unmatched entries - send to me.
+#
 ##########################################################################
 
 ########################################################
@@ -17,21 +21,29 @@
 $Startups = 0;
 $Shutdowns = 0;
 $LookupCount = 0;
+$LookupErrorCount = 0;
 $Connections = 0;
 
 while (defined($ThisLine = <STDIN>)) {
    chomp($ThisLine);
    if (
-      ($ThisLine =~ m/^Continuous traffic control enabled/)
+      ($ThisLine =~ m/^Continuous traffic control enabled/) or
+      ($ThisLine =~ m/^Timeout for request -- Closing connection/)
    ) {
       #ignore these
    } elsif ( ($Host,$Port,$User,$Identity) = ($ThisLine =~ /^\[([^ ]*)\] Successful lookup: \d+ , (\d+) : ([^ ]*) \(([^ ]*)\)$/)) {
       $Temp = "$User announced as $Identity";
-      $Lookups{$Host}{$Port}{$Temp}++;
+      $Lookups{$Port}{$Temp}{$Host}++;
       $LookupCount++;
-   } elsif ( ($Host) = ($ThisLine =~ /^Connection from ([^ ]* \([^ ]*\)):\d+$/)) {
+   } elsif ( 
+      (($Host) = ($ThisLine =~ /^Connection from ([^ ]* \([^ ]*\)):\d+$/)) or
+      (($Host) = ($ThisLine =~ /^Connection from ([^ ]*):\d+$/))
+      ) {
       $Connection{$Host}++;
       $Connections++;
+   } elsif ( ($Host,$Port) = ($ThisLine =~ /^\[([^ ]*)\] \d+ , (\d+) : ERROR : [^ ]*$/)) {
+      $ErrorLookup{$Port}{$Host}++;
+      $LookupErrorCount++;
    } elsif ( $ThisLine =~ /^oidentd startup\s+succeeded$/ ) {
       $Startups++;
    } elsif ( $ThisLine =~ /^oidentd shutdown\s+succeeded$/ ) {
@@ -60,14 +72,24 @@ if (keys %Connection) {
 }
 
 if (keys %Lookups) {
-   print "\nSuccessful ident lookups $LookupCount\n";
-   foreach $Host (sort {$a cmp $b} keys %Lookups) {
-      print "   $Host:\n";
-      foreach $Port (sort {$a cmp $b} keys %{$Lookups{$Host}}) {
-         print "      Service on port $Port:\n";
-         foreach $User (sort {$a cmp $b} keys %{$Lookups{$Host}{$Port}}) {
-            print "         $User: $Lookups{$Host}{$Port}{$User} Time(s)\n";
+   print "\nSuccessful ident lookups $LookupCount Time(s)\n";
+   foreach $Port (sort {$a cmp $b} keys %Lookups) {
+      print "    Service on port $Port:\n";
+      foreach $User (sort {$a cmp $b} keys %{$Lookups{$Port}}) {
+         print "      $User:\n";
+         foreach $Host (sort {$a cmp $b} keys %{$Lookups{$Port}{$User}}) {
+            print "         $Host: $Lookups{$Port}{$User}{$Host} Time(s)\n";
          }
+      }
+   }
+}
+
+if (keys %ErrorLookup) {
+   print "\nErrors when lookup ident $LookupErrorCount Time(s)\n";
+   foreach $Port (sort {$a cmp $b} keys %ErrorLookup) {
+      print "    Service on port $Port:\n";
+      foreach $Host (sort {$a cmp $b} keys %{$ErrorLookup{$Port}}) {
+         print "      $Host: $ErrorLookup{$Port}{$Host} Time(s)\n"
       }
    }
 }
