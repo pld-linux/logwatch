@@ -1,0 +1,18 @@
+Index: scripts/services/dhcpd
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/dhcpd,v
+retrieving revision 1.6
+diff -u -r1.6 dhcpd
+--- scripts/services/dhcpd	3 Nov 2003 05:07:25 -0000	1.6
++++ scripts/services/dhcpd	21 Nov 2003 08:41:28 -0000
+@@ -33,8 +33,8 @@
+       # Other lines to ignore
+       ($line =~ /^Wrote .* to leases file\./) or
+       ($line =~ /^already acking lease/) or
+-      ($line =~ /^dhcpd shutdown succeeded/) or
+-      ($line =~ /^dhcpd startup succeeded/) or
++      ($line =~ /^dhcpd shutdown .*succeeded/) or
++      ($line =~ /^dhcpd startup .*succeeded/) or
+       ($line =~ /^Sending on/) or
+       ($line =~ /^DHCPACK/) or
+       ($line =~ /^DHCPNAK/) or
