@@ -16,7 +16,6 @@ Patch4:		%{name}-pam_unix2.patch
 Patch5:		%{name}-modprobe.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
-Requires:	perl
 Requires:	perl-modules
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Buildarch:	noarch
