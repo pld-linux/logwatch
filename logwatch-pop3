@@ -37,9 +37,10 @@ if ( $Debug >= 5 ) {
 
 while (defined($ThisLine = <STDIN>)) {
    if (
+      ($ThisLine =~ /^auth: PAM error: Authentication failure$/) or
+      ($ThisLine =~ /^getpeername: Socket operation on non-socket$/) or
       ($ThisLine =~ /^Initializing */) or
       ($ThisLine =~ /^Installing */) or
-      ($ThisLine =~ /^auth: PAM error: Authentication failure$/) or
       ($ThisLine =~ /^(mailbox: )?open: No such file or directory$/) or
       ($ThisLine =~ /^(sktbuff|maildrop): write: Broken pipe$/) or
       ($ThisLine =~ /^maildrop: can't read message$/) or
@@ -125,17 +126,11 @@ if ( ( $Detail >= 0 ) and (keys %LoginFailed)) {
    $ConnCount = 0;
    foreach $Host (sort keys %LoginFailed) {
       $Conns = $LoginFailed{$Host};
-      $HostLength = length($Host);
-      $HostSpaceLength = 61 - $HostLength;
-      $CountLength = length("$Conns");
-      $CountSpaceLength = 12 - $CountLength;
-      print "\n" ." " x $HostSpaceLength . $Host . " |" . " " x $CountSpaceLength .  $Conns . "";
+      printf "\n%61s | %11.0f", $Host, $Conns;
       $ConnCount += $Conns;
    }
-   $CountLength = length("$ConnCount");
-   $CountSpaceLength = 75 - $CountLength;
    print "\n" . "-" x 75;
-   print "\n" . " " x $CountSpaceLength . "$ConnCount\n\n\n";
+   printf "\n%75s\n\n\n", $ConnCount;
 }
 
 if ( ( $Detail >= 5 ) and (keys %Connection)) {
@@ -147,17 +142,11 @@ if ( ( $Detail >= 5 ) and (keys %Connection)) {
    $ConnCount = 0;
    foreach $Host (sort keys %Connection) {
       $Conns = $Connection{$Host};
-      $HostLength = length($Host);
-      $HostSpaceLength = 61 - $HostLength;
-      $CountLength = length("$Conns");
-      $CountSpaceLength = 12 - $CountLength;
-      print "\n" ." " x $HostSpaceLength . $Host . " |" . " " x $CountSpaceLength .  $Conns . "";
+      printf "\n%61s | %11.0f", $Host, $Conns;
       $ConnCount += $Conns;
    }
-   $CountLength = length("$ConnCount");
-   $CountSpaceLength = 75 - $CountLength;
    print "\n" . "-" x 75;
-   print "\n" . " " x $CountSpaceLength . "$ConnCount\n\n\n";
+   printf "\n%75s\n\n\n", $ConnCount;
 }
 
 
