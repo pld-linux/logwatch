@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.7
 diff -u -r1.7 postfix
 --- scripts/services/postfix	15 Dec 2003 18:35:03 -0000	1.7
-+++ scripts/services/postfix	5 Jan 2004 10:56:50 -0000
++++ scripts/services/postfix	6 Jan 2004 09:02:10 -0000
 @@ -61,12 +61,18 @@
  #
  ########################################################
@@ -79,7 +79,7 @@ diff -u -r1.7 postfix
 +      $TooManyErrors{$Command}{$Host}++;
 +   } elsif ( (undef,undef,$To) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 552 Message size exceeds fixed limit; from=<([^ ]*)> to=<([^ ]*)>$/)) {
 +      $SizeLimit{"$From -> $To"}++;
-+   } elsif ( ($File,$Source) = ($ThisLine =~ /^warning: database ([^ ]*) is older than source file ([a-zA-Z0-9\/]+)$/)) {
++   } elsif ( (undef,$Source) = ($ThisLine =~ /^warning: database ([^ ]*) is older than source file ([a-zA-Z0-9\/]+)$/)) {
 +      $DatabaseGeneration{$Source}++;
     } else {
        push @OtherList,$ThisLine;
