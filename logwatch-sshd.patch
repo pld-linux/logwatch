@@ -4,15 +4,20 @@ RCS file: /var/cvs/logwatch/scripts/services/sshd,v
 retrieving revision 1.41
 diff -u -r1.41 sshd
 --- scripts/services/sshd	24 Feb 2005 17:08:05 -0000	1.41
-+++ scripts/services/sshd	24 Feb 2005 22:33:59 -0000
-@@ -116,18 +116,17 @@
++++ scripts/services/sshd	28 Feb 2005 10:39:15 -0000
+@@ -112,22 +112,21 @@
+       } else {
+          $Users{$2}{$3}{"(all)"}++;
+       }
+-   } elsif ( $ThisLine =~ m/^Failed (\S+) for (invalid user )(\S+) from ([^ ]+) port (\d+)/ ) { #openssh
++   } elsif (($Method,$User,$From,undef) = ( $ThisLine =~ m/^Failed (\S+) for invalid user (\S+) from ([^ ]+) port (\d+)/ )) { #openssh
        if ( $Debug >= 5 ) {
           print STDERR "DEBUG: Found -Failed login- line\n";
        }
 -      $BadLogins{"$3/$1 from $4"}++;
 -   } elsif ( $ThisLine =~ m/^Failed (\S+) for illegal user (.*) from ([^ ]+) port (\d+)/ ) { #openssh
 -      $Temp = "$2/$1 from $3";
-+      $BadLogins{"$2/$1 from $3"}++;
++      $BadLogins{"invalid user $User ($Method) from $From"}++;
 +   } elsif ( ($Method, undef,$User,$Host,$Port) = ($ThisLine =~ m/^Failed (\S+) for (illegal|invalid) user (.*) from ([^ ]+) port (\d+)/ ) ) { #openssh
 +      $Temp = "$User/$Method from $Host";
        $BadLogins{$Temp}++;
@@ -29,3 +34,18 @@ diff -u -r1.41 sshd
     } elsif ( $ThisLine =~ m/^(fatal: )?Did not receive ident(ification)? string from (.+)/ ) { # ssh/openssh
        $name = LookupIP($3);
        $NoIdent{$name}++;
+@@ -170,12 +169,12 @@
+       if ( $Debug >= 5 ) {
+          print STDERR "DEBUG: Found -Keygen complete- line\n";
+       }
+-   } elsif ( $ThisLine =~ m/^Failed (\w+) for (\S+) from ([\d.]+) port (\d+)/ ) { #openssh
++   } elsif ( ($Method,$User,$Host,undef) = ( $ThisLine =~ m/^Failed (\w+) for (\S+) from ([^ ]+) port (\d+)/ ) ) { #openssh
+       # depending on log mode, openssh may not report these in connection context.
+       if ( $Debug >= 5 ) {
+          print STDERR "DEBUG: Found -Failed login- line\n";
+       }
+-      $BadLogins{"$2/$1 from $3"}++;
++      $BadLogins{"$User/$Method from $Host"}++;
+    } elsif ($ThisLine =~ s/^(log: )?Could not reverse map address ([^ ]*).*$/$2/) {
+       $NoRevMap{$ThisLine}++;
+    } elsif ( ($Address) = ($ThisLine =~ /^reverse mapping checking getaddrinfo for ([^ ]*) failed - POSSIBLE BREAKIN ATTEMPT!/)) {
