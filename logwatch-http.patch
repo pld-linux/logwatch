@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/http,v
 retrieving revision 1.8
 diff -u -r1.8 http
 --- scripts/services/http	15 Dec 2003 19:01:19 -0000	1.8
-+++ scripts/services/http	29 Dec 2003 09:24:23 -0000
++++ scripts/services/http	7 Jan 2004 06:53:31 -0000
 @@ -1,4 +1,19 @@
  #!/usr/bin/perl
 +##########################################################################
@@ -138,10 +138,10 @@ diff -u -r1.8 http
 +my $src_bytes =      0;
 +my $images_count =   0;
 +my $images_bytes =   0;
-+my $image_types =    '(\.bmp|\.gif|\.ico|\.jpeg|\.jpg|\.png|\.swf|\.wmf|\.xdm)';
++my $image_types =    '(\.bmp|\.gif|\.ico|\.jpeg|\.jpg|\.png|\.swf|\.tif|\.tiff|\.wmf|\.xdm)';
 +my $content_types =  '(';
 +   $content_types =  $content_types.'\/server-status|\/server-info';
-+   $content_types =  $content_types.'|\.htm|\.html|\.phtml|\.shtml|\/';
++   $content_types =  $content_types.'|\.htm|\.html|\.jhtml|\.phtml|\.shtml|\/';
 +   $content_types =  $content_types.'|\.php|\.php3|\.asp|\.pl|\.wml|\/';
 +   $content_types =  $content_types.'|\.css|\.js|\.cgi|\.txt|\/';
 +   $content_types =  $content_types.'|\.class|\.jsp|\.jar|\.java)';
@@ -151,7 +151,7 @@ diff -u -r1.8 http
 +my $movie_types =    '(\.asf|\.avi|\.mid|\.mpg|\.mpeg|\.mov)';
 +my $winexec_types =  '(\.com|\.exe|\.dll)';
 +my $wpad_files =     '(wpad\.dat|wspad\.dat|proxy\.pac)';
-+my $program_src =    '(\.c|\.h|\.patch|\.cpp)';
++my $program_src =    '(\.c|\.f|\.h|\.patch|\.cpp)';
 +my $images_types =   '(\.bin|\.cue|\.iso|\.run)';
  
  #
