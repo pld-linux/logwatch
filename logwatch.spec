@@ -6,15 +6,15 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	6.0
-Release:	0.pre.0.1
+Release:	0.pre.0.2
 License:	MIT
 Group:		Applications/System
 #Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
 #Path for pre-versions:
 Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
 # Source0-md5:	591d6e4480db79d5a2f9f397bbf565eb
-#Source2:	%{name}-saslauthd
-#Source3:	%{name}-saslauthd.conf
+Source1:	%{name}-saslauthd
+Source2:	%{name}-saslauthd.conf
 Patch0:		%{name}-config.patch
 Patch1:		%{name}-log_conf.patch
 Patch2:		%{name}-clam-update.patch
@@ -22,14 +22,12 @@ Patch3:		%{name}-postfix.patch
 Patch4:		%{name}-samba.patch
 Patch5:		%{name}-http.patch
 Patch6:		%{name}-zz-disk_space.patch
-Patch7:		%{name}-html_report.patch
 Patch8:		%{name}-pam_unix.patch
 Patch9:		%{name}-sshd.patch
 Patch10:	%{name}-pop3.patch
 Patch11:	%{name}-amavisd-new-log_format.patch
 Patch12:	%{name}-scripts-services.diff
 Patch13:	%{name}-postfix_verbosity.patch
-Patch14:	%{name}-cisco.patch
 Patch15:	%{name}-postfix-revDNS.patch
 Patch16:	%{name}-named.patch
 Patch17:	%{name}-pam_unix.conf.patch
@@ -61,31 +59,24 @@ poczt± elektroniczn± do administratora systemu. Logwatch jest ³atwy w
 u¿yciu i mo¿e pracowaæ na wiêkszo¶ci systemów.
 
 %prep
-%setup -q
-%patch0 -p1
+%setup -q -n %{name}-pre%{version}
+#%patch0 -p1	--has to be updated!!!
 %patch1 -p1
-%patch2 -p0
-%patch3 -p1
-%patch4 -p0
-%patch5 -p0
-%patch6 -p1
-%patch8 -p0
-%patch9 -p0
-%patch10 -p0
-%patch11 -p1
+#%patch2 -p0	--applied?
+#%patch3 -p1	--to be checked
+#%patch4 -p0	--applied?
+#%patch5 -p0	--to be checked
+#%patch6 -p1	--applied? script has changed
+#%patch8 -p0	--applied?
+#%patch9 -p0	--to be checked
+#%patch10 -p0	--to be checked
+#%patch11 -p1	--to be checked
 %patch13 -p1
-%patch14 -p0
 %patch15 -p1
 %patch17 -p0
-%patch18 -p0
+#%patch18 -p0
 %patch19 -p0
 %patch20 -p0
-
-cd scripts
-%patch7 -p0
-cd services
-%patch12 -p1
-#%patch16 -p0
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -109,8 +100,8 @@ ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT/etc/cron.daily/00-logwatch
 install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
 
 # saslauthd:
-install %{SOURCE2} $RPM_BUILD_ROOT%{_logwatchdir}/scripts/services/saslauthd
-install %{SOURCE3} $RPM_BUILD_ROOT%{_logwatchconf}/services/saslauthd.conf
+install %{SOURCE1} $RPM_BUILD_ROOT%{_logwatchdir}/scripts/services/saslauthd
+install %{SOURCE2} $RPM_BUILD_ROOT%{_logwatchconf}/services/saslauthd.conf
 
 %clean
 rm -rf $RPM_BUILD_ROOT
