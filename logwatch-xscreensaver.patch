@@ -1,0 +1,56 @@
+? logwatch-postfix.patch
+? logwatch-xscreensaver.patch
+? scripts/services/pam_unix.org
+Index: scripts/services/secure
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/secure,v
+retrieving revision 1.36
+diff -u -r1.36 secure
+--- scripts/services/secure	3 Nov 2003 16:01:27 -0000	1.36
++++ scripts/services/secure	18 Nov 2003 08:36:05 -0000
+@@ -44,13 +44,15 @@
+       } else {
+          $Connections->{$Service}->{$Name}++;
+       }
+-   } elsif ( (undef, $Service, $IP) = ($ThisLine =~ /^(xinetd|xinetd-ipv6)\[\d+\]: START: ([^ ]+) pid=\d+ from=((<no address>)|([^ \n]+))$/) ) {
+-      if ($Summarize =~ /\Q$Service\E/) { 
+-         $Connections->{$Service}++;
+-      } else {
+-         $Name = LookupIP($IP);
+-         $Connections->{$Service}->{$Name}++;
+-      }
++      } elsif ( (undef, $Service, $IP) = ($ThisLine =~ /^(xinetd|xinetd-ipv6)\[\d+\]: START: ([^ ]+) pid=\d+ from=((<no address>)|([^ \n]+))$/) ) {
++		  if ($Summarize =~ /\Q$Service\E/) { 
++			  $Connections->{$Service}++;
++		  } else {
++			  $Name = LookupIP($IP);
++			  $Connections->{$Service}->{$Name}++;
++		  }
++	  } elsif ( ($Display, $User) = ($ThisLine =~ /^xscreensaver\[\d+\]: FAILED LOGIN \d ON DISPLAY \"([^ ]+)\", FOR \"([^ ]+)\"$/) ) {
++	      $FailedSaver->{$User}->{$Display}++;
+    } elsif ( (undef, $Service) = ($ThisLine =~ /^(xinetd|xinetd-ipv6)\[\d+\]: EXIT: ([^ ]+) pid=\d+/) ) {
+       #ignore...
+    } elsif ( $ThisLine =~ s/^([^ ]+)\[\d+\]: warning: can\'t get client address: No route to host$/$1/ ) {
+@@ -162,6 +164,17 @@
+    }
+ }
+ 
++if (keys %{$FailedSaver}) {
++	print "\nFailed screensaver disable:\n";
++	foreach $ThisOne (keys %{$FailedSaver}) {
++		print "   User " . $ThisOne . " on displays:\n";
++		foreach $OtherOne (keys %{$FailedSaver>{$ThisOne}}) {
++			# Why it does not work?
++			print "      " . $FailedLogins->{$ThisOne}->{$OtherOne} . " Time(s)\n";
++		}
++	}
++}
++
+ if (keys %{$NoIP}) {
+    print "\nCouldn't get client IPs for connections to:\n";
+    foreach $ThisOne (keys %{$NoIP}) {
+@@ -195,3 +208,4 @@
+ 
+ exit(0);
+ 
++# vi: shiftwidth=4 tabstop=4
