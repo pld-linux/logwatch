@@ -1,0 +1,74 @@
+Index: scripts/services/pop3
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/pop3,v
+retrieving revision 1.1
+diff -u -r1.1 pop3
+--- scripts/services/pop3	21 Jun 2004 14:59:05 -0000	1.1
++++ scripts/services/pop3	30 Aug 2004 10:52:36 -0000
+@@ -15,6 +15,9 @@
+ my $Debug = $ENV{'LOGWATCH_DEBUG'};
+ my $Detail = $ENV{'LOGWATCH_DETAIL_LEVEL'};
+ 
++$ReadSocketError = 0;
++$WriteSocketError = 0;
++
+ #Make pseudo IPv6 to IPv4
+ sub LookupIPv46 {
+    my $IPv4Addr;
+@@ -44,9 +47,8 @@
+       ($ThisLine =~ /^(mailbox: )?open: No such file or directory$/) or
+       ($ThisLine =~ /^(sktbuff|maildrop): write: Broken pipe$/) or
+       ($ThisLine =~ /^maildrop: can't read message$/) or
+-      ($ThisLine =~ /^maildrop: can't write to socket$/) or
+       ($ThisLine =~ /^mailbox: mailbox content has been changed$/) or
+-      ($ThisLine =~ /^maildrop: write: Connection reset by peer$/) or
++      ($ThisLine =~ /^(sktbuff|maildrop): write: Connection reset by peer$/) or
+       ($ThisLine =~ /^(sktbuff|maildrop): write: Connection timed out$/) or
+       ($ThisLine =~ /^open: Permission denied$/) or
+       ($ThisLine =~ /^read: Broken pipe$/) or
+@@ -92,6 +94,15 @@
+       $Logout2{$User}++;
+    } elsif ($ThisLine =~ /^mailbox: no memory available$/ ) {
+       $OutOfMemory++;
++   } elsif (
++      ($Mbox) = ( $ThisLine =~ /^mailbox: mailbox (.*) is damaged$/ ) or
++      ($Mbox) = ( $ThisLine =~ /^mailbox: mailbox is damaged: (.*)$/ )
++   ) {
++      $DamagedMbox{$Mbox}++;
++   } elsif ($ThisLine =~ /^(sktbuff|maildrop): can't read from socket$/ ) {
++      $ReadSocketError++;
++   } elsif ($ThisLine =~ /^(sktbuff|maildrop): can't write to socket$/ ) {
++      $WriteSocketError++;
+    } else {
+       # Report any unmatched entries...
+       # remove PID from named messages
+@@ -113,6 +124,14 @@
+    }
+ }
+ 
++if ( ( $Detail >= 0 ) and (keys %DamagedMbox)) {
++   print "WARNING:\n";
++   print "Damaged mailbox in your system:\n";
++   foreach $Mbox (sort {$a cmp $b} keys %DamagedMbox) {
++      print "   $Mbox: $DamagedMbox{$Mbox} Time(s)\n";
++   }
++}
++
+ if ( ( $Detail >= 0 ) and ($OutOfMemory > 0) ) {
+    print "\nPOP3 processes were running out of memory $OutOfMemory Time(s)\n";
+ }
+@@ -233,6 +252,14 @@
+    print "Total APOP errors: $TotalAPOP Time(s)\n";
+ }
+ 
++if ( ( $Detail >= 5 ) and ( $ReadSocketError > 0 ) ) {
++   print "Socket Read Error $ReadSocketError Time(s)\n";
++}
++
++if ( ( $Detail >= 5 ) and ( $WriteSocketError > 0 ) ) {
++   print "Socket Write Error $WriteSocketError Time(s)\n";
++}
++
+ if (keys %OtherList) {
+    print "\n**Unmatched Entries**\n";
+    foreach $line (sort {$a cmp $b} keys %OtherList) {
