@@ -3,7 +3,7 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	4.3.2
-Release:	5
+Release:	5.4
 License:	MIT
 Group:		Applications/System
 Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
@@ -40,7 +40,7 @@ u¿yciu i moze pracowaæ na wiêkszo¶ci systemów.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-%patch5 -p1
+#%patch5 -p1
 
 cat in.qpopper.patch030319 | patch -p3
 cat sendmail.conf.patch030319 | patch -p3
