@@ -2,30 +2,18 @@
 Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
-Version:	5.1
-Release:	11
+Version:	5.2
+Release:	0.1
 License:	MIT
 Group:		Applications/System
 #Path for pre-versions:
 #Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
 Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
-# Source0-md5:	35f96e1002d081620c508216bb9a0170
-Source1:	%{name}-pop3.conf
-Source2:	%{name}-pop3
-Source3:	%{name}-imapd.conf
-Source4:	%{name}-imapd
+# Source0-md5:	22d7e30ca025529d9a6cbbfcdcbea8d0
 Patch0:		%{name}-config.patch
 Patch1:		%{name}-log_conf.patch
-Patch2:		%{name}-secure.patch
 Patch3:		%{name}-postfix.patch
-Patch4:		%{name}-oidentd.patch
-Patch5:		%{name}-http.patch
 Patch6:		%{name}-sshd.patch
-Patch7:		%{name}-courier.patch
-Patch8:		%{name}-cron.patch
-Patch9:		%{name}-pam_unix.patch
-Patch10:	%{name}-amavis.patch
-Patch11:	%{name}-sendmail.patch
 Patch12:	%{name}-clam-update.conf.patch
 Patch13:	%{name}-clam-update.patch
 URL:		http://www.logwatch.org/
@@ -55,18 +43,10 @@ u¿yciu i moze pracowaæ na wiêkszo¶ci systemów.
 %setup -q
 %patch0 -p1
 %patch1 -p1
-%patch2 -p0
-%patch3 -p0
-%patch4 -p0
-%patch5 -p0
+#patch3 -p0	--to be checked
 %patch6 -p0
-%patch7 -p0
-%patch8 -p0
-%patch9 -p0
-%patch10 -p0
-%patch11 -p0
 %patch12 -p0
-%patch13 -p0
+#patch13 -p0
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -88,11 +68,6 @@ ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT%{_logwatchconf}/logwatch
 ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT/etc/cron.daily/00-logwatch
 
 install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
-
-install %{SOURCE1} $RPM_BUILD_ROOT%{_logwatchconf}/services/pop3.conf
-install %{SOURCE2} $RPM_BUILD_ROOT%{_logwatchdir}/scripts/services/pop3
-install %{SOURCE3} $RPM_BUILD_ROOT%{_logwatchconf}/services/imapd.conf
-install %{SOURCE4} $RPM_BUILD_ROOT%{_logwatchdir}/scripts/services/imapd
 
 %clean
 rm -rf $RPM_BUILD_ROOT
