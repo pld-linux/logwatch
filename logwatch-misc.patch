@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.3
 diff -u -r1.3 postfix
 --- scripts/services/postfix	18 Nov 2003 14:04:05 -0000	1.3
-+++ scripts/services/postfix	26 Nov 2003 08:36:44 -0000
++++ scripts/services/postfix	26 Nov 2003 13:10:57 -0000
 @@ -51,52 +45,70 @@
  $MsgsSent = 0;
  $BytesTransferred = 0;
@@ -238,13 +238,235 @@ diff -u -r1.3 postfix
      print "\n ---------------------- postfix End ------------------------- \n";
  
  }
+Index: scripts/services/proftpd-messages
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/proftpd-messages,v
+retrieving revision 1.12
+diff -u -r1.12 proftpd-messages
+--- scripts/services/proftpd-messages	3 Nov 2003 05:07:25 -0000	1.12
++++ scripts/services/proftpd-messages	26 Nov 2003 13:10:58 -0000
+@@ -17,114 +17,118 @@
+ $IgnoreUnmatched = $ENV{'ftpd_ignore_unmatched'};
+ 
+ while (defined($ThisLine = <STDIN>)) {
+-   if ( ( $ThisLine =~ /^FTP session closed./ ) or
+-         ( $ThisLine =~ /^(ANONYMOUS )?FTP login as \'.*\' from [^ ]+ \[.*\] to .*/ ) or
+-         ( $ThisLine =~ /^FTP no transfer time out, disconnected\./ ) or
+-         ( $ThisLine =~ /PAM\(.*\): Authentication failure/ ) or
+-         ( $ThisLine =~ /^data_sendfile/ ) or
+-         ( $ThisLine =~ / - FTP session opened/ ) or
+-         ( $ThisLine =~ / - FTP session closed/ ) or
+-         ( $ThisLine =~ / - No certificate files found/ ) or
+-         ( $ThisLine =~ /FTP no transfer timeout, disconnected\./ ) or
+-         ( $ThisLine =~ /FTP login timed out, disconnected\./ )   ) {
+-      # We don't care about these
+-   }        			 
+-   elsif ( ($Host,$IP,$Email,) = ( $ThisLine =~ /^FTP session opened: ftp\/ftp (.*)\[(.*)\] (.*)$/ ) ) {
+-      $Temp = "   " . $Host . " (" . $IP . "): " . $Email . " - ";
+-      $AnonLogins{$Temp}++;
+-   }
+-   elsif ( ($Host, $IP) = ( $ThisLine =~ /\((.*)\[(.*)\]\) - ANON .+: Login successful\./ ) ) {
+-      $Temp = "   " . $Host . " (" . $IP . ")";
+-      $AnonLogins{$Temp}++;
+-   }
+-   elsif ( ($User,$Host,$IP) = ( $ThisLine =~ /^FTP session opened: (.*\/.*) (.*)\[(.*)\] (.*)$/ ) ) {
+-      $Temp = "   " . $Host .  ": " . $User . " - ";
+-      $UserLogins{$Temp}++;
+-   }
+-   elsif ( ($Host,$IP,$User) = ( $ThisLine =~ /\((.*)\[(.*)\]\) - USER (.+): Login successful/ ) ) {
+-      $Temp = "   " . $Host . ": " . $User . " - ";
+-      $UserLogins{$Temp}++;
+-   }
+-   elsif ( ($User) = ( $ThisLine =~ /^failed login, can\'t find user \'(.*)\' $/ ) ) {
+-      $Temp = "   " . "Unknown" . " (" . "Unknown.IP" . "): " . $User . " - ";
+-      $BadUsers{$Temp}++;
+-   }
+-   elsif ( ($User,$Host,$IP) = ( $ThisLine =~ /USER (.*): no such user found from (.*) \[(.*)\] to/ ) ) {
+-      $Temp = "   " . $Host . ": " . $User . " - ";
+-      $BadUsers{$Temp}++;
+-   }
+-   elsif ( ($Host,$IP,$User) = ( $ThisLine =~ /\((.*)\[(.*)\]\) - no such user '(.*)'$/ ) ) {
+-      $Temp = "   " . $Host . ": " . $User . " - ";
+-      $BadUsers{$Temp}++;
+-   }
+-   elsif ( ($Host,$User) = ( $ThisLine =~ /\[(.*)\]\) - USER (.*) \(Login failed\): Incorrect password/ ) ) {
+-      $Temp = "   " . $Host . ": " . $User . " - ";
+-      $BadPasswds{$Temp}++;
+-   }
+-   elsif ( ($Host,$User) = ( $ThisLine =~ /\[(.*)\]\) - USER (.*) \(Login failed\): Invalid shell/ ) ) {
+-      $Temp = "   " . $Host . ": " . $User . " - ";
+-      $BadShell{$Temp}++;
+-   }
+-   elsif ( ($Host,$Reason) = ( $ThisLine =~ /\[(.*)\]\) - Refused PORT [\d,]+ \((.*)\)/ ) ) {
+-      $Temp = "   " . $Host . ": " . $Reason . " - ";
+-      $RefusedPorts{$Temp}++;
+-   }
+-   else {
+-      # Report any unmatched entries...
+-      push @OtherList,$ThisLine;
++	if ( ( $ThisLine =~ /^FTP session closed./ ) or
++		( $ThisLine =~ /^(ANONYMOUS )?FTP login as \'.*\' from [^ ]+ \[.*\] to .*/ ) or
++		( $ThisLine =~ /^FTP no transfer time out, disconnected\./ ) or
++		( $ThisLine =~ /PAM\(.*\): Authentication failure/ ) or
++		( $ThisLine =~ /^data_sendfile/ ) or
++		( $ThisLine =~ / - FTP session opened/ ) or
++		( $ThisLine =~ / - FTP session closed/ ) or
++		( $ThisLine =~ / - No certificate files found/ ) or
++		( $ThisLine =~ /FTP no transfer timeout, disconnected\./ ) or
++		( $ThisLine =~ /FTP login timed out, disconnected\./ )   ) {
++		#We don't care about these
++	} elsif ( ($Host,$IP,$Email,) = ( $ThisLine =~ /^FTP session opened: ftp\/ftp (.*)\[(.*)\] (.*)$/ ) ) {
++		$Temp = "   " . $Host . " (" . $IP . "): " . $Email . " - ";
++		$AnonLogins{$Temp}++;
++	} elsif ( ($Host, $IP) = ( $ThisLine =~ /\((.*)\[(.*)\]\) - ANON .+: Login successful\./ ) ) {
++		$Temp = "   " . $Host . " (" . $IP . ")";
++		$AnonLogins{$Temp}++;
++	} elsif ( ($User,$Host,$IP) = ( $ThisLine =~ /^FTP session opened: (.*\/.*) (.*)\[(.*)\] (.*)$/ ) ) {
++		$Temp = "   " . $Host .  ": " . $User . " - ";
++		$UserLogins{$Temp}++;
++	} elsif ( ($Host,$IP,$User) = ( $ThisLine =~ /\((.*)\[(.*)\]\) - USER (.+): Login successful/ ) ) {
++		$Temp = "   " . $Host . ": " . $User . " - ";
++	   $UserLogins{$Temp}++;
++   } elsif ( ($User) = ( $ThisLine =~ /^failed login, can\'t find user \'(.*)\' $/ ) ) {
++	   $Temp = "   " . "Unknown" . " (" . "Unknown.IP" . "): " . $User . " - ";
++	   $BadUsers{$Temp}++;
++   } elsif ( ($User,$Host,$IP) = ( $ThisLine =~ /USER (.*): no such user found from (.*) \[(.*)\] to/ ) ) {
++	   $Temp = "   " . $Host . ": " . $User . " - ";
++	   $BadUsers{$Temp}++;
++   } elsif ( ($Host,$Ip,$User) = ( $ThisLine =~ /\((.*)\[(.*)\]\) - no such user '(.*)'.$/ ) ) {
++	   #$Temp = "$Host($Ip)";
++	   $BadUsers{$User}{$Host}++;
++   } elsif ( ($Host,$User) = ( $ThisLine =~ /\[(.*)\]\) - USER (.*) \(Login failed\): Incorrect password/ ) ) {
++	   $Temp = "   " . $Host . ": " . $User . " - ";
++	   $BadPasswds{$Temp}++;
++   } elsif ( ($Host,$User) = ( $ThisLine =~ /\[(.*)\]\) - USER (.*) \(Login failed\): Invalid shell/ ) ) {
++	   $Temp = "   " . $Host . ": " . $User . " - ";
++	   $BadShell{$Temp}++;
++   } elsif ( ($Host,$Ip) = ( $ThisLine =~ /\((.*)\[(.*)\]\) - SECURITY VIOLATION: root login attempted./ ) ) {
++	   $RootLoginAttempt{$Host}++;
++   }elsif ( ($Host,$Reason) = ( $ThisLine =~ /\[(.*)\]\) - Refused PORT [\d,]+ \((.*)\)/ ) ) {
++	   $Temp = "   " . $Host . ": " . $Reason . " - ";
++	   $RefusedPorts{$Temp}++;
++   } else {
++	   # Report any unmatched entries...
++	   push @OtherList,$ThisLine;
+    }
+ }
+ 
++##############################################
++
+ if ( (keys %AnonLogins) and ($Detail >= 5) ) {
+-   print "\nAnonymous FTP Logins:\n";
+-   foreach $ThisOne (keys %AnonLogins) {
+-      print $ThisOne . $AnonLogins{$ThisOne} . " Time(s)\n";
+-   }
++	print "\nAnonymous FTP Logins:\n";
++	foreach $ThisOne (sort {$a cmp $b} keys %AnonLogins) {
++		print $ThisOne . $AnonLogins{$ThisOne} . " Time(s)\n";
++	}
+ }
+ 
+ if ( (keys %DeletedFiles) and ($Detail >= 10) ) {
+-   print "\nFiles deleted through FTP:\n";
+-   foreach $ThisOne (keys %DeletedFiles) {
+-      print $ThisOne;
+-      print @{$DeletedFiles{$ThisOne}};
+-   }
++	print "\nFiles deleted through FTP:\n";
++	foreach $ThisOne (sort {$a cmp $b} keys %DeletedFiles) {
++		print $ThisOne;
++		print @{$DeletedFiles{$ThisOne}};
++	}
+ }
+ 
+ if (keys %UserLogins) {
+-   print "\nUser FTP Logins:\n";
+-   foreach $ThisOne (keys %UserLogins) {
+-      print $ThisOne . $UserLogins{$ThisOne} . " Time(s)\n";
+-   }
++	print "\nUser FTP Logins:\n";
++	foreach $ThisOne (sort {$a cmp $b} keys %UserLogins) {
++		print $ThisOne . $UserLogins{$ThisOne} . " Time(s)\n";
++	}
+ }
+ 
+-if ( ( (keys %BadUsers) or (keys %BadPasswds) ) and ($Detail >= 5) ) {
+-   print "\nFailed FTP Logins:\n";
+-
+-   if ( (keys %BadUsers) and ($Detail >= 5) ) {
+-      print "\n  Invalid Username:\n";
+-      foreach $ThisOne (keys %BadUsers) {
+-         print $ThisOne . $BadUsers{$ThisOne} . " Time(s)\n";
+-      }
+-   }
+-
+-   if ( (keys %BadPasswds) and ($Detail >= 5) ) {
+-      print "\n  Incorrect Password:\n";
+-      foreach $ThisOne (keys %BadPasswds) {
+-         print $ThisOne . $BadPasswds{$ThisOne} . " Time(s)\n";
+-      }
+-   }
+-   if ( (keys %BadPasswds) and ($Detail >= 5) ) {
+-      print "\n  Invalid Shell:\n";
+-      foreach $ThisOne (keys %BadShell) {
+-         print $ThisOne . $BadShell{$ThisOne} . " Time(s)\n";
+-      }
+-   }
++if (keys %RootLoginAttempt) {
++	print "\nSECURITY VIOLATION!!!!\n";
++	print "Root login attempt from:\n";
++	foreach $Host (sort {$a cmp $b} keys %RootLoginAttempt) {
++		print "  $Host : $RootLoginAttempt{$Host} Time(s)\n";
++	}
++}
+ 
++if ( ( (keys %BadUsers) or (keys %BadPasswds) ) and ($Detail >= 5) ) {
++	print "\nFailed FTP Logins:\n";
++	
++	if ( (keys %BadUsers) and ($Detail >= 5) ) {
++		print "\n  Invalid Username:\n";
++		foreach $User (sort {$a cmp $b} keys %BadUsers) {
++			print "    $User:\n";
++			foreach $Host (sort {$a cmp $b} keys %{$BadUsers{$User}}) {
++				print "      $Host : $BadUsers{$User}{$Host} Time(s)\n";
++			}
++		}
++	}
++	
++	if ( (keys %BadPasswds) and ($Detail >= 5) ) {
++		print "\n  Incorrect Password:\n";
++		foreach $ThisOne (sort {$a cmp $b} keys %BadPasswds) {
++			print $ThisOne . $BadPasswds{$ThisOne} . " Time(s)\n";
++		}
++	}
++	
++	if ( (keys %BadPasswds) and ($Detail >= 5) ) {
++		print "\n  Invalid Shell:\n";
++		foreach $ThisOne (sort {$a cmp $b} keys %BadShell) {
++			print $ThisOne . $BadShell{$ThisOne} . " Time(s)\n";
++		}
++	}
+ }
+ 
+ if ( (keys %RefusedPorts) and ($Detail >= 5) ) {
+    print "\nRefused PORTs:\n";
+-   foreach $ThisOne (keys %RefusedPorts) {
++   foreach $ThisOne (sort {$a cmp $b} keys %RefusedPorts) {
+       print $ThisOne . $RefusedPorts{$ThisOne} . " Time(s)\n";
+    }
+ }
+@@ -136,3 +140,4 @@
+ 
+ exit(0);
+ 
++# vi: shiftwidth=4 tabstop=4
 Index: scripts/services/samba
 ===================================================================
 RCS file: /var/cvs/logwatch/scripts/services/samba,v
 retrieving revision 1.11
 diff -u -r1.11 samba
 --- scripts/services/samba	3 Nov 2003 05:07:25 -0000	1.11
-+++ scripts/services/samba	26 Nov 2003 08:36:44 -0000
++++ scripts/services/samba	26 Nov 2003 13:10:58 -0000
 @@ -13,59 +13,96 @@
  
  $Debug = $ENV{'LOGWATCH_DEBUG'};
@@ -496,7 +718,7 @@ RCS file: /var/cvs/logwatch/scripts/services/secure,v
 retrieving revision 1.37
 diff -u -r1.37 secure
 --- scripts/services/secure	18 Nov 2003 14:04:06 -0000	1.37
-+++ scripts/services/secure	26 Nov 2003 08:36:44 -0000
++++ scripts/services/secure	26 Nov 2003 13:10:59 -0000
 @@ -19,14 +19,25 @@
  use Logwatch ':ip';
  
@@ -631,7 +853,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sendmail,v
 retrieving revision 1.29
 diff -u -r1.29 sendmail
 --- scripts/services/sendmail	7 Nov 2003 14:26:42 -0000	1.29
-+++ scripts/services/sendmail	26 Nov 2003 08:36:45 -0000
++++ scripts/services/sendmail	26 Nov 2003 13:11:00 -0000
 @@ -109,69 +109,69 @@
  my $UnknownUsersThreshold = 0;
  
@@ -837,7 +1059,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sshd,v
 retrieving revision 1.30
 diff -u -r1.30 sshd
 --- scripts/services/sshd	3 Nov 2003 14:30:40 -0000	1.30
-+++ scripts/services/sshd	26 Nov 2003 08:36:45 -0000
++++ scripts/services/sshd	26 Nov 2003 13:11:01 -0000
 @@ -18,30 +18,30 @@
  
  # Avoid "Use of uninitialized value" warning messages.
