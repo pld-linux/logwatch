@@ -1,0 +1,16 @@
+Index: scripts/services/pam_unix
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/pam_unix,v
+retrieving revision 1.13
+diff -u -r1.13 pam_unix
+--- scripts/services/pam_unix	3 Feb 2004 02:45:26 -0000	1.13
++++ scripts/services/pam_unix	19 Mar 2004 08:18:29 -0000
+@@ -43,7 +43,7 @@
+ 			# ignore this line
+ 		} elsif ($line =~ s/^authentication failure; .*rhost=([^ ]*)\s+user=([^ ]*)$/$2 ($1)/) {
+ 			$data{$service}{'Authentication Failures'}{$line}++;
+-      } elsif ($line =~ s/^authentication failure; .*rhost=([^ ]*)$/unknown ($1)/) {
++      } elsif ($line =~ s/^authentication failure; .*rhost=([^ ]*).$/unknown ($1)/) {
+          $data{$service}{'Authentication Failures'}{$line}++;
+       } elsif ($line =~ s/^(\d+) more authentication failure; .*rhost=(.+)\s+user=(.+)$/$2 ($1)/) {
+          $data{$service}{'Authentication Failures'}{$line}++;
