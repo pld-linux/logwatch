@@ -4,8 +4,8 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.9
 diff -u -r1.9 postfix
 --- scripts/services/postfix	3 Feb 2004 03:25:02 -0000	1.9
-+++ scripts/services/postfix	4 Jun 2004 10:21:41 -0000
-@@ -82,27 +82,34 @@
++++ scripts/services/postfix	7 Jun 2004 09:57:03 -0000
+@@ -82,32 +82,39 @@
  $QueueSizeExceeded = 0;
  $RejectedRBL = 0;
  $ErrorRBL = 0;
@@ -36,7 +36,7 @@ diff -u -r1.9 postfix
 +      ( $ThisLine =~ m/^[a-zA-Z0-9]+: client/ ) or
 +      ( $ThisLine =~ m/^[a-zA-Z0-9]+: message-id/ ) or
 +      ( $ThisLine =~ m/^[a-zA-Z0-9]+: skipped, still being delivered/ ) or
-+      ( $ThisLine =~ m/^[a-zA-Z0-9]+: to\=\<.*>, relay\=.*, delay\=[0-9]+, status\=[sent|deferred]/ ) or
++      ( $ThisLine =~ m/^[a-zA-Z0-9]+: to\=\<.*>, relay\=.*, delay\=-?[0-9]+, status\=[sent|deferred]/ ) or
 +      ( $ThisLine =~ m/^Deleted: \d message$/ ) or
 +      ( $ThisLine =~ m/^connect/ ) or
 +      ( $ThisLine =~ m/^daemon started$/ ) or
@@ -59,7 +59,22 @@ diff -u -r1.9 postfix
        # We don't care about these
     } elsif ( ($Bytes) = ($ThisLine =~ /^[a-zA-Z0-9]+: from=.*size=([0-9]+).*$/) ) {
        $MsgsSent++;
-@@ -154,9 +161,11 @@
+       $BytesTransferred += $Bytes;
+-   } elsif (($User) = ($ThisLine =~ /^[a-zA-Z0-9]+: to\=\<([^ ]*)>, relay\=local, delay\=[0-9]+, status\=bounced \(unknown user/)) {
++   } elsif (($User) = ($ThisLine =~ /^[a-zA-Z0-9]+: to\=\<([^ ]*)>, relay\=local, delay\=-?[0-9]+, status\=bounced \(unknown user/)) {
+       # unknown user
+       $UnknownUsers{$User}++;
+    } elsif ((undef,$User) = ($ThisLine =~ /^[a-zA-Z0-9]+: reject: RCPT from ([^ ]*): [0-9]+ <([^ ]*)>: User unknown in virtual mailbox table;/)) {
+@@ -119,7 +126,7 @@
+    } elsif ((undef,$User) = ($ThisLine =~ /^[a-zA-Z0-9]+: reject: RCPT from ([^ ]*): [0-9]+ <([^ ]*)>.*: User unknown in local recipient table/)) {
+       # and yet another unknown user probably
+       $UnknownUsers{$User}++;
+-   } elsif (($Dest, $Relay, $Msg) = ($ThisLine =~ /^[a-zA-Z0-9]+: to\=\<([^ ]*)>, relay=([^ ]*).*, delay\=[0-9]+, status\=bounced \(([^)]*)/ )) {
++   } elsif (($Dest, $Relay, $Msg) = ($ThisLine =~ /^[a-zA-Z0-9]+: to\=\<([^ ]*)>, relay=([^ ]*).*, delay\=-?[0-9]+, status\=bounced \(([^)]*)/ )) {
+       # unknown user
+       # $Msg = " hello "
+       # print "bounce message from " . $Dest . " msg : " . $Relay . "\n";
+@@ -154,9 +161,14 @@
     #} elsif ( ($Host,undef) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <([^ ]*)>: Sender address rejected: Domain not found;/)) {
     #   $RejectDomain{$Host}++;
     # above two lines included in generic reject sender on next condition
@@ -70,20 +85,13 @@ diff -u -r1.9 postfix
 +      $RejectSender{$Reason}{$Host}{$Sender}++;
 +      $RejectSenderHost{$Reason}{$Host}++;
 +      $RejectSenderReason{$Reason}++;
++   } elsif ( ($Host) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <[^ ]*\[[^ ]*\]>: Client host rejected: Access denied;/)) {
++      $RejectClientHost{$Host}++;
++      $RejectClients++;
 +   } elsif ( ($Host,$Recip,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <(.*)>: Recipient address rejected: (.*);/)) {
        $Temp = "$Host : $Reason";
        $RejectRecip{$Recip}{$Temp}++;
     } elsif ( ($Host,undef) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): 554 <(.*)>: Sender address rejected: Access denied;/)) {
-@@ -168,6 +177,9 @@
-    } elsif ( ($Host,$Site) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): 554 Service unavailable; \[[^ ]*\] blocked using ([^ ]*);/)) {
-       $RejectRBL{$Site}{$Host}++;
-       $RejectedRBL++;
-+   } elsif ( ($Host) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): 554 <[^ ]*\[[^ ]*\]>: Client host rejected: Access denied;/)) {
-+      $RejectClientHost{$Host}++;
-+      $RejectClients++;
-    } elsif ( ($Host,$Site,$Reason) = ($ThisLine =~ /warning: ([^ ]*): RBL lookup error: Name service error for \d+\.\d+\.\d+\.\d+\.([^ ]*): (.*)$/)) {
-       $Temp = "$Host : $Reason";
-       $RBLError{$Site}{$Temp}++;
 @@ -186,7 +198,7 @@
     } elsif ( ($Host,$MyName) = ($ThisLine =~ /warning: host ([^ ]*\[[^ ]*\]) replied to HELO\/EHLO with my own hostname ([^ ]*)$/)) {
        $Temp = "$Host : replied to HELO\/EHLO with my own hostname $MyName";
@@ -102,20 +110,32 @@ diff -u -r1.9 postfix
        $SaslAuthenticationFail{$Host}++;
     } elsif ( ($Domain) = ($ThisLine =~ /warning: malformed domain name in resource data of MX record (.*)$/)) {
        $MxError{$Domain}++;
-@@ -224,45 +236,66 @@
+@@ -218,51 +230,74 @@
+       $QueueSizeExceeded++;
+    } elsif ( ($Command,$Host) = ($ThisLine =~ /too many errors after ([^ ]*) from ([^ ]*\[[^ ]*\])$/)) {
+       $TooManyErrors{$Command}{$Host}++;
+-   } elsif ( (undef,undef,$To) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): 552 Message size exceeds fixed limit; from=<([^ ]*)> to=<([^ ]*)>$/)) {
++   } elsif ( (undef,undef,$To) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 552 Message size exceeds fixed limit; from=<([^ ]*)> to=<([^ ]*)>$/)) {
+       $SizeLimit{"$From -> $To"}++;
+-   } elsif ( (undef,$Source) = ($ThisLine =~ /warning: database ([^ ]*) is older than source file ([a-zA-Z0-9\/]+)$/)) {
++   } elsif ( (undef,$Source) = ($ThisLine =~ /^warning: database ([^ ]*) is older than source file ([a-zA-Z0-9\/]+)$/)) {
        $DatabaseGeneration{$Source}++;
-    } elsif ( ($Reason) = ($ThisLine =~ /warning: [a-zA-Z0-9]+: write queue file: (.*)$/)) {
+-   } elsif ( ($Reason) = ($ThisLine =~ /warning: [a-zA-Z0-9]+: write queue file: (.*)$/)) {
++   } elsif ( ($Reason) = ($ThisLine =~ /^warning: [a-zA-Z0-9]+: write queue file: (.*)$/)) {
        $QueueWriteError{$Reason}++;
-+   } elsif ( ($Reason) = ($ThisLine =~ /warning: open active [a-zA-Z0-9]+: (.*)$/)) {
+-   } elsif ( ($Reason) = ($ThisLine =~ /warning: [^ ]*\/[a-zA-Z0-9]+: (Error writing message file)$/)) {
++   } elsif ( ($Reason) = ($ThisLine =~ /^warning: open active [a-zA-Z0-9]+: (.*)$/)) {
 +      $QueueWriteError{"open active: $Reason"}++;
-+   } elsif ( ($Reason) = ($ThisLine =~ /warning: qmgr_active_corrupt: save corrupt file queue active id [a-zA-Z0-9]+: (.*)$/)) {
++   } elsif ( ($Reason) = ($ThisLine =~ /^warning: qmgr_active_corrupt: save corrupt file queue active id [a-zA-Z0-9]+: (.*)$/)) {
 +      $QueueWriteError{"active corrupt: $Reason"}++;
-+   } elsif ( ($Reason) = ($ThisLine =~ /warning: qmgr_active_done_3_generic: remove [a-zA-Z0-9]+ from active: (.*)$/)) {
++   } elsif ( ($Reason) = ($ThisLine =~ /^warning: qmgr_active_done_3_generic: remove [a-zA-Z0-9]+ from active: (.*)$/)) {
 +      $QueueWriteError{"remove active: $Reason"}++;
-    } elsif ( ($Reason) = ($ThisLine =~ /warning: [^ ]*\/[a-zA-Z0-9]+: (Error writing message file)$/)) {
++   } elsif ( ($Reason) = ($ThisLine =~ /^warning: [^ ]*\/[a-zA-Z0-9]+: (Error writing message file)$/)) {
        $MessageWriteError{$Reason}++;
 +   } elsif ( $ThisLine =~ /reject: RCPT from [^ ]*\[[^ ]*\]: \d+ Insufficient system storage; from=<.*> to=<.*>/) {
 +      $NoFreeSpace++;
++   } elsif ( ($Process,$Status) = ($ThisLine =~ /^warning: process ([^ ]*) pid \d+ exit status (\d+)$/)) {
++      $ProcessExit{$Process}{$Status}++;
     } elsif ( ($Warn) = ($ThisLine =~ /^warning: (.*)/)) {
        # keep this as the next to last condition
        $UnknownWarnings{$Warn}++;
@@ -177,7 +197,7 @@ diff -u -r1.9 postfix
     foreach $Reason (sort {$a cmp $b} keys %QueueWriteError) {
        print "   $Reason : $QueueWriteError{$Reason} Time(s)\n";
     }
-@@ -275,10 +308,6 @@
+@@ -275,10 +310,6 @@
     }
  }
  
@@ -188,7 +208,7 @@ diff -u -r1.9 postfix
  if (keys %DatabaseGeneration) {
     print "\n\nDatabase files are not up-to-date (propably rehash is needed):\n";
     foreach $Source (sort {$a cmp $b} keys %DatabaseGeneration) {
-@@ -286,10 +315,6 @@
+@@ -286,10 +317,6 @@
     }
  }
  
@@ -199,7 +219,7 @@ diff -u -r1.9 postfix
  if (keys %PixWorkaround) {
     print "\n\nEnabled PIX <CRLF>.<CRLF> workaround for:\n";
     foreach $Host (sort {$a cmp $b} keys %PixWorkaround) {
-@@ -353,20 +378,24 @@
+@@ -353,20 +380,24 @@
     }
  }
  
@@ -236,7 +256,7 @@ diff -u -r1.9 postfix
        }
     }
  }
-@@ -376,7 +405,7 @@
+@@ -376,7 +407,7 @@
     foreach $Recip (sort {$a cmp $b} keys %RejectRecip) {
        print "    $Recip:\n";
        foreach $Host (sort {$a cmp $b} keys %{$RejectRecip{$Recip}} ) {
@@ -245,7 +265,20 @@ diff -u -r1.9 postfix
        }
     }
  }
-@@ -508,7 +537,7 @@
+@@ -505,10 +536,20 @@
+    }
+ }
+ 
++if (keys %ProcessExit) {
++   print "\n\nProcess exited:\n";
++   foreach $Process (sort {$a cmp $b} keys %ProcessExit) {
++      print "   $Process:\n"
++      foreach $Status (sort {$a cmp $b} keys %{$ProcessExit{$Process}} ) {
++         print "   Exit status $Status: $ProcessExit{$Process}{$Status} Time(s)\n";
++      }
++   }
++}
++
  if (keys %UnknownWarnings) {
     print "\n\nUnrecognized warning:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %UnknownWarnings) {
