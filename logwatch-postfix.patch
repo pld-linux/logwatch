@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.4
 diff -u -r1.4 postfix
 --- scripts/services/postfix	26 Nov 2003 14:36:30 -0000	1.4
-+++ scripts/services/postfix	7 Dec 2003 14:50:57 -0000
++++ scripts/services/postfix	7 Dec 2003 17:46:50 -0000
 @@ -55,6 +55,8 @@
  $BytesTransferred = 0;
  $FourHourReturns = 0;
@@ -102,26 +102,26 @@ diff -u -r1.4 postfix
 +		$HostnameVerification{$Error}++;
 +	} elsif ( $ThisLine =~ /^[a-zA-Z0-9]+: removed$/) {
 +		$RemovedFromQueue++;
++	} elsif ( ($Host) = ($ThisLine =~ /^[a-zA-Z0-9]+: enabling PIX <CRLF>.<CRLF> workaround for ([^ ]*\[[^ ]*\])$/)) {
++		$PixWorkaround{$Host}++;
++	} elsif ( ($Message) = ($ThisLine =~ /^warning: valid_hostname: (.*)$/)) {
++		$ValidHostname{$Message}++;
 +	} else {
 +		push @OtherList,$ThisLine;
 +		#
 +		# TODO:
++		#warning: Illegal address syntax from f133.ds.univ.gda.pl[153.19.197.133] in MAIL command: <sseeds_pg@teamaffiliate.com onMouseOver=>
++		#warning: bad size limit "(5120000)" in EHLO reply from relay.hwk-aachen.de[212.117.75.130]
 +		#warning: host 127.0.1.50[127.0.1.50] greeted me with my own hostname jol.task.gda.pl
 +		#warning: host 127.0.1.50[127.0.1.50] replied to HELO/EHLO with my own hostname jol.task.gda.pl
 +		#warning: mailer loop: best MX host for pager.icq.com is local
++		#warning: malformed domain name in resource data of MX record for sfol.com:
++		#warning: malformed domain name in resource data of MX record for kiri.com: \254\184\194\008
++		#warning: open active EA67A1B840: No such file or directory
++		#warning: premature end-of-input from cleanup socket while reading input attribute name
 +		#warning: smtp_connect_addr: socket: Address family not supported by protocol
 +		#warning: smtp_addr_one: unknown address family 1 for localhost
-+		#warning: bad size limit "(5120000)" in EHLO reply from relay.hwk-aachen.de[212.117.75.130]
-+		#299721B69E: enabling PIX <CRLF>.<CRLF> workaround for mx2.ps.net[160.109.70.71]
-+		#warning: valid_hostname: empty hostname
-+		#warning: malformed domain name in resource data of MX record for sfol.com:
 +		#warning: unknown[203.197.217.137] sent message header instead of SMTP command: From:"Bailey" <sanchez_24@canada.com>
-+		#warning: Illegal address syntax from f133.ds.univ.gda.pl[153.19.197.133] in MAIL command: <sseeds_pg@teamaffiliate.com onMouseOver=>
-+		#warning: premature end-of-input from cleanup socket while reading input attribute name
-+		#warning: open active EA67A1B840: No such file or directory
-+		#warning: valid_hostname: invalid character 92(decimal): \254\184\194\008
-+		#warning: malformed domain name in resource data of MX record for kiri.com: \254\184\194\008
-+		#
      }
  }
  
@@ -135,29 +135,36 @@ diff -u -r1.4 postfix
  	(keys %UnknownUsers) or
  	(keys %RelayDenied) or
  	(keys %$HeaderReject) or
-@@ -148,7 +160,8 @@
+@@ -148,83 +160,132 @@
  	(keys %AuthWarns) or
  	(keys %ForwardErrors) or
  	(keys %SentBy) or
 -	(keys %ConnectionLost)
 +	(keys %ConnectionLost) or
-+	(keys %HostnameVerification)
++	(keys %HostnameVerification) or
++	(keys %PixWorkaround) or
++	(keys %$ValidHostname)
  ) {
  	print "\n\n --------------------- postfix Begin ------------------------ ";
  	
-@@ -157,7 +170,7 @@
-         print "\n" . $MsgsSent . " messages sent";
+     if($MsgsSent > 0) {
+-        print "\n\n" . $BytesTransferred . " bytes transferred";
+-        print "\n" . $MsgsSent . " messages sent";
++        print "\n\n$BytesTransferred bytes transferred";
++        print "\n$MsgsSent messages sent";
      }
  
 -    if($FourHourReturns > 0) {
+-        print "\n\n" . $FourHourReturns . " messages returned after 4 hours";
 +    if ($FourHourReturns > 0) {
-         print "\n\n" . $FourHourReturns . " messages returned after 4 hours";
++        print "\n\n$FourHourReturns messages returned after 4 hours";
      }
  
-@@ -165,66 +178,98 @@
- 		print "\n\n" . $ReturnedToSender . " messages expired and returned to sender";
- 	}
- 
+ 	if ($ReturnedToSender >0) {
+-		print "\n\n" . $ReturnedToSender . " messages expired and returned to sender";
++		print "\n\n$ReturnedToSender messages expired and returned to sender";
++	}
++
 +	if ($ResentMessages > 0) {
 +		print "\n\n$ResentMessages resent messages";
 +	}
@@ -166,19 +173,28 @@ diff -u -r1.4 postfix
 +		print "\n\n$RemovedFromQueue messages removed from queue";
 +	}
 +
++	if (keys %PixWorkaround) {
++		print "\n\nEnabled PIX <CRLF>.<CRLF> workaround for:\n";
++		foreach $Host (sort {$a cmp $b} keys %PixWorkaround) {
++			print "    $Host : $PixWorkaround{$Host}  Times(s)\n";
++		}
+ 	}
+ 
  	if (keys %SentBy) {
  		print "\n\nMessages sent by:\n";
 -		foreach $ThisOne (keys %SentBy) {
+-			print "    " . $ThisOne . $SentBy{$ThisOne} . " Times(s)\n";
 +		foreach $ThisOne (sort {$a cmp $b} keys %SentBy) {
- 			print "    " . $ThisOne . $SentBy{$ThisOne} . " Times(s)\n";
++			print "    $ThisOne : $SentBy{$ThisOne} Times(s)\n";
  		}
  	}
  
      if (keys %UnknownUsers) {
  		print "\n\nUnknown users:\n";
 -		foreach $ThisOne (keys %UnknownUsers) {
+-			print "    " . $ThisOne . ": " . $UnknownUsers{$ThisOne} . " Times(s)\n";
 +		foreach $ThisOne (sort {$a cmp $b} keys %UnknownUsers) {
- 			print "    " . $ThisOne . ": " . $UnknownUsers{$ThisOne} . " Times(s)\n";
++			print "    $ThisOne : $UnknownUsers{$ThisOne} Times(s)\n";
  		}
  	}
  
@@ -262,6 +278,13 @@ diff -u -r1.4 postfix
 +		print "\n\nHostname verification errors:\n";
 +		foreach $Error (sort {$a cmp $b} keys %HostnameVerification) {
 +			print "    $Error : $HostnameVerification{$Error} Times(s)\n";
++		}
++	}
++
++	if (keys %ValidHostname) {
++		print "\n\nHostname validation errors:\n";
++		foreach $Message (sort {$a cmp $b} keys %ValidHostname) {
++			print "    $Message : $ValidHostname{$Message} Times(s)\n";
  		}
  	}
  	
