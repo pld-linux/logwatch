@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.13
 diff -u -r1.13 postfix
 --- scripts/services/postfix	23 Jun 2004 15:01:17 -0000	1.13
-+++ scripts/services/postfix	30 Jun 2004 14:25:14 -0000
++++ scripts/services/postfix	1 Jul 2004 06:51:31 -0000
 @@ -188,8 +188,10 @@
     } elsif ( ($Command,$Host) = ($ThisLine =~ /timeout after ([^ ]*) from ([^ ]*)$/)) {
        # Make some better summary with hosts
@@ -18,7 +18,7 @@ diff -u -r1.13 postfix
     #} elsif ( ($Host,undef) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <([^ ]*)>: Sender address rejected: Domain not found;/)) {
     #   $RejectDomain{$Host}++;
     # above two lines included in generic reject sender on next condition
-@@ -462,8 +464,19 @@
+@@ -462,8 +464,21 @@
  
  if (($Detail >= 5) and (keys %HeaderReject)) {
     print "\n\nHeader content reject:\n";
@@ -28,6 +28,7 @@ diff -u -r1.13 postfix
 +      print "   $Reason:";
 +      foreach $Rejected (sort {$a cmp $b} keys %{$HeaderReject{$Reason}} ) {
 +         print "      $Rejected : $HeaderReject{$Reason}{$Rejected} Time(s)\n";
++      }
 +   }
 +}
 +
@@ -37,6 +38,7 @@ diff -u -r1.13 postfix
 +      print "   $Reason:";
 +      foreach $Warning (sort {$a cmp $b} keys %{$HeaderWarning{$Reason}} ) {
 +         print "      $Warning : $HeaderWarning{$Reason}{$Warning} Time(s)\n";
++      }
     }
  }
  
