@@ -3,7 +3,7 @@ Summary:    	Analyzes system logs
 Summary(pl): 	Logwatch - analizator logów systemowych
 Name:        	logwatch
 Version:     	4.2.1
-Release:     	1
+Release:     	2
 License:   	MIT
 Group:       	Applications/System
 Source:      	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
@@ -38,45 +38,51 @@ done
 %install
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT/etc/log.d/ \
-	$RPM_BUILD_ROOT{%{_sbindir},%{_mandir}/man8} \
+	$RPM_BUILD_ROOT{%{_sbindir},%{_mandir}/man8,%{_datadir}/logwatch} \
 	$RPM_BUILD_ROOT/etc/cron.daily 
 
-cp -a scripts $RPM_BUILD_ROOT/etc/log.d/
+cp -a scripts $RPM_BUILD_ROOT/%{_datadir}/logwatch
 cp -a conf $RPM_BUILD_ROOT/etc/log.d/
+
+mv $RPM_BUILD_ROOT%{_datadir}/logwatch/scripts/logwatch.pl $RPM_BUILD_ROOT%{_sbindir}/logwatch
+
+ln -sf %{_datadir}/logwatch/scripts/ $RPM_BUILD_ROOT/etc/log.d/scripts
+ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT%{_datadir}/logwatch/scripts/logwatch.pl
+
+ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT/etc/log.d/logwatch 
+ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT/etc/cron.daily/00-logwatch 
+ln -sf /etc/log.d/conf/logwatch.conf $RPM_BUILD_ROOT/etc/log.d/logwatch.conf 
 
 install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
 
-ln -sf /etc/log.d/scripts/logwatch.pl $RPM_BUILD_ROOT/etc/log.d/logwatch 
-ln -sf /etc/log.d/conf/logwatch.conf $RPM_BUILD_ROOT/etc/log.d/logwatch.conf 
-ln -sf /etc/log.d/scripts/logwatch.pl $RPM_BUILD_ROOT/etc/cron.daily/00-logwatch 
-ln -sf /etc/log.d/scripts/logwatch.pl $RPM_BUILD_ROOT%{_sbindir}/logwatch 
-
-
 %post
-echo
 echo "You should take a look at /etc/log.d/logwatch.conf..."
 echo "Especially the Detail entry..."
-echo
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(644,root,root,755)
-%doc  README
-
+%doc README HOWTO-Make-Filter project/{CHANGES,TODO}
 %attr(700,root,root) %dir /etc/log.d
-%attr(700,root,root) %dir /etc/log.d/conf
 %attr(700,root,root) %dir /etc/log.d/scripts
+%attr(700,root,root) %dir /etc/log.d/conf
+%attr(700,root,root) %dir %{_datadir}/logwatch/
+%attr(700,root,root) %dir %{_datadir}/logwatch/scripts
 
 %attr(700,root,root) %dir /etc/log.d/conf/logfiles
 %attr(700,root,root) %dir /etc/log.d/conf/services
 
-%attr(700,root,root) %dir /etc/log.d/scripts/logfiles
-%attr(700,root,root) %dir /etc/log.d/scripts/services
-%attr(700,root,root) %dir /etc/log.d/scripts/shared
+%attr(700,root,root) %dir %{_datadir}/logwatch/scripts/logfiles
+%attr(700,root,root) %dir %{_datadir}/logwatch/scripts/services
+%attr(700,root,root) %dir %{_datadir}/logwatch/scripts/shared
 
-%attr(700,root,root) %dir /etc/log.d/scripts/logfiles/*
+#%attr(700,root,root) %{_datadir}/logwatch/scripts/logfiles/*
+%attr(700,root,root) %{_datadir}/logwatch/scripts/shared/*
+%attr(700,root,root) %{_datadir}/logwatch/scripts/services/*
+%attr(700,root,root) %{_datadir}/logwatch/scripts/logfiles/*/*
+%attr(700,root,root) %{_datadir}/logwatch/scripts/logwatch.pl
 
 %attr(600,root,root) %config(noreplace) %verify(not size mtime md5) /etc/log.d/conf/logwatch.conf
 %attr(600,root,root) %config(noreplace) %verify(not size mtime md5) /etc/log.d/logwatch.conf
@@ -84,14 +90,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(600,root,root) %config %verify(not size mtime md5) /etc/log.d/conf/services/*
 %attr(600,root,root) %config %verify(not size mtime md5) /etc/log.d/conf/logfiles/*
 
-%attr(700,root,root) /etc/log.d/scripts/logwatch.pl
 %attr(700,root,root) %{_sbindir}/logwatch
-
-%attr(700,root,root) /etc/log.d/scripts/shared/*
-%attr(700,root,root) /etc/log.d/scripts/services/*
-%attr(700,root,root) /etc/log.d/scripts/logfiles/*/*
-
 %attr(700,root,root) /etc/log.d/logwatch
-
 %attr(700,root,root) /etc/cron.daily/00-logwatch
 %{_mandir}/man8/*
