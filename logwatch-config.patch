@@ -1,6 +1,23 @@
---- ./scripts/logwatch.pl.org	Wed Nov  5 09:51:15 2003
-+++ ./scripts/logwatch.pl	Wed Nov  5 09:52:16 2003
-@@ -15,9 +15,9 @@
+Index: scripts/logwatch.pl
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/logwatch.pl,v
+retrieving revision 1.115
+diff -u -r1.115 logwatch.pl
+--- scripts/logwatch.pl	29 Oct 2004 21:22:24 -0000	1.115
++++ scripts/logwatch.pl	31 Oct 2004 14:33:33 -0000
+@@ -7,6 +7,11 @@
+ # ftp://ftp.logwatch.org/pub/redhat/RPMS
+ 
+ ########################################################
++# Specify version and build-date:
++my $Version = 'pre6.0';
++my $VDate = '10/29/04';
++
++########################################################
+ # This was written and is maintained by:
+ #    Kirk Bauer <kirk@kaybee.org>
+ #
+@@ -15,14 +20,11 @@
  #
  ########################################################
  
@@ -9,6 +26,11 @@
  #my $BaseDir = "/home/kirk/cvs-work/logwatch";
 -my $ConfigDir = "$BaseDir/conf";
 +my $ConfigDir = "/etc/log.d";
+ my $PerlVersion = "/usr/bin/perl";
  
- #Added to create switches for different os options -mgt
- #For now working on Linux and SunOS
+-my $Version = 'pre6.0';
+-my $VDate = '10/29/04';
+-
+ #############################################################################
+ 
+ use Getopt::Long;
