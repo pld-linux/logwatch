@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/http,v
 retrieving revision 1.9
 diff -u -r1.9 http
 --- scripts/services/http	3 Feb 2004 02:45:26 -0000	1.9
-+++ scripts/services/http	1 Jun 2004 06:37:58 -0000
++++ scripts/services/http	1 Jun 2004 06:54:48 -0000
 @@ -79,40 +79,67 @@
  my $wpad_bytes =     0;
  my $src_count =      0;
@@ -90,13 +90,16 @@ diff -u -r1.9 http
  );
  
  #
-@@ -238,9 +265,16 @@
+@@ -238,9 +265,19 @@
     } elsif ($field{base_url} =~ /$images_types$/) {
        $images_count += 1;
        $images_bytes += $field{bytes_transfered};
 +   } elsif ($field{base_url} =~ /$logs_types$/) {
 +      $logs_count += 1;
 +      $logs_bytes += $field{bytes_transfered};
++   } elsif ($field{base_url} =~ /$fonts_types$/) {
++      $fonts_count += 1;
++      $fonts_bytes += $field{bytes_transfered};
     } elsif ($field{http_rc} =~ /3\d\d/) {
        $redirect_count += 1;
        $redirect_bytes += $field{bytes_transfered};
@@ -107,7 +110,7 @@ diff -u -r1.9 http
     } else {
        $other_count += 1;
        $other_bytes += $field{bytes_transfered};
-@@ -282,7 +316,7 @@
+@@ -282,7 +319,7 @@
     
  } ## End of while loop
  
@@ -116,7 +119,7 @@ diff -u -r1.9 http
  ##   output the results 
  ##
  
-@@ -293,18 +327,21 @@
+@@ -293,18 +330,21 @@
     print " responses ";
     print " (1xx $a1xx_resp, 2xx $a2xx_resp, 3xx $a3xx_resp,";
     print " 4xx $a4xx_resp, 5xx $a5xx_resp) \n";
@@ -150,7 +153,7 @@ diff -u -r1.9 http
  }
  
  #
-@@ -335,6 +372,12 @@
+@@ -335,6 +375,12 @@
     }	
  }
  
@@ -169,7 +172,7 @@ RCS file: /var/cvs/logwatch/conf/logfiles/http.conf,v
 retrieving revision 1.2
 diff -u -r1.2 http.conf
 --- conf/logfiles/http.conf	15 Dec 2003 18:35:01 -0000	1.2
-+++ conf/logfiles/http.conf	1 Jun 2004 06:37:58 -0000
++++ conf/logfiles/http.conf	1 Jun 2004 06:54:48 -0000
 @@ -4,13 +4,16 @@
  
  # What actual file?  Defaults to LogPath if not absolute path....
