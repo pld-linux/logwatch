@@ -1,0 +1,24 @@
+Index: scripts/services/secure
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/secure,v
+retrieving revision 1.46
+diff -u -r1.46 secure
+--- scripts/services/secure	21 Jun 2004 14:59:05 -0000	1.46
++++ scripts/services/secure	2 Oct 2004 12:36:31 -0000
+@@ -52,6 +52,7 @@
+    $temp =~ s/^([^[]+).*/$1/;
+    if ($Ignore =~ /\b\Q$temp\E\b/i) { next; }
+    if (
++      ( $ThisLine =~ /^(.*)\(pam_unix\)/) or
+       ( $ThisLine =~ m/^[^ ]+\[\d+\]: connect from localhost$/ ) or
+       ( $ThisLine =~ /^\/usr\/bin\/sudo:/) or
+       ( $ThisLine =~ /^sudo:/) or
+@@ -324,7 +325,7 @@
+    foreach $Service (sort {$a cmp $b} keys %NameVerifyFail) {
+       print "   Service $Service:\n";
+       foreach $Name (sort {$a cmp $b} keys %{$NameVerifyFail{$Service}}) {
+-         print "      $Name$NameVerifyFail{$Service}{$Name} Time(s)\n";
++         print "      $Name$NameVerifyFail{$Service}{$Name} Time(s)\n";
+       }
+    }
+ }
