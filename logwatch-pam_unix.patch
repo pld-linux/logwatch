@@ -1,0 +1,25 @@
+Index: scripts/services/pam_unix
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/pam_unix,v
+retrieving revision 1.12
+diff -u -r1.12 pam_unix
+--- scripts/services/pam_unix	15 Dec 2003 19:01:19 -0000	1.12
++++ scripts/services/pam_unix	23 Dec 2003 22:06:55 -0000
+@@ -3,6 +3,8 @@
+ ##########################################################################
+ # $Id$
+ ##########################################################################
++# $Log$
++##########################################################################
+ 
+ ########################################################
+ # This was written and is maintained by:
+@@ -29,6 +31,8 @@
+ 	if (($service eq 'sshd') or ($service eq 'login') or ($service eq 'ftp')) {
+ 		if ($line =~ s/^session opened for user (.+) by \(uid=\d+\)/$1/) {
+ 			($Detail >= 5) && $data{$service}{'Sessions Opened'}{$line}++;
++      } elsif ($line =~ s/^session opened for user ([^ ]*) by ([^ ]*)\(uid=\d+\)/$1 by $2/) {
++         ($Detail >= 5) && $data{$service}{'Sessions Opened'}{$line}++;
+ 		} elsif ($line =~ s/^session opened for user (.+) by LOGIN\(uid=\d+\)/$1/) {
+ 			$data{$service}{'Sessions Opened'}{$line}++;
+ 		} elsif ($line =~ /session closed for user/) {
