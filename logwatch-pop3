@@ -1,0 +1,197 @@
+#!/usr/bin/perl
+##########################################################################
+# $Id$
+##########################################################################
+
+########################################################
+# Logwatch was written and is maintained by:
+#    Kirk Bauer <kirk@kaybee.org>
+#
+# The courier script was written by:
+#    Pawe³ Go³aszewski <blues@gda.pl>
+#
+########################################################
+
+my $Debug = $ENV{'LOGWATCH_DEBUG'};
+my $Detail = $ENV{'LOGWATCH_DETAIL_LEVEL'};
+
+#Make pseudo IPv6 to IPv4
+sub LookupIPv46 {
+   my $IPv4Addr;
+   my $Addr = $_[0];
+   if ( ($IPv4Addr) = ($Addr =~ /::ffff:([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})/ ) ) {
+#      print "$IPv4Addr\n";
+      return $IPv4Addr;
+      
+      }
+   else {
+#      print $Addr;
+      return $Addr;
+      
+      }
+}
+   
+if ( $Debug >= 5 ) {
+    print STDERR "\n\nDEBUG \n\n";
+}
+
+while (defined($ThisLine = <STDIN>)) {
+   if (
+      ($ThisLine =~ /^Initializing */) or
+      ($ThisLine =~ /^Installing */) or
+      ($ThisLine =~ /^read: Broken pipe$/)
+   ) {
+      # Don't care about these...
+   } elsif ( ($User, $Host) = ( $ThisLine =~ /^user (.*?) authenticated - (.*)$/ ) ) {
+      $Login{$User}{$Host}++;
+   } elsif ( ($User,$Downloaded,$DownloadSize,$Left,$LeftSize) = ( $ThisLine =~ /^Stats: (.*?) (.*?) (.*?) (.*?) (.*?)$/) ) {
+      $DownloadedMessages{$User} += $Downloaded;
+      $DownloadedMessagesSize{$User} += $DownloadSize;
+      $MessagesLeft{$User} = $Left;
+      $MboxSize{$User} = $LeftSize;
+   } elsif ( ($User, $Host) = ( $ThisLine =~ /^session ended for user (.*?) - (.*)/) ) {
+      $Logout{$User}{$Host}++;
+      $Logout2{$User}++;
+      $Connection{$Host}++;
+   } elsif ( ($User,$Host) = ( $ThisLine =~ /^authentication failed for user (.*?) - (.*)/ ) ) {
+      $LoginFailed{"$Host ($User)"}++;
+   } elsif ( ($User,$Host) = ( $ThisLine =~ /^authentication failed: no such user: (.*?) - (.*)/ ) ) {
+      $LoginFailed{"$Host (UNKNOWN: $User)"}++;
+   } elsif ( ($Mechanism) = ( $ThisLine =~ /^sptls: TLS connection established: (.*)$/ ) ) {
+      $sslMechanism{$Mechanism}++;
+   } else {
+      # Report any unmatched entries...
+      # remove PID from named messages
+
+      $ThisLine =~ s/^(client [.0-9]+)\S+/$1/;
+      chomp($ThisLine);
+      $OtherList{$ThisLine}++;
+   }
+   $LastLine = $ThisLine;
+}
+
+################################################
+
+if ( ( $Detail >= 0 ) and (keys %LoginFailed)) {
+   print     "\n[POP3] Failures:".
+             "\n=========================".
+             "\n                                                  Host (user) |          # ".
+             "\n------------------------------------------------------------- | -----------";
+  
+   $ConnCount = 0;
+   foreach $Host (sort keys %LoginFailed) {
+      $Conns = $LoginFailed{$Host};
+      $HostLength = length($Host);
+      $HostSpaceLength = 61 - $HostLength;
+      $CountLength = length("$Conns");
+      $CountSpaceLength = 12 - $CountLength;
+      print "\n" ." " x $HostSpaceLength . $Host . " |" . " " x $CountSpaceLength .  $Conns . "";
+      $ConnCount += $Conns;
+   }
+   $CountLength = length("$ConnCount");
+   $CountSpaceLength = 75 - $CountLength;
+   print "\n" . "-" x 75;
+   print "\n" . " " x $CountSpaceLength . "$ConnCount\n\n\n";
+}
+
+if ( ( $Detail >= 5 ) and (keys %Connection)) {
+   print     "\n[POP3] Connections:".
+             "\n=========================".
+             "\n                                                         Host | Connections".
+             "\n------------------------------------------------------------- | -----------";
+  
+   $ConnCount = 0;
+   foreach $Host (sort keys %Connection) {
+      $Conns = $Connection{$Host};
+      $HostLength = length($Host);
+      $HostSpaceLength = 61 - $HostLength;
+      $CountLength = length("$Conns");
+      $CountSpaceLength = 12 - $CountLength;
+      print "\n" ." " x $HostSpaceLength . $Host . " |" . " " x $CountSpaceLength .  $Conns . "";
+      $ConnCount += $Conns;
+   }
+   $CountLength = length("$ConnCount");
+   $CountSpaceLength = 75 - $CountLength;
+   print "\n" . "-" x 75;
+   print "\n" . " " x $CountSpaceLength . "$ConnCount\n\n\n";
+}
+
+
+
+if (keys %Logout2) {
+   print     "\n[POP3] Logout stats:".
+             "\n====================".
+             "\n                                   User | Logouts | Downloaded |  Mbox Size".
+             "\n--------------------------------------- | ------- | ---------- | ----------";
+  
+   $ConnCount = 0;
+   $SizeAll = 0;
+   $DownAll = 0;
+   foreach $User (sort keys %Logout2) {
+      $Conns = $Logout2{$User};
+      $Size = $MboxSize{$User};
+      $UserLength = length($User);
+      $UserSpaceLength = 39 - $UserLength;
+      $CountLength = length("$Conns");
+      $CountSpaceLength = 8 - $CountLength;
+      $SizeSpaceLength = 12 - length($Size);
+      $Down = $DownloadedMessagesSize{$User};
+      $DownSpaceLength = 11 - length($Down);
+      print "\n" ." " x $UserSpaceLength . $User . " |" . " " x $CountSpaceLength .  $Conns . " |" . 
+                  " " x $DownSpaceLength . $Down . " |" . " " x $SizeSpaceLength . $Size;
+      $ConnCount += $Conns;
+      $SizeAll += $Size;
+      $DownAll += $Down;
+   }
+   $CountLength = length("$ConnCount");
+   $CountSpaceLength = 49 - $CountLength;
+   $DownLength = length($DownAll);
+   $DownSpaceLength = 11 - $DownLength;
+   $SizeLength = length($SizeAll);
+   $SizeSpaceLength = 12 - $SizeLength;
+   print "\n" . "-" x 76;
+   print "\n" . " " x $CountSpaceLength . "$ConnCount" . " |" . " " x $DownSpaceLength . $DownAll . " |" .
+                " " x $SizeSpaceLength  .  $SizeAll    . "\n\n\n";
+}
+
+
+if ( ( $Detail >= 10 ) and (keys %Login)) {
+   print "\n[POP3] Successful Logins:\n";
+   $LoginCount = 0;
+   foreach my $User (keys %Login) {
+      print "  User $User: \n";
+      $UserCount = 0;
+      foreach $Host (keys %{$Login{$User}}) {
+         $HostCount = $Login{$User}{$Host};
+         print "    From $Host: $HostCount Time(s)\n";
+         $UserCount += $HostCount;
+      }
+      $LoginCount += $UserCount;
+      print "  Total $UserCount Time(s)\n";
+      print "\n";
+   }
+   print "Total $LoginCount successful logins\n\n\n";
+}
+
+if ( ( $Detail >= 5 ) and (keys %sslMechanism)) {
+   print "\nTLS Connection types:\n";
+   $TotalConnections = 0;
+   foreach $Mechanism (keys %sslMechanism) {
+      print "   $Mechanism $sslMechanism{$Mechanism} Time(s)\n";
+      $TotalConnections += $sslMechanism{$Mechanism};
+   }
+   print "Total TLS connections: $TotalConnections Time(s)\n";
+}
+
+if (keys %OtherList) {
+   print "\n**Unmatched Entries**\n";
+   foreach $line (sort {$a cmp $b} keys %OtherList) {
+      print "   $line: $OtherList{$line} Time(s)\n";
+   }
+}
+
+exit(0);
+
+
+# vi: shiftwidth=3 tabstop=3 et
+
