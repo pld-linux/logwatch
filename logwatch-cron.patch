@@ -1,0 +1,30 @@
+Index: scripts/services/cron
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/cron,v
+retrieving revision 1.14
+diff -u -r1.14 cron
+--- scripts/services/cron	3 Feb 2004 03:36:39 -0000	1.14
++++ scripts/services/cron	16 Mar 2004 06:39:44 -0000
+@@ -62,6 +62,8 @@
+          $CronDeny{$User}++;
+       } elsif ( $ThisLine =~ /^WRONG INODE INFO \([^ ]+\)/) {
+          $InodeError{$User}++;
++      } elsif ( ($Reason) = ($ThisLine =~ /^error \((.+)\)$/) ) {
++         $Errors{$Reason}++;
+       } else {
+          # Report any unmatched entries...
+          push @OtherList, "$ThisLine\n";
+@@ -89,6 +91,13 @@
+    print "\nInode errors in crontab files of users:\n";
+    foreach $User (sort {$a cmp $b} keys %InodeError) {
+       print "   $User : $InodeError{$User} Time(s)\n";
++   }
++}
++
++if (keys %Errors) {
++   print "Errors when running cron:\n";
++   foreach $Reason (sort {$a cmp $b} keys %Errors) {
++      print "   $Reason: $Errors{$Reason} Time(s)\n";
+    }
+ }
+ 
