@@ -4,18 +4,33 @@ RCS file: /var/cvs/logwatch/scripts/services/pop3,v
 retrieving revision 1.1
 diff -u -r1.1 pop3
 --- scripts/services/pop3	21 Jun 2004 14:59:05 -0000	1.1
-+++ scripts/services/pop3	30 Aug 2004 10:52:36 -0000
-@@ -15,6 +15,9 @@
++++ scripts/services/pop3	2 Oct 2004 17:38:55 -0000
+@@ -15,6 +15,12 @@
  my $Debug = $ENV{'LOGWATCH_DEBUG'};
  my $Detail = $ENV{'LOGWATCH_DETAIL_LEVEL'};
  
 +$ReadSocketError = 0;
 +$WriteSocketError = 0;
++$Startups = 0;
++$Shutdowns = 0;
++$AuthDrivers = 0;
 +
  #Make pseudo IPv6 to IPv4
  sub LookupIPv46 {
     my $IPv4Addr;
-@@ -44,9 +47,8 @@
+@@ -38,25 +44,36 @@
+ while (defined($ThisLine = <STDIN>)) {
+    if (
+       ($ThisLine =~ /^auth: PAM error: Authentication failure$/) or
++      ($ThisLine =~ /^authcontext_new_user_pass: began session for/) or
++      ($ThisLine =~ /^cclient_steal_lock: attempting to grab c-client lock from PID \d+$/) or
+       ($ThisLine =~ /^getpeername: Socket operation on non-socket$/) or
+       ($ThisLine =~ /^Initializing */) or
+       ($ThisLine =~ /^Installing */) or
++      ($ThisLine =~ /^ioabs_tcp_post_select: client .*: connection closed by peer$/) or
++      ($ThisLine =~ /^listener_new: (.*:\d+): cannot obtain domain suffix for this address$/) or
++      ($ThisLine =~ /^listener_new: (.*:\d+): using fallback domain suffix `(.*)'$/) or
++      ($ThisLine =~ /^listener_new: gethostbyaddr\((.*)\): cannot resolve name$/) or
        ($ThisLine =~ /^(mailbox: )?open: No such file or directory$/) or
        ($ThisLine =~ /^(sktbuff|maildrop): write: Broken pipe$/) or
        ($ThisLine =~ /^maildrop: can't read message$/) or
@@ -24,9 +39,68 @@ diff -u -r1.1 pop3
 -      ($ThisLine =~ /^maildrop: write: Connection reset by peer$/) or
 +      ($ThisLine =~ /^(sktbuff|maildrop): write: Connection reset by peer$/) or
        ($ThisLine =~ /^(sktbuff|maildrop): write: Connection timed out$/) or
++      ($ThisLine =~ /^mailspool_build_index.*: skipping c-client metadata$/) or
        ($ThisLine =~ /^open: Permission denied$/) or
        ($ThisLine =~ /^read: Broken pipe$/) or
-@@ -92,6 +94,15 @@
+       ($ThisLine =~ /^read: Connection reset by peer$/) or
+       ($ThisLine =~ /^spgetpwnam: can't find user: */) or
+       ($ThisLine =~ /^sptls: SSL_accept error: (-|)\d+$/) or
+-      ($ThisLine =~ /^sptls: do need at least RSA or DSA cert\/key data$/)
++      ($ThisLine =~ /^sptls: do need at least RSA or DSA cert\/key data$/) or
++      ($ThisLine =~ /^tpop3d shutdown  succeeded$/) or
++      ($ThisLine =~ /tpop3d startup  succeeded$/)
+    ) {
+       # Don't care about these...
+-   } elsif ( ($User, $Host) = ( $ThisLine =~ /^user (.*?) authenticated - (.*)$/ ) ) {
++   } elsif (
++      (($User, $Host) = ( $ThisLine =~ /^user (.*?) authenticated - (.*)$/ )) or
++      (($User, $Host) = ( $ThisLine =~ /^fork_child: \[\d\].*\((.*)\): began session for `(.*)' with .*; child PID is \d+$/ )) 
++   ) {
+       $Login{$User}{$Host}++;
+    } elsif ( ($User,$Downloaded,$DownloadSize,$Left,$LeftSize) = ( $ThisLine =~ /^Stats: (.*?) (.*?) (.*?) (.*?) (.*?)$/) ) {
+       $DownloadedMessages{$User} += $Downloaded;
+@@ -70,15 +87,38 @@
+    } elsif  ( ($Host) = ( $ThisLine =~ /^session ended - (.*)$/) ) {
+       $Logout{"UNKNOWN"}{$Host}++;
+       $Connection{$Host}++;
+-   } elsif ( ($User,$Host) = ( $ThisLine =~ /^authentication failed for user (.*?) - (.*)/ ) ) {
++   } elsif ( 
++      (($User,$Host,$DownloadSize,undef) = ( $ThisLine =~ /^connections_post_select: client \[\d+\](.*)\((.*)\): disconnected; (.*?)\/(.*?) bytes read\/written$/) ) or
++      (($Host,$User) = ( $ThisLine =~ /^connections_post_select: client \[\d\].*\((.*)\): finished session for `(.*)' with pam/) )
++   ) {
++      $DownloadedMessagesSize{$User} += $DownloadSize;
++      $Logout{$User}{$Host}++;
++      $Logout2{$User}++;
++      $Connection{$Host}++;
++   } elsif (($Host) = ( $ThisLine =~ /^connections_post_select: client \[\d\](.*)\/.*: disconnected; \d+\/\d+ bytes read\/written$/) ) {
++      $Connection{$Host}++;
++   } elsif (
++      (($User,$Host) = ( $ThisLine =~ /^authentication failed for user (.*?) - (.*)/ )) or
++      (($Host,$User) = ( $ThisLine =~ /^connection_do: client `\[\d+\](.*)\/.*': username `(.*)': \d authentication failures/ ))
++   ) {
+       $LoginFailed{"$Host ($User)"}++;
+    } elsif ( ($User,$Host) = ( $ThisLine =~ /^authentication failed: no such user: (.*?) - (.*)/ ) ) {
+       $LoginFailed{"$Host (UNKNOWN: $User)"}++;
++   } elsif ( ($User) = ( $ThisLine =~ /^auth_pam_new_user_pass: pam_authenticate\((.*)\): Authentication failure/) ){
++      $LoginFailed{$User}++;
++   } elsif ( ($User) = ( $ThisLine =~ /^authcontext_new_user_pass: rejecting login attempt by `(.*)' with empty password$/) ) {
++      $LoginFailed{"EMPTY PASSWORD: $User"}++;
+    } elsif ( ($Mechanism) = ( $ThisLine =~ /^sptls: TLS connection established: (.*)$/ ) ) {
+       $sslMechanism{$Mechanism}++;
+    } elsif ($ThisLine =~ /^sptls: created \d+bit temporary [^ ].* key$/ ) {
+       $sslTempkey++;
+-   } elsif ( ($Host) = ( $ThisLine =~ /^autologout time elapsed - (.*)$/ ) ) {
++   } elsif ( ($User,$Host) = ( $ThisLine =~ /^ioabs_tls_shutdown: client \[\d\](.*)\((.*)\): underlying connection closed by peer during shutdown$/) ) {
++      # What to with that??
++   } elsif (
++      (($Host) = ( $ThisLine =~ /^autologout time elapsed - (.*)$/ )) or
++      (($Host) = ( $ThisLine =~ /^net_loop: timed out client \[\d\](.*)\// )) or
++      (($Host) = ( $ThisLine =~ /^net_loop: timed out client \[\d\].*\((.*)\)$/ ))
++   ) {
+       $AutoLogout{$Host}++;
+    } elsif (
+       (($File) = ( $ThisLine =~ /^can't open or create file: (.*)$/ )) or
+@@ -92,6 +132,33 @@
        $Logout2{$User}++;
     } elsif ($ThisLine =~ /^mailbox: no memory available$/ ) {
        $OutOfMemory++;
@@ -35,14 +109,56 @@ diff -u -r1.1 pop3
 +      ($Mbox) = ( $ThisLine =~ /^mailbox: mailbox is damaged: (.*)$/ )
 +   ) {
 +      $DamagedMbox{$Mbox}++;
-+   } elsif ($ThisLine =~ /^(sktbuff|maildrop): can't read from socket$/ ) {
++   } elsif (
++      ($ThisLine =~ /^(sktbuff|maildrop): can't read from socket$/) or
++      ($ThisLine =~ /^ioabs_tls_read: client .*: connection closed by peer$/) or
++      ($ThisLine =~ /^(ioabs_tls_read|ioabs_tls_post_select): client .*: connection unexpectedly closed by peer$/)
++   ) {
 +      $ReadSocketError++;
 +   } elsif ($ThisLine =~ /^(sktbuff|maildrop): can't write to socket$/ ) {
 +      $WriteSocketError++;
++   } elsif ( ($Box,$Size) = ( $ThisLine =~ /^mailspool_new_from_file: indexed mailspool (.*) \((\d+) bytes\) in/ ) ) {
++      # What to do with that?
++      #$MboxSize{$User} = $LeftSize;
++   } elsif ( ($Host,$Iface) = ( $ThisLine =~ /^listeners_post_select: client \[\d\](.*)\/.*: connected to local address (.*:\d+)$/ ) ) {
++      $Connection{$Host}++;
++      $Conect{$Iface}{$Host}++;
++   } elsif ( ($Listen) = ( $ThisLine =~ /^parse_listeners: listening on address (.*)$/ ) ) {
++      $ListenOn{$Listen}++;
++   } elsif ($ThisLine =~ /^net_loop: tpop3d version \d+\.\d+\.\d+ successfully started$/ ) {
++      $Startups++;
++   } elsif ($ThisLine =~ /^net_loop: terminating on signal \d+$/ ) {
++      $Shutdowns++;
++   } elsif ( ($Drivers) = ($ThisLine =~ /^(\d+) authentication drivers successfully loaded$/) ) {
++      $AuthDrivers = $Drivers;      
     } else {
        # Report any unmatched entries...
        # remove PID from named messages
-@@ -113,6 +124,14 @@
+@@ -105,6 +172,23 @@
+ 
+ ################################################
+ 
++if ($Startups > 0) {
++   print "Startups: $Startups";
++   if ($AuthDrivers > 0) {
++      print " with $AuthDrivers authentication drivers\n";
++   } else { print "\n"; }
++   if (keys %ListenOn) {
++      print "Listening on:\n";
++      foreach $Listen (sort {$a cmp $b} keys %ListenOn) {
++         print "   $Listen\n";
++      }
++   }
++}
++
++if ($Shutdowns > 0) {
++   print "\nShutdowns: $Shutdowns\n";
++}
++
+ if ( ( $Detail >= 0 ) and (keys %PermissionDenied)) {
+    print "WARNING:\n";
+    print "Can't open or create files:\n";
+@@ -113,6 +197,14 @@
     }
  }
  
@@ -57,7 +173,7 @@ diff -u -r1.1 pop3
  if ( ( $Detail >= 0 ) and ($OutOfMemory > 0) ) {
     print "\nPOP3 processes were running out of memory $OutOfMemory Time(s)\n";
  }
-@@ -233,6 +252,14 @@
+@@ -233,6 +325,24 @@
     print "Total APOP errors: $TotalAPOP Time(s)\n";
  }
  
@@ -67,6 +183,16 @@ diff -u -r1.1 pop3
 +
 +if ( ( $Detail >= 5 ) and ( $WriteSocketError > 0 ) ) {
 +   print "Socket Write Error $WriteSocketError Time(s)\n";
++}
++
++if (keys %Conect) {
++   print "\nConnection to interface:\n";
++   foreach $Iface (sort {$a cmp $b} keys %Conect) {
++      print "   $Iface:\n";
++      foreach $Host (sort {$a cmp $b} keys %{$Conect{$Iface}}) {
++         print "      $Host: $Conect{$Iface}{$Host} Time(s)\n";
++      }
++   }
 +}
 +
  if (keys %OtherList) {
