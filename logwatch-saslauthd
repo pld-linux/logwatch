@@ -1,0 +1,80 @@
+#!/usr/bin/perl -w
+##########################################################################
+# $Id$
+##########################################################################
+# $Log$
+#
+##########################################################################
+
+########################################################
+# This was written by:
+# Pawe³ Go³aszewski <blues@ds.pg.gda.pl>
+#
+# Please send all comments, suggestions, bug reports,
+# logwatch-devel@logwatch.org
+#
+########################################################
+
+my $Detail = $ENV{'LOGWATCH_DETAIL_LEVEL'} || 0;
+my $Debug = $ENV{'LOGWATCH_DEBUG'} || 0;
+
+$AuthFailures = 0;
+$Startups = 0;
+$Shutdowns = 0;
+
+while (defined($ThisLine = <STDIN>)) {
+   if ( 
+      ( $ThisLine =~ m/^DEBUG: / ) or
+      ( $ThisLine =~ m/^ipc_init        : listening on socket:/ )
+   ) {
+      # We don't care about these
+   } elsif ( ($User,$Service,$Realm,$Mechanism,$Reason) = ($ThisLine =~ /^do_auth         : auth failure: \[user=(.*)\] \[service=([^ ]*)\] \[realm=([^ ]*)\] \[mech=([^ ]*)\] \[reason=(.*)\]$/) ) {
+      $AuthFailures++;
+      $AuthFailServiceCount{"$Service ($Mechanism)"}++;
+      $AuthFailRealmCount{"$Service ($Mechanism)"}{$Realm}++;
+      $AuthFail{"$Service ($Mechanism)"}{$Realm}{"$User - $Reason"}++;
+   } elsif ( $ThisLine =~ m/^detach_tty      : master pid is: \d+$/) {
+      $Startups++;
+   } elsif ( $ThisLine =~ m/^server_exit     : master exited: \d+$/) {
+      $Shutdowns++;
+   } else {
+      push @OtherList,$ThisLine;
+   }
+}
+
+##################################################################
+
+if ($Startups > 0) {
+   print "Startups: $Startups\n";
+}
+
+if ($Shutdowns > 0) {
+   print "Shutdowns: $Shutdowns\n";
+}
+
+if ($AuthFailures > 0) {
+   print "Authentification failures $AuthFailures Time(s)\n";
+}
+
+if (keys %AuthFail) {
+   print "\nSASL Authentications failed:\n";
+   foreach $Service (sort {$a cmp $b} keys %AuthFail) {
+      print "Service $Service - $AuthFailServiceCount{$Service} Time(s):\n";
+      foreach $Realm (sort {$a cmp $b} keys %{$AuthFail{$Service}} ) {
+         print "   Realm $Realm - $AuthFailRealmCount{$Service}{$Realm} Time(s):\n";
+         foreach $User (sort {$a cmp $b} keys %{$AuthFail{$Service}{$Realm}} ) {
+            print "      User: $User - $AuthFail{$Service}{$Realm}{$User} Time(s):\n";
+         }
+      }
+   }
+}
+
+if ($#OtherList >= 0) {
+   print "\n\n**Unmatched Entries**\n\n";
+   print @OtherList;
+}
+
+
+exit(0);
+
+# vi: shiftwidth=3 tabstop=3 et
