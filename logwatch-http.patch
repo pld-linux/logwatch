@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/http,v
 retrieving revision 1.8
 diff -u -r1.8 http
 --- scripts/services/http	15 Dec 2003 19:01:19 -0000	1.8
-+++ scripts/services/http	7 Jan 2004 07:08:00 -0000
++++ scripts/services/http	21 Jan 2004 07:08:47 -0000
 @@ -1,4 +1,19 @@
  #!/usr/bin/perl
 +##########################################################################
@@ -138,20 +138,20 @@ diff -u -r1.8 http
 +my $src_bytes =      0;
 +my $images_count =   0;
 +my $images_bytes =   0;
-+my $image_types =    '(\.bmp|\.gif|\.ico|\.jpeg|\.jpg|\.png|\.swf|\.tif|\.tiff|\.wmf|\.xdm)';
++my $image_types =    '(\.bmp|\.emz|\.gif|\.ico|\.jpeg|\.jpg|\.png|\.swf|\.tif|\.tiff|\.wmf|\.wmz|\.xdm)';
 +my $content_types =  '(';
 +   $content_types =  $content_types.'\/server-status|\/server-info';
 +   $content_types =  $content_types.'|\.htm|\.html|\.jhtml|\.phtml|\.shtml|\/';
 +   $content_types =  $content_types.'|\.php|\.php3|\.asp|\.pl|\.wml|\/';
 +   $content_types =  $content_types.'|\.css|\.js|\.cgi|\.txt|\/';
 +   $content_types =  $content_types.'|\.class|\.jsp|\.jar|\.java)';
-+my $docs_types =     '(\.doc|\.dvi|\.gnumeric|\.mcd|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.tex|\.xls|\.xml)';
-+my $archive_types =  '(\.ace|\.bz2|\.cab|\.deb|\.gz|\.rar|\.rpm|\.tbz2|\.zip)';
++my $docs_types =     '(\.doc|\.dvi|\.gnumeric|\.mcd|\.mso|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.tex|\.text|\.xls|\.xml)';
++my $archive_types =  '(\.ace|\.bz2|\.cab|\.deb|\.gz|\.hqx|\.rar|\.rpm|\.tbz2|\.zip)';
 +my $sound_types =    '(\.mp3|\.ram|\.raw|\.rm|\.wav|\.wma|\.mid)';
 +my $movie_types =    '(\.asf|\.avi|\.mid|\.mpg|\.mpeg|\.mov)';
 +my $winexec_types =  '(\.com|\.exe|\.dll)';
 +my $wpad_files =     '(wpad\.dat|wspad\.dat|proxy\.pac)';
-+my $program_src =    '(\.c|\.f|\.h|\.patch|\.cpp)';
++my $program_src =    '(\.bas|\.c|\.diff|\.f|\.h|\.patch|\.cpp)';
 +my $images_types =   '(\.bin|\.cue|\.iso|\.run)';
  
  #
