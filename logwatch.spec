@@ -27,9 +27,11 @@ wiêkszo¶ci systemów.
 
 %build
 
-mv scripts/services/zz-fortune scripts/services/zz-fortune.
-sed -e s/bash/sh/ scripts/services/zz-fortune. > scripts/services/zz-fortune
-rm -f scripts/services/zz-fortune.
+for i in scripts/{shared/{onlycontains,remove},services/zz-fortune}; do
+	mv $i $i.
+	sed -e s/bash/sh/ $i. > $i
+	rm -f $i.
+done
 
 %install
 rm -rf $RPM_BUILD_ROOT
