@@ -3,25 +3,16 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	5.1
-Release:	0.pre.6
+Release:	0.pre.7
 License:	MIT
 Group:		Applications/System
 #Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
 Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
-# Source0-md5:	03393644cfb61c90e8f596d8e50f3b8a
+# Source0-md5:	7939ffc153261984d028bb3e56882412
 Source1:	http://piorun.ds.pg.gda.pl/~blues/patches/clam-update-1.0.tar.gz
 # Source1-md5:	d92959cfa650ccce908721cbbe4fd6ef
 Patch0:		%{name}-config.patch
 Patch1:		%{name}-log_conf.patch
-Patch2:		%{name}-dhcp_start-stop.patch
-Patch3:		%{name}-postfix.patch
-Patch4:		%{name}-user_login.patch
-Patch5:		%{name}-samba.patch
-Patch6:		%{name}-modprobe.patch
-Patch7:		%{name}-proftpd-messages.patch
-Patch8:		%{name}-config3.patch
-Patch9:		%{name}-http.patch
-Patch10:	%{name}-pam_unix.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	perl-modules
@@ -46,15 +37,6 @@ u¿yciu i moze pracowaæ na wiêkszo¶ci systemów.
 %setup -q -a1 -n %{name}-pre%{version}
 %patch0 -p1
 %patch1 -p1
-%patch2 -p0
-%patch3 -p0
-%patch4 -p0
-%patch5 -p0
-%patch6 -p0
-%patch7 -p0
-%patch8 -p0
-%patch9 -p0
-%patch10 -p0
 
 %install
 rm -rf $RPM_BUILD_ROOT
