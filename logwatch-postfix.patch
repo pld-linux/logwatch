@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.7
 diff -u -r1.7 postfix
 --- scripts/services/postfix	15 Dec 2003 18:35:03 -0000	1.7
-+++ scripts/services/postfix	17 Dec 2003 08:30:52 -0000
++++ scripts/services/postfix	17 Dec 2003 08:35:27 -0000
 @@ -67,6 +67,9 @@
  $ReturnedToSender = 0;
  $ResentMessages = 0;
@@ -34,15 +34,21 @@ diff -u -r1.7 postfix
        $RejectDomain{$Host}++;
     } elsif ( ($Host,$Site,$Reason) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 554 Service unavailable; \[[^ ]*\] blocked using ([^ ]*), reason: (.*);/)) {
        $Temp = "$Host : $Reason";
-@@ -137,7 +141,7 @@
+@@ -137,11 +141,11 @@
        $PixWorkaround{$Host}++;
     } elsif ( ($Message) = ($ThisLine =~ /^warning: valid_hostname: (.*)$/)) {
        $ValidHostname{$Message}++;
 -   } elsif ( ($Host,$MyName) = ($ThisLine =~ /^warning: ([^ ]*\[[^ ]*\]) greeted me with my own hostname ([^ ]*)$/)) {
+-      $Temp = "$Host : greeted me with my own hostname \($MyName\)";
 +   } elsif ( ($Host,$MyName) = ($ThisLine =~ /^warning: host ([^ ]*\[[^ ]*\]) greeted me with my own hostname ([^ ]*)$/)) {
-       $Temp = "$Host : greeted me with my own hostname \($MyName\)";
++      $Temp = "$Host : greeted me with my own hostname $MyName";
        $HeloError{$Temp}++;
     } elsif ( ($Host,$MyName) = ($ThisLine =~ /^warning: host ([^ ]*\[[^ ]*\]) replied to HELO\/EHLO with my own hostname ([^ ]*)$/)) {
+-      $Temp = "$Host : replied to HELO\/EHLO with my own hostname\($MyName\)";
++      $Temp = "$Host : replied to HELO\/EHLO with my own hostname $MyName";
+       $HeloError{$Temp}++;
+    } elsif ( ($Host,$Reason) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 504 <[^ ]*>: Helo command rejected: (.*);/)) {
+       $Temp = "$Host : Helo command rejected \($Reason\)";
 @@ -155,17 +159,25 @@
        $MailerLoop{$Error}++;
     } elsif ( ($Host) = ($ThisLine =~ /^warning: ([^ ]*\[[^ ]*\]): SASL LOGIN authentication failed/)) {
