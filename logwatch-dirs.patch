@@ -1,0 +1,56 @@
+--- ./scripts/logwatch.pl.org	Tue Feb 18 16:53:27 2003
++++ ./scripts/logwatch.pl	Sat Mar 22 16:14:38 2003
+@@ -15,7 +15,8 @@
+ #
+ ########################################################
+ 
+-my $BaseDir = "/etc/log.d";
++my $BaseDir = "/usr/share/logwatch";
++my $ConfigDir = "/etc/log.d";
+ #my $BaseDir = "/home/kirk/cvs-work/logwatch";
+ 
+ my $Version = '4.3.2';
+@@ -201,7 +202,7 @@
+ my $OldMailTo = $Config{'mailto'};
+ my $OldPrint  = $Config{'print'};
+ 
+-ReadConfigFile ($BaseDir . "conf/logwatch.conf");
++ReadConfigFile ($ConfigDir . "/logwatch.conf");
+ for (my $i = 0; $i <= $#ReadConfigNames; $i++) {
+    if ($ReadConfigNames[$i] eq "logfile") {
+       push @LogFileList, $ReadConfigValues[$i];
+@@ -302,14 +303,14 @@
+ 
+ # Find out what services are defined...
+ my (@TempAllServices, $ThisFile, $count);
+-opendir(SERVICESDIR,$BaseDir . "conf/services") or die $BaseDir . "conf/services/, no such directory.\n";
++opendir(SERVICESDIR,$ConfigDir . "/services") or die $ConfigDir . "/services/, no such directory.\n";
+ while (defined($ThisFile = readdir(SERVICESDIR))) {
+-   unless (-d $BaseDir . "conf/services/" . $ThisFile) {
++   unless (-d $ConfigDir . "/services/" . $ThisFile) {
+       my $ThisService = $ThisFile;
+       if ($ThisService =~ s/\.conf$//i) { 
+          $ThisService = lc($ThisService);
+          push @TempAllServices, $ThisService;
+-         ReadConfigFile($BaseDir . "conf/services/" . $ThisFile);
++         ReadConfigFile($ConfigDir . "/services/" . $ThisFile);
+          for (my $i = 0; $i <= $#ReadConfigNames; $i++) {
+             if ($ReadConfigNames[$i] eq "logfile") {
+                push @{$ServiceData{$ThisService}{'logfiles'}}, $ReadConfigValues[$i];
+@@ -327,13 +328,13 @@
+ my @AllServices = sort @TempAllServices;
+ 
+ # Find out what logfiles are defined...
+-opendir(LOGFILEDIR,$BaseDir . "conf/logfiles") or die $BaseDir . "conf/logfiles/, no such directory.\n";
++opendir(LOGFILEDIR,$ConfigDir . "/logfiles") or die $ConfigDir . "/logfiles/, no such directory.\n";
+ while (defined($ThisFile = readdir(LOGFILEDIR))) {
+-   unless (-d $BaseDir . "conf/logfiles/" . $ThisFile) {
++   unless (-d $ConfigDir . "/logfiles/" . $ThisFile) {
+       my $ThisLogFile = $ThisFile;
+       if ($ThisLogFile =~ s/\.conf$//i) { 
+          push @AllLogFiles, $ThisLogFile;
+-         ReadConfigFile($BaseDir . "conf/logfiles/" . $ThisFile);
++         ReadConfigFile($ConfigDir . "/logfiles/" . $ThisFile);
+          for (my $i = 0; $i <= $#ReadConfigNames; $i++) {
+             if ($ReadConfigNames[$i] eq "logfile") {
+                push @{$LogFileData{$ThisLogFile}{'logfiles'}}, $ReadConfigValues[$i];

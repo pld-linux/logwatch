@@ -1,0 +1,95 @@
+--- ./scripts/services/pam_unix.org	Wed Apr  2 21:10:16 2003
++++ ./scripts/services/pam_unix	Mon May 12 14:39:39 2003
+@@ -33,10 +33,18 @@
+          # ignore this line
+       } elsif ($line =~ s/^authentication failure; .*rhost=(.+)\s+user=(.+)$/$2 ($1)/) {
+          $data{$service}{'Authentication Failures'}{$line}++;
++      } elsif ($line =~ s/^(\d+) more authentication failure; .*rhost=(.+)\s+user=(.+)$/$2 ($1)/) {
++	      $data{$service}{'Authentication Failures'}{$line}++;
+       } elsif ($line =~ s/^authentication failure; .*rhost=(.+)$/unknown ($1)/) {
+          $data{$service}{'Authentication Failures'}{$line}++;
++      } elsif ($line =~ s/^(\d+) more authentication failure; .*rhost=(.+)$/unknown ($1)/) {
++	      $data{$service}{'Authentication Failures'}{$line}++;
+       } elsif ($line =~ /check pass; user unknown/) {
+          $data{$service}{'Invalid Users'}{'Unknown Account'}++;
++      } elsif ($line =~ s/^password changed for (.+)/$1(by sshd)/) {
++	      ($Detail >= 5) && $data{passwd}{'Password changed'}{$line}++;
++      } elsif ($line =~ s/^account (.+) has expired (failed to change password)$/$1/) {
++	      $data{$service}{'Expired Accounts'}{$line}++;
+       } elsif ($line =~ s/bad username \[(.*)\]/$1/) {
+          $data{$service}{'Invalid Users'}{"Bad User: $line"}++;
+       } else {
+@@ -52,6 +60,14 @@
+       } else {
+          $data{$service}{'Unknown Entries'}{$line}++;
+       }
++   } elsif ($service eq 'passwd') {
++	   if ($line =~ s/^password changed for (.+)/$1/) {
++		   ($Detail >= 5) && $data{$service}{'Password changed'}{$line}++;
++	   }
++   } elsif ($service eq 'poppassd') {
++	   if ($line =~ s/^password changed for (.+)/$1/) {
++		   ($Detail >= 5) && $data{$service}{'Password changed'}{$line}++;
++	   }
+    } elsif ($service eq 'gdm') {
+       if ($line =~ s/^session opened for user (.+) by \(uid=\d+\)/$1/) {
+          ($Detail >= 5) && $data{$service}{'Sessions Opened'}{$line}++;
+@@ -60,8 +76,14 @@
+       } else {
+          $data{$service}{'Unknown Entries'}{$line}++;
+       }
++   } elsif ($service eq 'kdm') {
++	   if ($line =~ s/^session opened for user (.+) by \(uid=\d+\)/$1/) {
++		   ($Detail >= 5) && $data{$service}{'Sessions Opened'}{$line}++;
++	   } elsif ($line =~ /session closed for user/) {
++		   # ignore this line
++	   }
+    } elsif ($service eq 'imap') {
+-	   if ($line =~ s/^authentication failure; logname=(.+) uid=(\d+) .*user=(.+)$/$1($2) -> $3/) {
++	   if ($line =~ s/^authentication failure; .*user=(.+)$/$1/) {
+ 		   $data{$service}{'Authentication Failures'}{$line}++;
+ 	   } else {
+ 		   $data{$service}{'Unknown Entries'}{$line}++;
+@@ -71,8 +93,10 @@
+ 		   $data{$service}{'Sessions Opened'}{$line}++;
+ 	   } elsif ($line =~ /session closed for user/) {
+ 		   # ignore this line
+-	   } elsif ($line =~ s/^authentication failure; logname=(.+) uid=(\d+) .*user=(.+)$/$1($2) -> $3/) {
++	   } elsif ($line =~ s/^authentication failure; .*user=(.+)$/$1/) {
+ 		   $data{$service}{'Authentication Failures'}{$line}++;
++	   } elsif ($line =~ s/^account (.+) has expired (failed to change password)$/$1/) {
++		   $data{$service}{'Expired Accounts'}{$line}++;
+ 	   } else {
+ 		   $data{$service}{'Unknown Entries'}{$line}++;
+ 	   }
+@@ -84,20 +108,24 @@
+ 	   } else {
+ 		   $data{$service}{'Unknown Entries'}{$line}++;
+ 	   }
++   } elsif ($service eq 'cyrus') {
++	   if ($line =~ s/^authentication failure; .*user=(.+)$/$1/) {
++		   $data{$service}{'Authentication Failures'}{$line}++;
++	   }
+    } elsif ($service eq 'pure-ftpd') {
+ 	   if ($line =~ s/^session opened for user (.+)/$1/) {
+ 		   $data{$service}{'Sessions Opened'}{$line}++;
++	   } elsif ($line =~ s/^check pass; (.+)/$1/) {
++		   $data{$service}{'Password Failures'}{$line}++;
+ 	   } else {
+ 		   $data{$service}{'Unknown Entries'}{$line}++;
+ 	   }
+-   } elsif ($service eq 'kdm') {
+-	   if ($line =~ s/^session opened for user (.+) by \(uid=\d+\)/$1/) {
+-		   ($Detail >= 5) && $data{$service}{'Sessions Opened'}{$line}++;
+-	   } elsif ($line =~ /session closed for user/) {
+-		   # ignore this line
++   } elsif ($service eq 'xscreensaver') {
++	   if ($line =~ s/^authentication failure; .*uid=(\d+) euid=(\d+) tty=(.+) ruser= rhost=  user=(.+)$/$4($1,$2) on display $3/) {
++		   $data{$service}{'Authentication Failures'}{$line}++;
+ 	   }
+    } else {
+-      $data{$service}{'Unknown Entries'}{$line}++;
++	   $data{$service}{'Unknown Entries'}{$line}++;
+    }
+ }
+ 
