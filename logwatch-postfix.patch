@@ -4,8 +4,16 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.9
 diff -u -r1.9 postfix
 --- scripts/services/postfix	3 Feb 2004 03:25:02 -0000	1.9
-+++ scripts/services/postfix	11 Feb 2004 09:56:01 -0000
-@@ -155,7 +155,9 @@
++++ scripts/services/postfix	19 Mar 2004 08:53:42 -0000
+@@ -82,6 +82,7 @@
+ $QueueSizeExceeded = 0;
+ $RejectedRBL = 0;
+ $ErrorRBL = 0;
++$NoFreeSpace = 0;
+ 
+ while (defined($ThisLine = <STDIN>)) {
+    if ( ( $ThisLine =~ m/^connect/ ) or 
+@@ -155,7 +156,9 @@
     #   $RejectDomain{$Host}++;
     # above two lines included in generic reject sender on next condition
     } elsif ( ($Host,$Sender,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <([^ ]*)>: Sender address rejected: (.*);/)) {
@@ -16,7 +24,39 @@ diff -u -r1.9 postfix
     } elsif ( ($Host,$Recip,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <([^ ]*)>: Recipient address rejected: (.*);/)) {
        $Temp = "$Host : $Reason";
        $RejectRecip{$Recip}{$Temp}++;
-@@ -362,11 +364,16 @@
+@@ -186,7 +189,7 @@
+    } elsif ( ($Host,$MyName) = ($ThisLine =~ /warning: host ([^ ]*\[[^ ]*\]) replied to HELO\/EHLO with my own hostname ([^ ]*)$/)) {
+       $Temp = "$Host : replied to HELO\/EHLO with my own hostname $MyName";
+       $HeloError{$Temp}++;
+-   } elsif ( ($Host,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): 504 <[^ ]*>: Helo command rejected: (.*);/)) {
++   } elsif ( ($Host,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): \d+ <[^ ]*>: Helo command rejected: (.*);/)) {
+       $Temp = "$Host : Helo command rejected \($Reason\)";
+       $HeloError{$Temp}++;
+    } elsif ( ($Size,$Host) = ($ThisLine =~ /bad size limit "\(([^ ]*)\)" in EHLO reply from ([^ ]*\[[^ ]*\])$/)) {
+@@ -226,6 +229,8 @@
+       $QueueWriteError{$Reason}++;
+    } elsif ( ($Reason) = ($ThisLine =~ /warning: [^ ]*\/[a-zA-Z0-9]+: (Error writing message file)$/)) {
+       $MessageWriteError{$Reason}++;
++   } elsif ( $ThisLine =~ /reject: RCPT from [^ ]*\[[^ ]*\]: \d+ Insufficient system storage; from=<.*> to=<.*>/) {
++      $NoFreeSpace++;
+    } elsif ( ($Warn) = ($ThisLine =~ /^warning: (.*)/)) {
+       # keep this as the next to last condition
+       $UnknownWarnings{$Warn}++;
+@@ -236,6 +241,13 @@
+    }
+ }
+ 
++##################################################################
++
++if ($NoFreeSpace > 0) {
++   print "\nWARNING!!!\n";
++   print "Insufficient system storage error $NoFreeSpace Time(s)\n";
++}
++
+ if ($MsgsSent > 0) {
+    print "\n\n$BytesTransferred bytes transferred";
+    print "\n$MsgsSent messages sent";
+@@ -362,11 +374,16 @@
  #}
  
  if (keys %RejectSender) {
@@ -38,7 +78,7 @@ diff -u -r1.9 postfix
        }
     }
  }
-@@ -376,7 +383,7 @@
+@@ -376,7 +393,7 @@
     foreach $Recip (sort {$a cmp $b} keys %RejectRecip) {
        print "    $Recip:\n";
        foreach $Host (sort {$a cmp $b} keys %{$RejectRecip{$Recip}} ) {
@@ -47,7 +87,7 @@ diff -u -r1.9 postfix
        }
     }
  }
-@@ -508,7 +515,7 @@
+@@ -508,7 +525,7 @@
  if (keys %UnknownWarnings) {
     print "\n\nUnrecognized warning:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %UnknownWarnings) {
