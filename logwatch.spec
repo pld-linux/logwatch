@@ -3,12 +3,11 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	5.0
-Release:	0.pre.3
+Release:	1.0
 License:	MIT
 Group:		Applications/System
-#Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-pre%{version}.tar.gz
-Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
-# Source0-md5:	1b544e8f14c1dde9c9e8c5e560844ec1
+Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
+# Source0-md5:	1685b19695a5a5a5406d2c7c8a339870
 Patch0:		%{name}-config.patch
 Patch1:		%{name}-log_conf.patch
 URL:		http://www.logwatch.org/
@@ -32,7 +31,7 @@ poczt± elektroniczn± do administratora systemu. Logwatch jest ³atwy w
 u¿yciu i moze pracowaæ na wiêkszo¶ci systemów.
 
 %prep
-%setup -q -n %{name}-pre%{version}
+%setup -q
 %patch0 -p1
 %patch1 -p1
 
