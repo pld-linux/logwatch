@@ -4,8 +4,8 @@ RCS file: /var/cvs/logwatch/scripts/services/http,v
 retrieving revision 1.9
 diff -u -r1.9 http
 --- scripts/services/http	3 Feb 2004 02:45:26 -0000	1.9
-+++ scripts/services/http	20 May 2004 06:27:37 -0000
-@@ -79,40 +79,64 @@
++++ scripts/services/http	1 Jun 2004 06:37:58 -0000
+@@ -79,40 +79,67 @@
  my $wpad_bytes =     0;
  my $src_count =      0;
  my $src_bytes =      0;
@@ -14,6 +14,8 @@ diff -u -r1.9 http
  my $images_count =   0;
  my $images_bytes =   0;
 -my $image_types =    '(\.bmp|\.emz|\.gif|\.ico|\.jpeg|\.jpg|\.png|\.swf|\.tif|\.tiff|\.wmf|\.wmz|\.xdm)';
++my $fonts_count =    0;
++my $fonts_bytes =    0;
 +my $proxy_count =    0;
 +my $proxy_bytes =    0;
 +my %proxy_host =     ();
@@ -29,15 +31,16 @@ diff -u -r1.9 http
 -   $content_types =  $content_types.'|\.class|\.jsp|\.jar|\.java)';
 -my $docs_types =     '(\.doc|\.dvi|\.gnumeric|\.mcd|\.mso|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.tex|\.text|\.xls|\.xml)';
 -my $archive_types =  '(\.ace|\.bz2|\.cab|\.deb|\.gz|\.hqx|\.rar|\.rpm|\.tbz2|\.zip)';
+-my $sound_types =    '(\.mp3|\.ram|\.raw|\.rm|\.wav|\.wma|\.mid)';
+-my $movie_types =    '(\.asf|\.avi|\.mid|\.mpg|\.mpeg|\.mov)';
+-my $winexec_types =  '(\.com|\.exe|\.dll)';
 +   $content_types =  $content_types.'|\.inc|\.php|\.php3|\.asp|\.pl|\.wml|\/';
 +   $content_types =  $content_types.'|\.css|\.js|\.cgi|\/';
 +   $content_types =  $content_types.'|\.class|\.jsp|\.jar|\.java|\/';
 +   $content_types =  $content_types.'|COPYRIGHT|readme|README|FAQ|INSTALL|\.txt)';
 +my $docs_types =     '(\.asc|\.doc|\.dot|\.dvi|\.gnumeric|\.mcd|\.mso|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.sxi|\.tex|\.text|\.xls|\.xml)';
-+my $archive_types =  '(\.ace|\.bz2|\.cab|\.deb|\.dsc|\.ed2k|\.gz|\.hqx|\.rar|\.rpm|\.sig|\.sign|\.tar|\.tbz2|\.tgz|\.Z|\.zip)';
- my $sound_types =    '(\.mp3|\.ram|\.raw|\.rm|\.wav|\.wma|\.mid)';
--my $movie_types =    '(\.asf|\.avi|\.mid|\.mpg|\.mpeg|\.mov)';
--my $winexec_types =  '(\.com|\.exe|\.dll)';
++my $archive_types =  '(\.ace|\.bz2|\.cab|\.deb|\.dsc|\.ed2k|\.gz|\.hqx|\.md5|\.rar|\.rpm|\.sig|\.sign|\.tar|\.tbz2|\.tgz|\.Z|\.zip)';
++my $sound_types =    '(\.au|\.mp3|\.ram|\.raw|\.rm|\.wav|\.wma|\.mid)';
 +my $movie_types =    '(\.asf|\.ass|\.avi|\.idx|\.mid|\.mpg|\.mpeg|\.mov|\.qt|\.psb|\.srt|\.ssa|\.smi|\.sub)';
 +my $winexec_types =  '(\.bat|\.com|\.exe|\.dll)';
  my $wpad_files =     '(wpad\.dat|wspad\.dat|proxy\.pac)';
@@ -45,7 +48,8 @@ diff -u -r1.9 http
 -my $images_types =   '(\.bin|\.cue|\.iso|\.run)';
 +my $program_src =    '(\.bas|\.c|\.cfg|\.conf|\.config|\.cpp|\.diff|\.f|\.h|\.init|\.m|\.pas|\.patch|\.spec)';
 +my $images_types =   '(\.bin|\.cue|\.img|\.iso|\.run)';
-+my $logs_types =     '(\.log|_log|-log|\.logs)';
++my $logs_types =     '(\.log|_log|-log|\.logs|\.out)';
++my $fonts_types =    '(\.aft)';
  
  #
  #   what to look for as an attack  USE LOWER CASE!!!!!!
@@ -86,7 +90,7 @@ diff -u -r1.9 http
  );
  
  #
-@@ -238,9 +262,16 @@
+@@ -238,9 +265,16 @@
     } elsif ($field{base_url} =~ /$images_types$/) {
        $images_count += 1;
        $images_bytes += $field{bytes_transfered};
@@ -103,7 +107,7 @@ diff -u -r1.9 http
     } else {
        $other_count += 1;
        $other_bytes += $field{bytes_transfered};
-@@ -282,7 +313,7 @@
+@@ -282,7 +316,7 @@
     
  } ## End of while loop
  
@@ -112,7 +116,7 @@ diff -u -r1.9 http
  ##   output the results 
  ##
  
-@@ -293,18 +324,20 @@
+@@ -293,18 +327,21 @@
     print " responses ";
     print " (1xx $a1xx_resp, 2xx $a2xx_resp, 3xx $a3xx_resp,";
     print " 4xx $a4xx_resp, 5xx $a5xx_resp) \n";
@@ -140,12 +144,13 @@ diff -u -r1.9 http
 +   if ($src_count > 0)        { printf " $src_count Program source files (%.2f MB),\n" , $src_bytes/(1024*1024); }
 +   if ($images_count > 0)     { printf " $images_count CD Images (%.2f MB),\n" , $images_bytes/(1024*1024); }
 +   if ($logs_count > 0)       { printf " $logs_count various Logs (%.2f MB),\n" , $logs_bytes/(1024*1024); }
++   if ($fonts_count > 0)      { printf " $fonts_count Fonts (%.2f MB),\n" , $fonts_bytes/(1024*1024); }
 +   if ($proxy_count > 0)      { printf " $proxy_count mod_proxy connection attempts (%.2f MB),\n" , $proxy_bytes/(1024*1024); }
 +   if ($other_count > 0)      { printf " $other_count Other (%.2f MB) \n" , $other_bytes/(1024*1024); }
  }
  
  #
-@@ -335,6 +368,12 @@
+@@ -335,6 +372,12 @@
     }	
  }
  
@@ -164,7 +169,7 @@ RCS file: /var/cvs/logwatch/conf/logfiles/http.conf,v
 retrieving revision 1.2
 diff -u -r1.2 http.conf
 --- conf/logfiles/http.conf	15 Dec 2003 18:35:01 -0000	1.2
-+++ conf/logfiles/http.conf	20 May 2004 06:27:37 -0000
++++ conf/logfiles/http.conf	1 Jun 2004 06:37:58 -0000
 @@ -4,13 +4,16 @@
  
  # What actual file?  Defaults to LogPath if not absolute path....
