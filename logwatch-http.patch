@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/http,v
 retrieving revision 1.8
 diff -u -r1.8 http
 --- scripts/services/http	15 Dec 2003 19:01:19 -0000	1.8
-+++ scripts/services/http	7 Jan 2004 06:53:31 -0000
++++ scripts/services/http	7 Jan 2004 07:08:00 -0000
 @@ -1,4 +1,19 @@
  #!/usr/bin/perl
 +##########################################################################
@@ -145,7 +145,7 @@ diff -u -r1.8 http
 +   $content_types =  $content_types.'|\.php|\.php3|\.asp|\.pl|\.wml|\/';
 +   $content_types =  $content_types.'|\.css|\.js|\.cgi|\.txt|\/';
 +   $content_types =  $content_types.'|\.class|\.jsp|\.jar|\.java)';
-+my $docs_types =     '(\.doc|\.dvi|\.gnumeric|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.tex|\.xls|\.xml)';
++my $docs_types =     '(\.doc|\.dvi|\.gnumeric|\.mcd|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.tex|\.xls|\.xml)';
 +my $archive_types =  '(\.ace|\.bz2|\.cab|\.deb|\.gz|\.rar|\.rpm|\.tbz2|\.zip)';
 +my $sound_types =    '(\.mp3|\.ram|\.raw|\.rm|\.wav|\.wma|\.mid)';
 +my $movie_types =    '(\.asf|\.avi|\.mid|\.mpg|\.mpeg|\.mov)';

@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sshd,v
 retrieving revision 1.33
 diff -u -r1.33 sshd
 --- scripts/services/sshd	15 Dec 2003 19:01:19 -0000	1.33
-+++ scripts/services/sshd	26 Dec 2003 00:47:19 -0000
++++ scripts/services/sshd	14 Jan 2004 08:17:23 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -14,18 +14,25 @@ diff -u -r1.33 sshd
  
  ########################################################
  # This was written and is maintained by:
-@@ -53,7 +55,9 @@
+@@ -49,11 +51,14 @@
+        ($ThisLine =~ m/^(log: )?Starting sshd:/ ) or
+        ($ThisLine =~ m/^(log: )?sshd \-TERM succeeded/ ) or
+        ($ThisLine =~ m/^Disconnecting: Command terminated on signal \d+/) or
+-       ($ThisLine =~ m/Bad protocol version identification .*:? [\d.]+/ ) or
++       ($ThisLine =~ m/^Bad protocol version identification .*:? [\d.]+/ ) or
++       ($ThisLine =~ m/^Bad protocol version identification.*Big-Brother-Monitor/ ) or
         ($ThisLine =~ m/^connect from \d+\.\d+\.\d+\.\d+/) or
         ($ThisLine =~ m/Read from socket failed/) or
-        ($ThisLine =~ m/^Bad protocol version identification.*Big-Brother-Monitor/ ) or
+-       ($ThisLine =~ m/^Bad protocol version identification.*Big-Brother-Monitor/ ) or
 -       ($ThisLine =~ m/^fatal: Timeout before authentication/ )
 +       ($ThisLine =~ m/^fatal: Timeout before authentication/ ) or
 +       ($ThisLine =~ m/sshd startup\s+succeeded/) or
-+       ($ThisLine =~ m/sshd shutdown\s+succeeded/)
++       ($ThisLine =~ m/sshd shutdown\s+succeeded/) or
++       ($ThisLine =~ m/Postponed keyboard-interactive for [^ ]+ from [^ ]+/)
     ) {
        # Ignore these
     } elsif ($ThisLine =~ /^Accepted (\S+) for (\S+) from ([\d\.:a-f]+) port (\d+)/) {
-@@ -71,8 +75,11 @@
+@@ -71,8 +76,11 @@
        }
        $BadLogins{"$2/$1 from $3"}++;
     } elsif ( $ThisLine =~ m/^Failed (\S+) for illegal user (\S+) from ([^ ]+) port (\d+)/ ) { #openssh
@@ -39,7 +46,34 @@ diff -u -r1.33 sshd
     } elsif ( ($User) = ($ThisLine =~ /^input_userauth_request: illegal user ([^ ]+)$/ )) {
        $IllegalUsers{"$User/none from unknown"}++;
     } elsif ( $ThisLine =~ m/^Illegal user (\S+) from ([^ ]+)/ ) { #redhat thing
-@@ -100,8 +107,10 @@
+@@ -80,15 +88,17 @@
+    } elsif ( $ThisLine =~ m/^(fatal: )?Did not receive ident(ification)? string from (.+)/ ) { # ssh/openssh
+       $name = LookupIP($3);
+       $NoIdent{$name}++;
+-   } elsif ( $ThisLine =~ m/^fatal: Connection closed by remote host\./ ) {
+-      $NetworkErrors++;
+-   } elsif ( $ThisLine =~ m/^fatal: Read error from remote host: Connection reset by peer/ ) {
+-      $NetworkErrors++;
+-   } elsif ( $ThisLine =~ m/^fatal: Write failed: Network is unreachable/ ) {
+-      $NetworkErrors++;
+-   } elsif ($ThisLine =~ m/^fatal: Read from socket failed: No route to host/) {
+-      $NetworkErrors++;
+-   } elsif ($ThisLine =~ m/^error: chan_shutdown_read failed for .+/) {
++   } elsif ( ($Host) = ($ThisLine =~ /Could not write ident string to ([^ ]+)$/ )) {
++      $name = LookupIP($Host);
++      $NoIdent{$name}++;
++   } elsif (
++      ($ThisLine =~ m/^fatal: Connection closed by remote host\./ ) or
++      ($ThisLine =~ m/^fatal: Read error from remote host: Connection reset by peer/ ) or
++      ($ThisLine =~ m/^fatal: Read from socket failed: No route to host/) or 
++      ($ThisLine =~ m/^fatal: Write failed: Network is unreachable/ ) or 
++      ($ThisLine =~ m/^fatal: Write failed: Broken pipe/) or
++      ($ThisLine =~ m/^error: chan_shutdown_read failed for .+/)
++   ) {
+       $NetworkErrors++;
+    } elsif ( $ThisLine =~ m/^(log: )?Received (signal 15|SIG...); (terminating|restarting)\./) { #ssh/openssh
+       $Kills++;
+@@ -100,8 +110,10 @@
        if ( $Debug >= 5 ) {
           print STDERR "DEBUG: Found -Listening on port 22- line\n";
        }
@@ -52,7 +86,7 @@ diff -u -r1.33 sshd
        # Don't care about this...
        if ( $Debug >= 5 ) {
           print STDERR "DEBUG: Found -Generating RSA key- line\n";
-@@ -129,6 +138,16 @@
+@@ -129,6 +141,20 @@
        $sftpRequests++;
     } elsif ( $ThisLine =~ m/refused connect from (.*)$/ ) {
        $RefusedConnections{$1}++;
@@ -66,10 +100,24 @@ diff -u -r1.33 sshd
 +      $PamReleaseFail{$Error}++;
 +   } elsif ( $ThisLine =~ m/^error: PAM: (.*)$/) {
 +      $PamReleaseFail{$Error}++;
++   } elsif ( ($Reason) = ($ThisLine =~ /^Setting tty modes failed: (.*)$/)) {
++      $TTYModesFail{$Reason}++;
++   } elsif ( ($User,undef) = ($ThisLine =~ /^User ([^ ]*) not allowed because ([^ ]*) exists$/)) {
++      $LoginLock{$User}++;
     } elsif ( ($IP) = ($ThisLine =~ /^scanned from ([^ ]*)/) ) {
        push @Scanned, LookupIP($IP);
     } else {
-@@ -149,16 +168,31 @@
+@@ -139,6 +165,9 @@
+    }
+ }
+ 
++
++###########################################################
++#
+ if ($NetworkErrors) {
+    print "\nNetwork Read Write Errors: " . $NetworkErrors . "\n";
+ }
+@@ -149,17 +178,32 @@
     print "\nSSHD Started: " . $Starts . " Time(s)\n";
  }
  
@@ -92,33 +140,47 @@ diff -u -r1.33 sshd
     if (keys %NoRevMap) {
        print "\nCouldn't resolve these IPs:\n";
 -      foreach $ThisOne (keys %NoRevMap) {
+-         print "   " . $ThisOne . ": " . $NoRevMap{$ThisOne} . " Time(s)\n";
 +      foreach $ThisOne (sort {$a cmp $b} keys %NoRevMap) {
-          print "   " . $ThisOne . ": " . $NoRevMap{$ThisOne} . " Time(s)\n";
++         print "   $ThisOne: $NoRevMap{$ThisOne} Time(s)\n";
        }
     }
     if (keys %NoIdent) {
        print "\nDidn't receive an ident from these IPs:\n";
 -      foreach $ThisOne (keys %NoIdent) {
+-         print "   " . $ThisOne . ": " . $NoIdent{$ThisOne} . " Time(s)\n";
 +      foreach $ThisOne (sort {$a cmp $b} keys %NoIdent) {
-          print "   " . $ThisOne . ": " . $NoIdent{$ThisOne} . " Time(s)\n";
++         print "   $ThisOne: $NoIdent{$ThisOne} Time(s)\n";
        }
     }
-@@ -171,6 +205,13 @@
-    }
  }
- 
+@@ -167,7 +211,14 @@
+ if ($#BadRSA >= 0) {
+    print "\nReceived a bad response to RSA challenge from these:\n";
+    foreach $ThisOne (@BadRSA) {
+-      print "   " . $ThisOne . "\n";
++      print "   $ThisOne\n";
++   }
++}
++
 +if (keys %TooManyFailures) {
 +   print "\nDisconnecting after too many authentication failures for user:\n";
 +   foreach $User (sort {$a cmp $b} keys %TooManyFailures) {
 +      print "   $User : $TooManyFailures{$User} Time(s)\n";
+    }
+ }
+ 
+@@ -185,9 +236,16 @@
+    }
+ }
+ 
++if ((keys %LoginLock) and ($Detail >= 5)) {
++   print "\nUser login attempt when nologin was set:\n";
++   foreach $User (sort {$a cmp $b} keys %LoginLock) {
++      print "   $User : $LoginLock{$User} Time(s)\n";
 +   }
 +}
 +
- if (keys %BadLogins) {
-    print "\nFailed logins from these:\n";
-    for (sort keys %BadLogins) {
-@@ -187,7 +228,7 @@
- 
  if (keys %Users) {
     print "\nUsers logging in through sshd:\n";
 -   foreach $user (sort keys %Users) {
@@ -126,7 +188,7 @@ diff -u -r1.33 sshd
        print "   $user:\n";
        my $totalSort = TotalCountOrder(%{$Users{$user}}, \&SortIP);
        foreach my $ip (sort $totalSort keys %{$Users{$user}}) {
-@@ -209,6 +250,23 @@
+@@ -209,6 +267,23 @@
     }
  }
  
@@ -150,7 +212,7 @@ diff -u -r1.33 sshd
  if ($#Scanned >= 0) {
     print "\nScanned from these:\n";
     foreach $ThisOne (sort SortIP @Scanned) {
-@@ -218,8 +276,15 @@
+@@ -218,8 +293,22 @@
  
  if (keys %RefusedConnections) {
     print "\nRefused incoming connections:\n";
@@ -164,6 +226,13 @@ diff -u -r1.33 sshd
 +   print "\nCannot release PAM authentication:\n";
 +   foreach $Error (sort {$a cmp $b} keys %PamReleaseFail) {
 +      print "   $Error : $PamReleaseFail{$Error} Time(s)\n";
++   }
++}
++
++if (keys %TTYModesFail) {
++   print "\nSetting tty modes failed:\n";
++   foreach $Reason (sort {$a cmp $b} keys %TTYModesFail) {
++      print "   $Reason : $TTYModesFail{$Reason} Time(s)\n";
     }
  }
  

@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/proftpd-messages,v
 retrieving revision 1.15
 diff -u -r1.15 proftpd-messages
 --- scripts/services/proftpd-messages	15 Dec 2003 19:01:19 -0000	1.15
-+++ scripts/services/proftpd-messages	6 Jan 2004 09:03:11 -0000
++++ scripts/services/proftpd-messages	14 Jan 2004 08:34:59 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -14,7 +14,15 @@ diff -u -r1.15 proftpd-messages
  
  ########################################################
  # This was written and is maintained by:
-@@ -64,6 +66,8 @@
+@@ -19,7 +21,6 @@
+ while (defined($ThisLine = <STDIN>)) {
+ 	if ( ( $ThisLine =~ /^FTP session closed./ ) or
+ 		( $ThisLine =~ /^(ANONYMOUS )?FTP login as \'.*\' from [^ ]+ \[.*\] to .*/ ) or
+-		( $ThisLine =~ /^FTP no transfer time out, disconnected\./ ) or
+ 		( $ThisLine =~ /PAM\(.*\): Authentication failure/ ) or
+ 		( $ThisLine =~ /^data_sendfile/ ) or
+ 		( $ThisLine =~ / - FTP session opened/ ) or
+@@ -64,6 +65,8 @@
  	   $RefusedPorts{$Temp}++;
     } elsif ( ($Host,$Reason) = ( $ThisLine =~ /\(((.*)\[(.*)\])\) - Connection refused \((.*)\)./ ) ) {
        $ConnectionRefused{$Reason}{$Host}++;
@@ -23,7 +31,7 @@ diff -u -r1.15 proftpd-messages
     } else {
  	   # Report any unmatched entries...
  	   push @OtherList,$ThisLine;
-@@ -152,6 +156,13 @@
+@@ -152,6 +155,13 @@
  	foreach $ThisOne (sort {$a cmp $b} keys %RefusedPorts) {
  		print $ThisOne . $RefusedPorts{$ThisOne} . " Time(s)\n";
  	}
