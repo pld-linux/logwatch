@@ -1,0 +1,104 @@
+Index: scripts/services/secure
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/secure,v
+retrieving revision 1.38
+diff -u -r1.38 secure
+--- scripts/services/secure	26 Nov 2003 14:36:30 -0000	1.38
++++ scripts/services/secure	2 Dec 2003 07:28:50 -0000
+@@ -78,10 +78,12 @@
+       $Error{$Service}{$Err}++;
+    } elsif ( ($Service,$Err) = ($ThisLine =~ /^([^ ]+): (FAILED LOGIN SESSION FROM [^ ]+ FOR , .*)$/ ) ) {
+       $Error{$Service}{$Err}++;
+-   } elsif ( $ThisLine =~ /^login: ROOT LOGIN ON tty[0-9]+/) {
+-      $RootLoginTTY++
+-   } elsif ( $ThisLine =~ s/^userdel\[\d+\]: delete user `(.+)'/$1/ ) {
+-      push @DeletedUsers, "   $ThisLine\n";
++  } elsif ( $ThisLine =~ /^login: ROOT LOGIN ON tty[0-9]+/) {
++	  $RootLoginTTY++
++  } elsif ( ($User) = ($ThisLine =~ /^login: LOGIN ON tty[0-9]+ BY ([^ ]+)$/ )) {
++	  $UserLogin{$User}++;
++  } elsif ( $ThisLine =~ s/^userdel\[\d+\]: delete user `(.+)'/$1/ ) {
++	  push @DeletedUsers, "   $ThisLine\n";
+    } elsif ( $ThisLine =~ s/^(useradd|adduser)\[\d+\]: new user: name=(.+), uid=(\d+).*$/$1 ($2)/ ) {
+       push @NewUsers, "   $ThisLine\n";
+    } elsif ( $ThisLine =~ s/^userdel\[\d+\]: remove group `(.+)'/$1/ ) {
+@@ -158,7 +160,7 @@
+ 
+ if (keys %{$Refused}) {
+    print "\nRefused Connections:\n";
+-   foreach $ThisOne (keys %{$Refused}) {
++   foreach $ThisOne (sort {$a cmp $b} keys %{$Refused}) {
+       print "   Service " . $ThisOne . ":\n";
+       foreach $OtherOne (sort SortIP keys %{$Refused->{$ThisOne}}) {
+          print "      " . $OtherOne . ": " . $Refused->{$ThisOne}->{$OtherOne} . " Time(s)\n";
+@@ -168,9 +170,9 @@
+ 
+ if (keys %{$FailedLogins}) {
+    print "\nFailed logins:\n";
+-   foreach $ThisOne (keys %{$FailedLogins}) {
++   foreach $ThisOne (sort {$a cmp $b} keys %{$FailedLogins}) {
+       print "   User " . $ThisOne . ":\n";
+-      foreach $OtherOne (keys %{$FailedLogins->{$ThisOne}}) {
++      foreach $OtherOne (sort {$a cmp $b} keys %{$FailedLogins->{$ThisOne}}) {
+          print "      " . $OtherOne . ": " . $FailedLogins->{$ThisOne}->{$OtherOne} . " Time(s)\n";
+       }
+    }
+@@ -178,9 +180,9 @@
+ 
+ if (keys %{$FailedSaver}) {
+ 	print "\nFailed screensaver disable:\n";
+-	foreach $ThisOne (keys %{$FailedSaver}) {
++	foreach $ThisOne (sort {$a cmp $b} keys %{$FailedSaver}) {
+ 		print "   User " . $ThisOne . " on displays:\n";
+-		foreach $OtherOne (keys %{$FailedSaver>{$ThisOne}}) {
++		foreach $OtherOne (sort {$a cmp $b} keys %{$FailedSaver>{$ThisOne}}) {
+ 			# Why it does not work?
+ 			print "      " . $FailedLogins->{$ThisOne}->{$OtherOne} . " Time(s)\n";
+ 		}
+@@ -195,27 +197,34 @@
+ }
+ 
+ if (keys %Error) {
+-   print "\nErrors:\n";
+-   foreach $Service (sort {$a cmp $b} keys %Error) {
+-      print "   Service " . $Service . ":\n";
+-      foreach $Err (sort {$a cmp $b} keys %{$Error{$Service}}) {
+-         print "      " . $Err . ": " . $Error{$Service}{$Err} . " Time(s)\n";
+-      }
+-   }
++	print "\nErrors:\n";
++	foreach $Service (sort {$a cmp $b} keys %Error) {
++		print "   Service " . $Service . ":\n";
++		foreach $Err (sort {$a cmp $b} keys %{$Error{$Service}}) {
++			print "      " . $Err . ": " . $Error{$Service}{$Err} . " Time(s)\n";
++		}
++	}
+ }
+ 
+ if ($RootLoginTTY) {
+-   print "\nRoot logins on tty\'s: $RootLoginTTY Time(s).\n";
++	print "\nRoot logins on tty\'s: $RootLoginTTY Time(s).\n";
++}
++
++if (keys %UserLogin) {
++	print "\nUser Login's on tty\'s:\n";
++	foreach $User (sort {$a cmp $b} keys %UserLogin) {
++		print "   $User : $UserLogin{$User} Time(s)\n";
++	}
+ }
+ 
+ if ($#SudoList >= 0) {
+-   print "\nUnauthorized sudo commands attempted (" . ($#SudoList + 1) . "):\n";
+-   print @SudoList;
++	print "\nUnauthorized sudo commands attempted (" . ($#SudoList + 1) . "):\n";
++	print @SudoList;
+ }
+ 
+ if ($#OtherList >= 0) {
+-   print "\n**Unmatched Entries**\n";
+-   print @OtherList;
++	print "\n**Unmatched Entries**\n";
++	print @OtherList;
+ }
+ 
+ exit(0);
