@@ -1,0 +1,85 @@
+#!/usr/bin/perl -w
+##########################################################################
+# $Id$
+##########################################################################
+# $Log$
+##########################################################################
+
+########################################################
+# This was written and is maintained by:
+#    Pawe³ Go³aszewski <blues@pld-linux.org>
+#
+# Please send all comments, suggestions, bug reports,
+#    etc, to kirk@kaybee.org and blues@pld-linux.org
+########################################################
+
+## Initial initialization:
+$Startups = 0;
+$Shutdowns = 0;
+$LookupCount = 0;
+$Connections = 0;
+
+while (defined($ThisLine = <STDIN>)) {
+   chomp($ThisLine);
+   if (
+      ($ThisLine =~ m/^Continuous traffic control enabled/)
+   ) {
+      #ignore these
+   } elsif ( ($Host,$Port,$User,$Identity) = ($ThisLine =~ /^\[([^ ]*)\] Successful lookup: \d+ , (\d+) : ([^ ]*) \(([^ ]*)\)$/)) {
+      $Temp = "$User announced as $Identity";
+      $Lookups{$Host}{$Port}{$Temp}++;
+      $LookupCount++;
+   } elsif ( ($Host) = ($ThisLine =~ /^Connection from ([^ ]* \([^ ]*\)):\d+$/)) {
+      $Connection{$Host}++;
+      $Connections++;
+   } elsif ( $ThisLine =~ /^oidentd startup\s+succeeded$/ ) {
+      $Startups++;
+   } elsif ( $ThisLine =~ /^oidentd shutdown\s+succeeded$/ ) {
+      $Shutdowns++;
+   } else {
+      $OtherList{$ThisLine}++;
+   }
+}
+
+###########################
+# Print report:
+
+if ($Startups > 0) {
+   print "\nStartups: $Startups\n";
+}
+
+if ($Shutdowns > 0) {
+   print "\nShutdowns: $Shutdowns\n";
+}
+
+if (keys %Connection) {
+   print "\nConnections to service: $Connections Time(s)\n";
+   foreach $Host (sort {$a cmp $b} keys %Connection) {
+      print "   $Host: $Connection{$Host} Time(s)\n";
+   }
+}
+
+if (keys %Lookups) {
+   print "\nSuccessful ident lookups $LookupCount\n";
+   foreach $Host (sort {$a cmp $b} keys %Lookups) {
+      print "   $Host:\n";
+      foreach $Port (sort {$a cmp $b} keys %{$Lookups{$Host}}) {
+         print "      Service on port $Port:\n";
+         foreach $User (sort {$a cmp $b} keys %{$Lookups{$Host}{$Port}}) {
+            print "         $User: $Lookups{$Host}{$Port}{$User} Time(s)\n";
+         }
+      }
+   }
+}
+
+if (keys %OtherList) {
+   print "\n**Unmatched Entries**\n";
+   foreach $line (sort {$a cmp $b} keys %OtherList) {
+      print "$line: $OtherList{$line} Time(s)\n";
+   }
+}
+
+exit(0);
+
+# vi: shiftwidth=3 tabstop=3 et
+
