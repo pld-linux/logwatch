@@ -7,7 +7,7 @@ Copyright:   	GPL
 Group:       	Utilities/System
 Source:      	ftp://ftp.kaybee.org/pub/linux/%{name}-%{version}.tar.gz
 Requires:    	perl
-Buildroot:   	/tmp/%{name}-%{version}-root
+BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Buildarch:   	noarch
 
 %description
