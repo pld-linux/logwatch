@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/secure,v
 retrieving revision 1.40
 diff -u -r1.40 secure
 --- scripts/services/secure	15 Dec 2003 21:49:19 -0000	1.40
-+++ scripts/services/secure	7 Jan 2004 17:11:40 -0000
++++ scripts/services/secure	8 Jan 2004 08:39:19 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -71,8 +71,12 @@ diff -u -r1.40 secure
     } elsif ( $ThisLine =~ s/^([^ ]+)\[\d+\]: warning: can\'t get client address: No route to host$/$1/ ) {
        $NoIP->{$ThisLine}++;
     } elsif ( $ThisLine =~ s/^([^ ]+)\[\d+\]: warning: can\'t get client address: Network is unreachable$/$1/ ) {
-@@ -80,7 +82,7 @@
+@@ -78,9 +80,11 @@
        $Error{$Service}{$Err}++;
+    } elsif ( ($Service,$Err) = ($ThisLine =~ /^([^ ]+): (FAILED LOGIN SESSION FROM [^ ]+ FOR , .*)$/ ) ) {
+       $Error{$Service}{$Err}++;
++   } elsif ( ($Service,$Err) = ($ThisLine =~ /^([^ ]+): (password mismatch for [^ ]+ in [^ ]+):.*$/ ) ) {
++      $Error{$Service}{$Err}++;
     } elsif ( $ThisLine =~ /^login: ROOT LOGIN ON tty[0-9]+/) {
        $RootLoginTTY++
 -   } elsif ( ($User) = ($ThisLine =~ /^login: LOGIN ON tty[0-9]+ BY ([^ ]+)$/ )) {
@@ -80,7 +84,7 @@ diff -u -r1.40 secure
        $UserLogin{$User}++;
     } elsif ( $ThisLine =~ s/^userdel\[\d+\]: delete user `(.+)'/$1/ ) {
        push @DeletedUsers, "   $ThisLine\n";
-@@ -109,14 +111,20 @@
+@@ -109,14 +113,20 @@
     } elsif ( ($service, $from) = ($ThisLine =~ /^xinetd\[\d+\]: FAIL: (.+) (?:address|libwrap) from=([\d.]+)/)) {
        if ($Ignore =~ /\b\Q$service\E\b/i) { next; }    
        $Refused->{$service}->{$from}++;
@@ -102,7 +106,7 @@ diff -u -r1.40 secure
  }
  
  if (@DeletedUsers) {
-@@ -132,13 +140,13 @@
+@@ -132,13 +142,13 @@
  }
  
  if (keys %AddToGroup) {
@@ -123,7 +127,7 @@ diff -u -r1.40 secure
  }
  
  if (@RemoveFromGroup) {
-@@ -180,52 +188,62 @@
+@@ -180,52 +190,62 @@
  }
  
  if (keys %{$FailedSaver}) {
