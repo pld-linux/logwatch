@@ -1,24 +1,21 @@
 Index: scripts/services/pop3
 ===================================================================
 RCS file: /var/cvs/logwatch/scripts/services/pop3,v
-retrieving revision 1.1
-diff -u -r1.1 pop3
---- scripts/services/pop3	21 Jun 2004 14:59:05 -0000	1.1
-+++ scripts/services/pop3	2 Oct 2004 17:38:55 -0000
-@@ -15,6 +15,12 @@
- my $Debug = $ENV{'LOGWATCH_DEBUG'};
- my $Detail = $ENV{'LOGWATCH_DETAIL_LEVEL'};
+retrieving revision 1.2
+diff -u -r1.2 pop3
+--- scripts/services/pop3	29 Oct 2004 21:19:01 -0000	1.2
++++ scripts/services/pop3	31 Oct 2004 15:59:15 -0000
+@@ -16,6 +16,9 @@
  
-+$ReadSocketError = 0;
-+$WriteSocketError = 0;
+ $ReadSocketError = 0;
+ $WriteSocketError = 0;
 +$Startups = 0;
 +$Shutdowns = 0;
 +$AuthDrivers = 0;
-+
+ 
  #Make pseudo IPv6 to IPv4
  sub LookupIPv46 {
-    my $IPv4Addr;
-@@ -38,25 +44,36 @@
+@@ -40,24 +43,36 @@
  while (defined($ThisLine = <STDIN>)) {
     if (
        ($ThisLine =~ /^auth: PAM error: Authentication failure$/) or
@@ -34,10 +31,8 @@ diff -u -r1.1 pop3
        ($ThisLine =~ /^(mailbox: )?open: No such file or directory$/) or
        ($ThisLine =~ /^(sktbuff|maildrop): write: Broken pipe$/) or
        ($ThisLine =~ /^maildrop: can't read message$/) or
--      ($ThisLine =~ /^maildrop: can't write to socket$/) or
        ($ThisLine =~ /^mailbox: mailbox content has been changed$/) or
--      ($ThisLine =~ /^maildrop: write: Connection reset by peer$/) or
-+      ($ThisLine =~ /^(sktbuff|maildrop): write: Connection reset by peer$/) or
+       ($ThisLine =~ /^(sktbuff|maildrop): write: Connection reset by peer$/) or
        ($ThisLine =~ /^(sktbuff|maildrop): write: Connection timed out$/) or
 +      ($ThisLine =~ /^mailspool_build_index.*: skipping c-client metadata$/) or
        ($ThisLine =~ /^open: Permission denied$/) or
@@ -54,17 +49,17 @@ diff -u -r1.1 pop3
 -   } elsif ( ($User, $Host) = ( $ThisLine =~ /^user (.*?) authenticated - (.*)$/ ) ) {
 +   } elsif (
 +      (($User, $Host) = ( $ThisLine =~ /^user (.*?) authenticated - (.*)$/ )) or
-+      (($User, $Host) = ( $ThisLine =~ /^fork_child: \[\d\].*\((.*)\): began session for `(.*)' with .*; child PID is \d+$/ )) 
++      (($User, $Host) = ( $ThisLine =~ /^fork_child: \[\d\].*\((.*)\): began session for `(.*)' with .*; child PID is \d+$/ ))
 +   ) {
        $Login{$User}{$Host}++;
     } elsif ( ($User,$Downloaded,$DownloadSize,$Left,$LeftSize) = ( $ThisLine =~ /^Stats: (.*?) (.*?) (.*?) (.*?) (.*?)$/) ) {
        $DownloadedMessages{$User} += $Downloaded;
-@@ -70,15 +87,38 @@
+@@ -71,15 +86,39 @@
     } elsif  ( ($Host) = ( $ThisLine =~ /^session ended - (.*)$/) ) {
        $Logout{"UNKNOWN"}{$Host}++;
        $Connection{$Host}++;
 -   } elsif ( ($User,$Host) = ( $ThisLine =~ /^authentication failed for user (.*?) - (.*)/ ) ) {
-+   } elsif ( 
++   } elsif (
 +      (($User,$Host,$DownloadSize,undef) = ( $ThisLine =~ /^connections_post_select: client \[\d+\](.*)\((.*)\): disconnected; (.*?)\/(.*?) bytes read\/written$/) ) or
 +      (($Host,$User) = ( $ThisLine =~ /^connections_post_select: client \[\d\].*\((.*)\): finished session for `(.*)' with pam/) )
 +   ) {
@@ -91,6 +86,7 @@ diff -u -r1.1 pop3
        $sslTempkey++;
 -   } elsif ( ($Host) = ( $ThisLine =~ /^autologout time elapsed - (.*)$/ ) ) {
 +   } elsif ( ($User,$Host) = ( $ThisLine =~ /^ioabs_tls_shutdown: client \[\d\](.*)\((.*)\): underlying connection closed by peer during shutdown$/) ) {
++      # FIXME:
 +      # What to with that??
 +   } elsif (
 +      (($Host) = ( $ThisLine =~ /^autologout time elapsed - (.*)$/ )) or
@@ -100,23 +96,19 @@ diff -u -r1.1 pop3
        $AutoLogout{$Host}++;
     } elsif (
        (($File) = ( $ThisLine =~ /^can't open or create file: (.*)$/ )) or
-@@ -92,6 +132,33 @@
-       $Logout2{$User}++;
-    } elsif ($ThisLine =~ /^mailbox: no memory available$/ ) {
-       $OutOfMemory++;
-+   } elsif (
-+      ($Mbox) = ( $ThisLine =~ /^mailbox: mailbox (.*) is damaged$/ ) or
-+      ($Mbox) = ( $ThisLine =~ /^mailbox: mailbox is damaged: (.*)$/ )
-+   ) {
-+      $DamagedMbox{$Mbox}++;
+@@ -98,10 +137,28 @@
+       ($Mbox) = ( $ThisLine =~ /^mailbox: mailbox is damaged: (.*)$/ )
+    ) {
+       $DamagedMbox{$Mbox}++;
+-   } elsif ($ThisLine =~ /^(sktbuff|maildrop): can't read from socket$/ ) {
 +   } elsif (
 +      ($ThisLine =~ /^(sktbuff|maildrop): can't read from socket$/) or
 +      ($ThisLine =~ /^ioabs_tls_read: client .*: connection closed by peer$/) or
 +      ($ThisLine =~ /^(ioabs_tls_read|ioabs_tls_post_select): client .*: connection unexpectedly closed by peer$/)
 +   ) {
-+      $ReadSocketError++;
-+   } elsif ($ThisLine =~ /^(sktbuff|maildrop): can't write to socket$/ ) {
-+      $WriteSocketError++;
+       $ReadSocketError++;
+    } elsif ($ThisLine =~ /^(sktbuff|maildrop): can't write to socket$/ ) {
+       $WriteSocketError++;
 +   } elsif ( ($Box,$Size) = ( $ThisLine =~ /^mailspool_new_from_file: indexed mailspool (.*) \((\d+) bytes\) in/ ) ) {
 +      # What to do with that?
 +      #$MboxSize{$User} = $LeftSize;
@@ -130,11 +122,11 @@ diff -u -r1.1 pop3
 +   } elsif ($ThisLine =~ /^net_loop: terminating on signal \d+$/ ) {
 +      $Shutdowns++;
 +   } elsif ( ($Drivers) = ($ThisLine =~ /^(\d+) authentication drivers successfully loaded$/) ) {
-+      $AuthDrivers = $Drivers;      
++      $AuthDrivers = $Drivers;
     } else {
        # Report any unmatched entries...
        # remove PID from named messages
-@@ -105,6 +172,23 @@
+@@ -115,6 +172,23 @@
  
  ################################################
  
@@ -158,7 +150,7 @@ diff -u -r1.1 pop3
  if ( ( $Detail >= 0 ) and (keys %PermissionDenied)) {
     print "WARNING:\n";
     print "Can't open or create files:\n";
-@@ -113,6 +197,14 @@
+@@ -131,6 +205,14 @@
     }
  }
  
@@ -173,8 +165,8 @@ diff -u -r1.1 pop3
  if ( ( $Detail >= 0 ) and ($OutOfMemory > 0) ) {
     print "\nPOP3 processes were running out of memory $OutOfMemory Time(s)\n";
  }
-@@ -233,6 +325,24 @@
-    print "Total APOP errors: $TotalAPOP Time(s)\n";
+@@ -259,6 +341,24 @@
+    print "Socket Write Error $WriteSocketError Time(s)\n";
  }
  
 +if ( ( $Detail >= 5 ) and ( $ReadSocketError > 0 ) ) {
@@ -198,3 +190,10 @@ diff -u -r1.1 pop3
  if (keys %OtherList) {
     print "\n**Unmatched Entries**\n";
     foreach $line (sort {$a cmp $b} keys %OtherList) {
+@@ -269,5 +369,4 @@
+ exit(0);
+ 
+ 
+-# vi: shiftwidth=3 tabstop=3 et
+-
++# vi: shiftwidth=3 tabstop=3 syntax=perl et
