@@ -1,159 +1,22 @@
-diff -dur logwatch-5.2.2.orig/scripts/services/postfix logwatch-5.2.2/scripts/services/postfix
---- logwatch-5.2.2.orig/scripts/services/postfix	2004-06-23 17:01:17.000000000 +0200
-+++ logwatch-5.2.2/scripts/services/postfix	2004-09-09 09:31:49.820640459 +0200
-@@ -112,11 +112,15 @@
-       ( $ThisLine =~ m/^[a-zA-Z0-9]+: message-id/ ) or
+Index: scripts/services/postfix
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/postfix,v
+retrieving revision 1.14
+diff -u -r1.14 postfix
+--- scripts/services/postfix	29 Oct 2004 21:19:01 -0000	1.14
++++ scripts/services/postfix	31 Oct 2004 15:07:36 -0000
+@@ -123,12 +123,14 @@
        ( $ThisLine =~ m/^[a-zA-Z0-9]+: skipped, still being delivered/ ) or
        ( $ThisLine =~ m/^[a-zA-Z0-9]+: to\=\<.*>, relay\=.*, delay\=[0-9]+, status\=(sent|deferred)/ ) or
-+      ( $ThisLine =~ m/^[a-zA-Z0-9]+: host [^ ]*\[[^ ]*\] said: 4[0-9][0-9]/ ) or
+       ( $ThisLine =~ m/^[a-zA-Z0-9]+: host [^ ]*\[[^ ]*\] said: 4[0-9][0-9]/ ) or
 +      ( $ThisLine =~ m/^[a-zA-Z0-9]+: host [^ ]*\[[^ ]*\] refused to talk to me: 4[0-9][0-9]/ ) or
        ( $ThisLine =~ m/^Deleted: \d message$/ ) or
--      ( $ThisLine =~ m/^Peer certificate could not be verified$/ ) or
        ( $ThisLine =~ m/^Peer certficate could not be verified$/ ) or #postfix typo
-+      ( $ThisLine =~ m/^Peer certificate could not be verified$/ ) or
+       ( $ThisLine =~ m/^Peer certificate could not be verified$/ ) or
        ( $ThisLine =~ m/^Peer verification:/ ) or
        ( $ThisLine =~ m/^SSL_accept error from/ ) or
-+      ( $ThisLine =~ m/^Verified: / ) or
-+      ( $ThisLine =~ m/^cert has expired/ ) or 
+       ( $ThisLine =~ m/^Verified: / ) or
++      ( $ThisLine =~ m/^cert has expired/ ) or
        ( $ThisLine =~ m/^connect/ ) or 
        ( $ThisLine =~ m/^daemon started$/ ) or
        ( $ThisLine =~ m/^daemon started -- version / ) or
-@@ -128,8 +132,10 @@
-       ( $ThisLine =~ m/^setting up TLS connection (from|to)/ ) or
-       ( $ThisLine =~ m/^terminating on signal 15$/ ) or
-       ( $ThisLine =~ m/^warning: [a-zA-Z0-9]+: skipping further client input$/ ) or
--      ( $ThisLine =~ m/^warning: [\.0-9]+: address not listed for hostname/ ) or
--      ( $ThisLine =~ m/^warning: [\.0-9]+: hostname .* verification failed: Host not found/ ) or
-+      ( $ThisLine =~ m/^warning: (?:smtpd_peer_init: )?[\.0-9]+: address not listed for hostname/ ) or
-+      ( $ThisLine =~ m/^warning: (?:smtpd_peer_init: )?[\.0-9]+: hostname .* verification failed: Host not found/ ) or
-+      ( $ThisLine =~ m/^warning: (?:smtpd_peer_init: )?[\.0-9]+: hostname .* verification failed: Name or service not known/ ) or
-+      ( $ThisLine =~ m/^warning: (?:smtpd_peer_init: )?[\.0-9]+: hostname .* verification failed: Temporary failure in name resolution/ ) or
-       ( $ThisLine =~ m/^warning: Mail system is down -- accessing queue directly$/ ) or
-       ( $ThisLine =~ m/^warning: SASL authentication failure: Password verification failed$/ ) or
-       ( $ThisLine =~ m/^warning: SASL authentication failure: no secret in database$/ ) or
-@@ -143,22 +149,22 @@
-    } elsif ( ($Bytes) = ($ThisLine =~ /^[a-zA-Z0-9]+: from=.*size=([0-9]+).*$/) ) {
-       $MsgsSent++;
-       $BytesTransferred += $Bytes;
--   } elsif (($User) = ($ThisLine =~ /^[a-zA-Z0-9]+: to\=\<([^ ]*)>, relay\=local, delay\=-?[0-9]+, status\=bounced \(unknown user/)) {
-+   } elsif (($User) = ($ThisLine =~ /^[a-zA-Z0-9]+: to\=\<([^ ]*)>,(?: orig_to\=\<(?:[^ ]*)>,)? relay\=local, delay\=-?[0-9]+, status\=bounced \(unknown user/)) {
-       # unknown user
-       $UnknownUsers{$User}++;
--   } elsif (($User) = ($ThisLine =~ /^[a-zA-Z0-9]+: to\=\<([^ ]*)>, relay\=local, delay\=[0-9]+, status\=bounced \(user unknown/)) {
-+   } elsif (($User) = ($ThisLine =~ /^[a-zA-Z0-9]+: to\=\<([^ ]*)>,(?: orig_to\=\<(?:[^ ]*)>,)? relay\=local, delay\=[0-9]+, status\=bounced \(user unknown/)) {
-       # unknown user ( alias to |"exit 67" in aliases table )
-       $UnknownUsers{$User}++;
-    } elsif ((undef,$User) = ($ThisLine =~ /^[a-zA-Z0-9]+: reject: RCPT from ([^ ]*): [0-9]+ <([^ ]*)>: User unknown in virtual mailbox table;/)) {
-       # unknown virtual user
-       $UnknownUsers{$User}++;
--   } elsif (($User) = ($ThisLine =~ /^[a-zA-Z0-9]+: to\=\<([^ ]*)>, .*, status\=bounced .*: User unknown in virtual mailbox table/)) {
-+   } elsif (($User) = ($ThisLine =~ /^[a-zA-Z0-9]+: to\=\<([^ ]*)>,(?: orig_to\=\<(?:[^ ]*)>,)? .*, status\=bounced .*: User unknown in virtual mailbox table/)) {
-       # another unknown user probably could combine with local unknown but again my perl is weak
-       $UnknownUsers{$User}++;
-    } elsif ((undef,$User) = ($ThisLine =~ /^[a-zA-Z0-9]+: reject: RCPT from ([^ ]*): [0-9]+ <([^ ]*)>.*: User unknown in local recipient table/)) {
-       # and yet another unknown user probably
-       $UnknownUsers{$User}++;
--   } elsif (($Dest, $Relay, $Msg) = ($ThisLine =~ /^[a-zA-Z0-9]+: to\=\<([^ ]*)>, relay=([^ ]*).*, delay\=-?[0-9]+, status\=bounced \(([^)]*)/ )) {
-+   } elsif (($Dest, $Relay, $Msg) = ($ThisLine =~ /^[a-zA-Z0-9]+: to\=\<([^ ]*)>,(?: orig_to\=\<(?:[^ ]*)>,)? relay=([^ ]*).*, delay\=-?[0-9]+, status\=bounced \(([^)]*)/ )) {
-       # unknown user
-       # $Msg = " hello "
-       # print "bounce message from " . $Dest . " msg : " . $Relay . "\n";
-@@ -188,8 +194,10 @@
-    } elsif ( ($Command,$Host) = ($ThisLine =~ /timeout after ([^ ]*) from ([^ ]*)$/)) {
-       # Make some better summary with hosts
-       $ConnectionLost{$Command}++;
--   } elsif ( ($Rejected,undef,undef) = ($ThisLine =~ /^[a-zA-Z0-9]+: reject: header (.*); from=<([^ ]*)> to=<([^ ]*)>: Message content rejected$/)) {
--      $HeaderReject{$Rejected}++;
-+   } elsif ( ($Rejected,undef,undef,$Reason) = ($ThisLine =~ /^[a-zA-Z0-9]+: reject: header (.*); from=<([^ ]*)> to=<([^ ]*)>: (.*)$/)) {
-+      $HeaderReject{$Reason}{$Rejected}++;
-+   } elsif ( ($Warning,undef,undef,$Reason) = ($ThisLine =~ /^[a-zA-Z0-9]+: warning: header (.*); from=<([^ ]*)> to=<([^ ]*)>: (.*)$/)) {
-+      $HeaderWarning{$Reason}{$Warning}++;
-    #} elsif ( ($Host,undef) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <([^ ]*)>: Sender address rejected: Domain not found;/)) {
-    #   $RejectDomain{$Host}++;
-    # above two lines included in generic reject sender on next condition
-@@ -205,17 +213,19 @@
-       $RejectRecip{$Recip}{$Temp}++;
-    } elsif ( ($Host,undef) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): 554 <(.*)>: Sender address rejected: Access denied;/)) {
-       $RejectAddress{$Host}++;
--   } elsif ( ($Host,$Site,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): 554 Service unavailable; \[[^ ]*\] blocked using ([^ ]*), reason: (.*);/)) {
-+   } elsif ( ($Host,$Site,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): 554 Service unavailable; (?:Client host )?\[[^ ]*\] blocked using ([^ ]*), reason: (.*);/)) {
-       $Temp = "$Host : $Reason";
-       $RejectRBL{$Site}{$Temp}++;
-       $RejectedRBL++;
--   } elsif ( ($Host,$Site) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): 554 Service unavailable; \[[^ ]*\] blocked using ([^ ]*);/)) {
-+   } elsif ( ($Host,$Site) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): 554 Service unavailable; (?:Client host )?\[[^ ]*\] blocked using ([^ ]*);/)) {
-       $RejectRBL{$Site}{$Host}++;
-       $RejectedRBL++;
-    } elsif ( ($Host,$Site,$Reason) = ($ThisLine =~ /warning: ([^ ]*): RBL lookup error: Name service error for \d+\.\d+\.\d+\.\d+\.([^ ]*): (.*)$/)) {
-       $Temp = "$Host : $Reason";
-       $RBLError{$Site}{$Temp}++;
-       $ErrorRBL++;
-+   } elsif ( ($Host,$Site,$Reason) = ($ThisLine =~ /discard: RCPT from ([^ ]*\[[^ ]*\]): ([^ ]*): ([^;]*);/)) {
-+      $Discarded{$Site}{$Reason}++;
-    } elsif ( (undef,undef,$Error) = ($ThisLine =~ /warning: ([^ ]*): hostname ([^ ]*) verification failed: (.*)$/)) {
-       $HostnameVerification{$Error}++;
-    } elsif ( $ThisLine =~ /^[a-zA-Z0-9]+: removed$/) {
-@@ -249,6 +259,8 @@
-       $TLSconnectFrom{$Host}++; 
-    } elsif ( ($Host) = ($ThisLine =~ /TLS connection established to ([^ ]*):/)) {
-       $TLSconnectTo{$Host}++; 
-+   } elsif ( ($Cert) = ($ThisLine =~ /^Unverified: (.*)/)) {
-+      $TLSunverified{$Cert}++; 
-    } elsif ( ($Domain) = ($ThisLine =~ /warning: malformed domain name in resource data of MX record (.*)$/)) {
-       $MxError{$Domain}++;
-    } elsif ( ($Host,$Command) = ($ThisLine =~ /warning: ([^ ]*\[[^ ]*\]) sent .* header instead of ([^ ]*) command: /)) {
-@@ -432,6 +444,13 @@
-    }
- }
- 
-+if (keys %TLSunverified) {
-+   print "\n\nUnverified TLS certificates:\n";
-+   foreach $Cert (sort {$a cmp $b} keys %TLSunverified) {
-+      print "   $Cert : $TLSunverified{$Cert} Time(s)\n";
-+   }
-+}
-+
- if (keys %RelayDenied) {
-    print "\n\nRelaying denied:\n";
-    foreach $ThisOne (sort {$a cmp $b} keys %RelayDenied) {
-@@ -462,8 +481,21 @@
- 
- if (($Detail >= 5) and (keys %HeaderReject)) {
-    print "\n\nHeader content reject:\n";
--   foreach $ThisOne (sort {$a cmp $b} keys %HeaderReject) {
--      print "   $ThisOne : $HeaderReject{$ThisOne} Time(s)\n";
-+   foreach $Reason (sort {$a cmp $b} keys %HeaderReject) {
-+      print "   $Reason:";
-+      foreach $Rejected (sort {$a cmp $b} keys %{$HeaderReject{$Reason}} ) {
-+         print "      $Rejected : $HeaderReject{$Reason}{$Rejected} Time(s)\n";
-+      }
-+   }
-+}
-+
-+if (($Detail >= 5) and (keys %HeaderWarning)) {
-+   print "\n\nHeader content warning (but passed):\n";
-+   foreach $Reason (sort {$a cmp $b} keys %HeaderWarning) {
-+      print "   $Reason:";
-+      foreach $Warning (sort {$a cmp $b} keys %{$HeaderWarning{$Reason}} ) {
-+         print "      $Warning : $HeaderWarning{$Reason}{$Warning} Time(s)\n";
-+      }
-    }
- }
- 
-@@ -537,6 +569,16 @@
-    }
- }
- 
-+if (keys %Discarded) {
-+   print "\n\nDiscarded messages:\n";
-+   foreach $Host (sort {$a cmp $b} keys %Discarded) {
-+      print "   $Host\n";
-+      foreach $Reason (sort {$a cmp $b} keys %{$Discarded{$Host}} ) {
-+         print "      $Reason : $Discarded{$Host}{$Reason} Time(s)\n";
-+      }
-+   }
-+}
-+
- if (keys %AuthWarns) {
-    print "\n\nAuthentication warnings:\n";
-    foreach $ThisOne (sort {$a cmp $b} keys %AuthWarns) {
