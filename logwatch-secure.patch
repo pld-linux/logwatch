@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/secure,v
 retrieving revision 1.49
 diff -u -r1.49 secure
 --- scripts/services/secure	24 Feb 2005 17:08:05 -0000	1.49
-+++ scripts/services/secure	25 Feb 2005 12:03:09 -0000
++++ scripts/services/secure	25 Feb 2005 12:12:54 -0000
 @@ -49,6 +49,8 @@
  $ConsoleLock = 0;
  $spop3d_opened=0;
@@ -37,7 +37,16 @@ diff -u -r1.49 secure
        ( $ThisLine =~ /^(xinetd|xinetd-ipv6)\[\d+\]: EXIT: /) or
        ( $ThisLine =~ /^crond\(\w+\)\[\d+\]: session /) or
        ( $ThisLine =~ /^sshd\(\w+\)\[\d+\]: authentication failure/) or
-@@ -212,6 +216,14 @@
+@@ -152,6 +156,8 @@
+       $Error{$Service}{$Err}++;
+    } elsif ( ($Service,$Err) = ($ThisLine =~ /^([^ ]+): (password mismatch for [^ ]+ in [^ ]+):.*$/ ) ) {
+       $Error{$Service}{$Err}++;
++   } elsif ( ($Service,$Err) = ($ThisLine =~ /^([^ ]+)\[\d+\]: (changed POP3 password for wojtek)$/ ) ) {
++      $Error{$Service}{$Err}++;
+    } elsif ( $ThisLine =~ /^login: ROOT LOGIN ON tty[0-9]+/) {
+       $RootLoginTTY++
+    } elsif ( (undef,$User) = ($ThisLine =~ /^login: LOGIN ON (tty|pts\/)[0-9]+ BY ([^ ]+)/ )) {
+@@ -212,6 +218,14 @@
     } elsif ( ($PID) = ($ThisLine =~ /^checkpassword-pam\[(\d+)\]: Setting PAM credentials succeeded/)) {
     } elsif ( ($PID) = ($ThisLine =~ /^checkpassword-pam\[(\d+)\]: Terminating PAM library/)) {
     } elsif ( ($PID) = ($ThisLine =~ /^checkpassword-pam\[(\d+)\]: Exiting with status 0/)) {
@@ -52,7 +61,7 @@ diff -u -r1.49 secure
     } else {
        # Unmatched entries...
        push @OtherList, "$ThisLine\n";
-@@ -282,6 +294,20 @@
+@@ -282,6 +296,20 @@
     }
  }
  
@@ -73,7 +82,7 @@ diff -u -r1.49 secure
  if (keys %{$Connections}) {
     print "\nConnections:\n";
     foreach $ThisOne (keys %{$Connections}) {
-@@ -445,4 +471,3 @@
+@@ -445,4 +473,3 @@
  exit(0);
  
  # vi: shiftwidth=3 tabstop=3 syntax=perl et
