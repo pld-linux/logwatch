@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/http,v
 retrieving revision 1.5
 diff -u -r1.5 http
 --- scripts/services/http	12 Nov 2003 04:09:08 -0000	1.5
-+++ scripts/services/http	9 Dec 2003 08:34:01 -0000
++++ scripts/services/http	9 Dec 2003 10:41:02 -0000
 @@ -39,6 +39,16 @@
  	my $a1xx_resp = 0;
  	my $image_count = 0;
