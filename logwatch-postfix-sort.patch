@@ -1,0 +1,75 @@
+--- ./scripts/services/postfix.org	Mon Dec  1 08:46:21 2003
++++ ./scripts/services/postfix	Mon Dec  1 08:48:05 2003
+@@ -167,63 +167,63 @@
+ 
+ 	if (keys %SentBy) {
+ 		print "\n\nMessages sent by:\n";
+-		foreach $ThisOne (keys %SentBy) {
++		foreach $ThisOne (sort {$a cmp $b} keys %SentBy) {
+ 			print "    " . $ThisOne . $SentBy{$ThisOne} . " Times(s)\n";
+ 		}
+ 	}
+ 
+     if (keys %UnknownUsers) {
+ 		print "\n\nUnknown users:\n";
+-		foreach $ThisOne (keys %UnknownUsers) {
++		foreach $ThisOne (sort {$a cmp $b} keys %UnknownUsers) {
+ 			print "    " . $ThisOne . ": " . $UnknownUsers{$ThisOne} . " Times(s)\n";
+ 		}
+ 	}
+ 
+     if (keys %RelayDenied) {
+ 		print "\n\nRelaying denied:\n";
+-		foreach $ThisOne (keys %RelayDenied) {
++		foreach $ThisOne (sort {$a cmp $b} keys %RelayDenied) {
+ 			print "    " . $ThisOne . ": " . $RelayDenied{$ThisOne} . " Times(s)\n";
+ 		}
+     }
+ 
+     if (keys %LocalBounce) {
+ 		print "\n\nLocal Bounce:\n";
+-		foreach $ThisOne (keys %LocalBounce) {
++		foreach $ThisOne (sort {$a cmp $b} keys %LocalBounce) {
+ 			print "    " . $ThisOne . ": " . $LocalBounce{$ThisOne} . " Times(s)\n";
+ 		}
+     }
+ 
+     if (keys %ForeignBounce) {
+ 		print "\n\nForeign Bounce:\n";
+-		foreach $ThisOne (keys %ForeignBounce) {
++		foreach $ThisOne (sort {$a cmp $b} keys %ForeignBounce) {
+ 			print "    " . $ThisOne . ": " . $ForeignBounce{$ThisOne} . " Times(s)\n";
+ 		}
+     }
+ 
+ 	if (keys %HeaderReject) {
+ 		print "\n\nHeader content reject:\n";
+-		foreach $ThisOne (keys %HeaderReject) {
++		foreach $ThisOne (sort {$a cmp $b} keys %HeaderReject) {
+ 			print "    " . $ThisOne . ": " . $HeaderReject{$ThisOne} . " Times(s)\n";
+ 		}
+ 	}
+ 
+     if (keys %AuthWarns) {
+ 		print "\n\nAuthentication warnings:\n";
+-		foreach $ThisOne (keys %AuthWarns) {
++		foreach $ThisOne (sort {$a cmp $b} keys %AuthWarns) {
+ 			print "    " . $ThisOne . ": " . $AuthWarns{$ThisOne} . " Times(s)\n";
+ 		}
+     }
+ 
+     if (keys %ForwardErrors) {
+ 		print "\n\nForwarding errors:\n";
+-		foreach $ThisOne (keys %ForwardErrors) {
++		foreach $ThisOne (sort {$a cmp $b} keys %ForwardErrors) {
+ 			print "    " . $ThisOne . ": " . $ForwardErrors{$ThisOne} . " Times(s)\n";
+ 		}
+ 	}
+ 
+ 	if (keys %ConnectionLost) {
+ 		print "\n\nConnections lost:\n";
+-		foreach $ThisOne (keys %ConnectionLost) {
++		foreach $ThisOne (sort {$a cmp $b} keys %ConnectionLost) {
+ 			print "    Connection lost after command " . $ThisOne . ": " . $ConnectionLost{$ThisOne} . " Times(s)\n";
+ 		}
+ 	}
