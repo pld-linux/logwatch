@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/proftpd-messages,v
 retrieving revision 1.15
 diff -u -r1.15 proftpd-messages
 --- scripts/services/proftpd-messages	15 Dec 2003 19:01:19 -0000	1.15
-+++ scripts/services/proftpd-messages	14 Jan 2004 08:34:59 -0000
++++ scripts/services/proftpd-messages	18 Jan 2004 15:59:26 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -14,27 +14,236 @@ diff -u -r1.15 proftpd-messages
  
  ########################################################
  # This was written and is maintained by:
-@@ -19,7 +21,6 @@
+@@ -16,97 +18,104 @@
+ $Detail = $ENV{'LOGWATCH_DETAIL_LEVEL'} || 0;
+ $IgnoreUnmatched = $ENV{'ftpd_ignore_unmatched'};
+ 
++$NoEndpoints = 0;
++
  while (defined($ThisLine = <STDIN>)) {
- 	if ( ( $ThisLine =~ /^FTP session closed./ ) or
- 		( $ThisLine =~ /^(ANONYMOUS )?FTP login as \'.*\' from [^ ]+ \[.*\] to .*/ ) or
+-	if ( ( $ThisLine =~ /^FTP session closed./ ) or
+-		( $ThisLine =~ /^(ANONYMOUS )?FTP login as \'.*\' from [^ ]+ \[.*\] to .*/ ) or
 -		( $ThisLine =~ /^FTP no transfer time out, disconnected\./ ) or
- 		( $ThisLine =~ /PAM\(.*\): Authentication failure/ ) or
- 		( $ThisLine =~ /^data_sendfile/ ) or
- 		( $ThisLine =~ / - FTP session opened/ ) or
-@@ -64,6 +65,8 @@
- 	   $RefusedPorts{$Temp}++;
+-		( $ThisLine =~ /PAM\(.*\): Authentication failure/ ) or
+-		( $ThisLine =~ /^data_sendfile/ ) or
+-		( $ThisLine =~ / - FTP session opened/ ) or
+-		( $ThisLine =~ / - FTP session closed/ ) or
+-		( $ThisLine =~ / - No certificate files found/ ) or
+-		( $ThisLine =~ /FTP no transfer timeout, disconnected\./ ) or
+-		( $ThisLine =~ /FTP login timed out, disconnected\./ )   ) {
+-		#We don't care about these
+-	} elsif ( ($Host,$IP,$Email,) = ( $ThisLine =~ /^FTP session opened: ftp\/ftp (.*)\[(.*)\] (.*)$/ ) ) {
+-		$Temp = "   " . $Host . " (" . $IP . "): " . $Email . " - ";
+-		$AnonLogins{$Temp}++;
+-	} elsif ( ($Host, $IP) = ( $ThisLine =~ /\((.*)\[(.*)\]\) - ANON .+: Login successful\./ ) ) {
+-		$Temp = "   " . $Host . " (" . $IP . ")";
+-		$AnonLogins{$Temp}++;
+-	} elsif ( ($User,$Host,$IP) = ( $ThisLine =~ /^FTP session opened: (.*\/.*) (.*)\[(.*)\] (.*)$/ ) ) {
+-		$Temp = "   $Host : $User - ";
+-		$UserLogins{$Temp}++;
+-	} elsif ( ($Host,$IP,$User) = ( $ThisLine =~ /\((.*)\[(.*)\]\) - USER (.+): Login successful/ ) ) {
+-		$Temp = "   " . $Host . ": " . $User . " - ";
+-	   $UserLogins{$Temp}++;
++   if (
++         ( $ThisLine =~ /^FTP session closed./ ) or
++         ( $ThisLine =~ /^(ANONYMOUS )?FTP login as \'.*\' from [^ ]+ \[.*\] to .*/ ) or
++         ( $ThisLine =~ /PAM\(.*\): Authentication failure/ ) or
++         ( $ThisLine =~ /^data_sendfile/ ) or
++         ( $ThisLine =~ / - FTP session opened/ ) or
++         ( $ThisLine =~ / - FTP session closed/ ) or
++         ( $ThisLine =~ / - No certificate files found/ ) or
++         ( $ThisLine =~ /FTP no transfer timeout, disconnected\./ ) or
++         ( $ThisLine =~ /FTP login timed out, disconnected\./ )
++      ) {
++         #We don't care about these
++   } elsif ( ($Host,$IP,$Email,) = ( $ThisLine =~ /^FTP session opened: ftp\/ftp (.*)\[(.*)\] (.*)$/ ) ) {
++      $Temp = "   " . $Host . " (" . $IP . "): " . $Email . " - ";
++      $AnonLogins{$Temp}++;
++   } elsif ( ($Host, $IP) = ( $ThisLine =~ /\((.*)\[(.*)\]\) - ANON .+: Login successful\./ ) ) {
++      $Temp = "   " . $Host . " (" . $IP . ")";
++      $AnonLogins{$Temp}++;
++   } elsif ( ($User,$Host,$IP) = ( $ThisLine =~ /^FTP session opened: (.*\/.*) (.*)\[(.*)\] (.*)$/ ) ) {
++      $Temp = "   $Host : $User - ";
++      $UserLogins{$Temp}++;
++   } elsif ( ($Host,$IP,$User) = ( $ThisLine =~ /\((.*)\[(.*)\]\) - USER (.+): Login successful/ ) ) {
++      $Temp = "   " . $Host . ": " . $User . " - ";
++      $UserLogins{$Temp}++;
+    } elsif ( ($User) = ( $ThisLine =~ /^failed login, can\'t find user \'(.*)\' $/ ) ) {
+-	   $Temp = "   " . "Unknown" . " (" . "Unknown.IP" . "): " . $User . " - ";
+-	   $BadUsers{$Temp}++;
++      $Temp = "   " . "Unknown" . " (" . "Unknown.IP" . "): " . $User . " - ";
++      $BadUsers{$Temp}++;
+    } elsif ( ($User,$Host,$IP) = ( $ThisLine =~ /USER (.*): no such user found from (.*) \[(.*)\] to/ ) ) {
+-	   $Temp = "   $Host : $User - ";
+-	   $BadUsers{$Temp}++;
++      $Temp = "   $Host : $User - ";
++      $BadUsers{$Temp}++;
+    } elsif ( ($Host,$Ip,$User) = ( $ThisLine =~ /\((.*)\[(.*)\]\) - no such user '(.*)'.$/ ) ) {
+-	   #$Temp = "$Host($Ip)";
+-	   $BadUsers{$User}{$Host}++;
++      #$Temp = "$Host($Ip)";
++      $BadUsers{$User}{$Host}++;
+    } elsif ( ($Host,$User) = ( $ThisLine =~ /\[(.*)\]\) - USER (.*) \(Login failed\): Incorrect password/ ) ) {
+-	   $Temp = "   $Host : $User - ";
+-	   $BadPasswds{$Temp}++;
++      $Temp = "   $Host : $User - ";
++      $BadPasswds{$Temp}++;
+    } elsif ( ($Host,$User) = ( $ThisLine =~ /\[(.*)\]\) - USER (.*) \(Login failed\): Invalid shell/ ) ) {
+-	   $Temp = "   $Host : $User - ";
+-	   $BadShell{$Temp}++;
++      $Temp = "   $Host : $User - ";
++      $BadShell{$Temp}++;
+    } elsif ( ($Host,$Ip) = ( $ThisLine =~ /\((.*)\[(.*)\]\) - SECURITY VIOLATION: root login attempted./ ) ) {
+-	   $RootLoginAttempt{$Host}++;
++      $RootLoginAttempt{$Host}++;
+    } elsif ( ($Host) = ( $ThisLine =~ /\(((.*)\[(.*)\])\) - Maximum login attempts exceeded./ ) ) {
+-	   $MaxLoginAttempts{$Host}++;
++      $MaxLoginAttempts{$Host}++;
+    } elsif ( ($Host,$Reason) = ( $ThisLine =~ /\[(.*)\]\) - Refused PORT [\d,]+ \((.*)\)/ ) ) {
+-	   $Temp = "   " . $Host . ": " . $Reason . " - ";
+-	   $RefusedPorts{$Temp}++;
++      $Temp = "   " . $Host . ": " . $Reason . " - ";
++      $RefusedPorts{$Temp}++;
     } elsif ( ($Host,$Reason) = ( $ThisLine =~ /\(((.*)\[(.*)\])\) - Connection refused \((.*)\)./ ) ) {
        $ConnectionRefused{$Reason}{$Host}++;
 +   } elsif ( ($Host) = ( $ThisLine =~ /\(((.*)\[(.*)\])\) - Data transfer stall timeout/ ) ) {
 +      $TransferTimeout{$Host}++;
++   } elsif ( $ThisLine =~ m/[^ ]* - Fatal: Transport endpoint is not connected/ ) {
++      $NoEndpoints++;
     } else {
- 	   # Report any unmatched entries...
- 	   push @OtherList,$ThisLine;
-@@ -152,6 +155,13 @@
- 	foreach $ThisOne (sort {$a cmp $b} keys %RefusedPorts) {
- 		print $ThisOne . $RefusedPorts{$ThisOne} . " Time(s)\n";
- 	}
+-	   # Report any unmatched entries...
+-	   push @OtherList,$ThisLine;
++      # Report any unmatched entries...
++      push @OtherList,$ThisLine;
+    }
+ }
+ 
+ ##############################################
+ 
+ if ( (keys %AnonLogins) and ($Detail >= 5) ) {
+-	print "\nAnonymous FTP Logins:\n";
+-	foreach $ThisOne (sort {$a cmp $b} keys %AnonLogins) {
+-		print $ThisOne . $AnonLogins{$ThisOne} . " Time(s)\n";
+-	}
++   print "\nAnonymous FTP Logins:\n";
++   foreach $ThisOne (sort {$a cmp $b} keys %AnonLogins) {
++      print $ThisOne . $AnonLogins{$ThisOne} . " Time(s)\n";
++   }
+ }
+ 
+ if ( (keys %DeletedFiles) and ($Detail >= 10) ) {
+-	print "\nFiles deleted through FTP:\n";
+-	foreach $ThisOne (sort {$a cmp $b} keys %DeletedFiles) {
+-		print $ThisOne;
+-		print @{$DeletedFiles{$ThisOne}};
+-	}
++   print "\nFiles deleted through FTP:\n";
++   foreach $ThisOne (sort {$a cmp $b} keys %DeletedFiles) {
++      print $ThisOne;
++      print @{$DeletedFiles{$ThisOne}};
++   }
+ }
+ 
+ if (keys %UserLogins) {
+-	print "\nUser FTP Logins:\n";
+-	foreach $ThisOne (sort {$a cmp $b} keys %UserLogins) {
+-		print $ThisOne . $UserLogins{$ThisOne} . " Time(s)\n";
+-	}
++   print "\nUser FTP Logins:\n";
++   foreach $ThisOne (sort {$a cmp $b} keys %UserLogins) {
++      print $ThisOne . $UserLogins{$ThisOne} . " Time(s)\n";
++   }
+ }
+ 
+ if (keys %RootLoginAttempt) {
+-	print "\nSECURITY VIOLATION!!!!\n";
+-	print "Root login attempt from:\n";
+-	foreach $Host (sort {$a cmp $b} keys %RootLoginAttempt) {
+-		print "  $Host : $RootLoginAttempt{$Host} Time(s)\n";
+-	}
++   print "\nSECURITY VIOLATION!!!!\n";
++   print "Root login attempt from:\n";
++   foreach $Host (sort {$a cmp $b} keys %RootLoginAttempt) {
++      print "  $Host : $RootLoginAttempt{$Host} Time(s)\n";
++   }
+ }
+ 
+ if (keys %MaxLoginAttempts) {
+-	print "\nMaximum login attempts exceeded from hosts:\n";
+-	foreach $Host (sort {$a cmp $b} keys %MaxLoginAttempts) {
+-		print "  $Host : $MaxLoginAttempts{$Host} Time(s)\n";
+-	}
++   print "\nMaximum login attempts exceeded from hosts:\n";
++   foreach $Host (sort {$a cmp $b} keys %MaxLoginAttempts) {
++      print "  $Host : $MaxLoginAttempts{$Host} Time(s)\n";
++   }
+ }
+ 
+ if (keys %ConnectionRefused) {
+@@ -120,43 +129,53 @@
+ }
+ 
+ if ( ( (keys %BadUsers) or (keys %BadPasswds) ) and ($Detail >= 5) ) {
+-	print "\nFailed FTP Logins:\n";
+-	
+-	if ( (keys %BadUsers) and ($Detail >= 5) ) {
+-		print "\n  Invalid Username:\n";
+-		foreach $User (sort {$a cmp $b} keys %BadUsers) {
+-			print "    $User:\n";
+-			foreach $Host (sort {$a cmp $b} keys %{$BadUsers{$User}}) {
+-				print "      $Host : $BadUsers{$User}{$Host} Time(s)\n";
+-			}
+-		}
+-	}
+-	
+-	if ( (keys %BadPasswds) and ($Detail >= 5) ) {
+-		print "\n  Incorrect Password:\n";
+-		foreach $ThisOne (sort {$a cmp $b} keys %BadPasswds) {
+-			print $ThisOne . $BadPasswds{$ThisOne} . " Time(s)\n";
+-		}
+-	}
+-	
+-	if ( (keys %BadPasswds) and ($Detail >= 5) ) {
+-		print "\n  Invalid Shell:\n";
+-		foreach $ThisOne (sort {$a cmp $b} keys %BadShell) {
+-			print $ThisOne . $BadShell{$ThisOne} . " Time(s)\n";
+-		}
+-	}
++   print "\nFailed FTP Logins:\n";
++   if ( (keys %BadUsers) and ($Detail >= 5) ) {
++      print "\n  Invalid Username:\n";
++      foreach $User (sort {$a cmp $b} keys %BadUsers) {
++         print "    $User:\n";
++         foreach $Host (sort {$a cmp $b} keys %{$BadUsers{$User}}) {
++            print "      $Host : $BadUsers{$User}{$Host} Time(s)\n";
++         }
++      }
++   }
++   
++   if ( (keys %BadPasswds) and ($Detail >= 5) ) {
++      print "\n  Incorrect Password:\n";
++      foreach $ThisOne (sort {$a cmp $b} keys %BadPasswds) {
++         print $ThisOne . $BadPasswds{$ThisOne} . " Time(s)\n";
++      }
++   }
++   
++   if ( (keys %BadPasswds) and ($Detail >= 5) ) {
++      print "\n  Invalid Shell:\n";
++      foreach $ThisOne (sort {$a cmp $b} keys %BadShell) {
++         print $ThisOne . $BadShell{$ThisOne} . " Time(s)\n";
++      }
++   }
+ }
+ 
+ if ( (keys %RefusedPorts) and ($Detail >= 5) ) {
+-	print "\nRefused PORTs:\n";
+-	foreach $ThisOne (sort {$a cmp $b} keys %RefusedPorts) {
+-		print $ThisOne . $RefusedPorts{$ThisOne} . " Time(s)\n";
+-	}
++   print "\nRefused PORTs:\n";
++   foreach $ThisOne (sort {$a cmp $b} keys %RefusedPorts) {
++      print $ThisOne . $RefusedPorts{$ThisOne} . " Time(s)\n";
++   }
 +}
 +
 +if ( (keys %TransferTimeout) and ($Detail >= 5) ) {
@@ -42,6 +251,17 @@ diff -u -r1.15 proftpd-messages
 +   foreach $Host (sort {$a cmp $b} keys %TransferTimeout) {
 +      print "   $Host : $TransferTimeout{$Host} Time(s)\n";
 +   }
++}
++
++if ($NoEndpoints > 0) {
++   print "\nTransport endpoint is not connected error $NoEndpoints Time(s)\n";
  }
  
  if (($#OtherList >= 0) and (not $IngoreUnmatched)) {
+-	print "\n**Unmatched Entries**\n";
+-	print @OtherList;
++   print "\n**Unmatched Entries**\n";
++   print @OtherList;
+ }
+ 
+ exit(0);
