@@ -3,7 +3,7 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	5.1
-Release:	0.pre.15
+Release:	0.pre.16
 License:	MIT
 Group:		Applications/System
 #Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
@@ -11,6 +11,8 @@ Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
 # Source0-md5:	7939ffc153261984d028bb3e56882412
 Source1:	shaperd
 Source2:	shaperd.conf
+Source3:	oidentd
+Source4:	%{name}-oidentd.conf
 Patch0:		%{name}-config.patch
 Patch1:		%{name}-log_conf.patch
 Patch2:		%{name}-sshd.patch
@@ -89,7 +91,9 @@ ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT/etc/cron.daily/00-logwatch
 install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
 
 install %{SOURCE1} $RPM_BUILD_ROOT%{_logwatchdir}/scripts/services/
+install %{SOURCE3} $RPM_BUILD_ROOT%{_logwatchdir}/scripts/services/
 install %{SOURCE2} $RPM_BUILD_ROOT%{_logwatchconf}/services/
+install %{SOURCE4} $RPM_BUILD_ROOT%{_logwatchconf}/services/oidentd.conf
 
 %clean
 rm -rf $RPM_BUILD_ROOT
