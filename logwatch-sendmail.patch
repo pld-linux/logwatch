@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sendmail,v
 retrieving revision 1.32
 diff -u -r1.32 sendmail
 --- scripts/services/sendmail	15 Dec 2003 18:09:23 -0000	1.32
-+++ scripts/services/sendmail	8 Jan 2004 08:12:45 -0000
++++ scripts/services/sendmail	18 Jan 2004 17:32:03 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -14,16 +14,24 @@ diff -u -r1.32 sendmail
  
  ########################################################
  # This was written and is maintained by:
-@@ -29,6 +31,8 @@
+@@ -24,11 +26,15 @@
+ $HourReturns = 0;
+ $DaysReturns = 0;
+ $UserUnknown = 0;
+-$ReturnUserUnknown = 0;
+ $TLSAcceptFailed = 0;
  $SaveMailPanic = 0;
  $RemoteProtocolError = 0;
  $ReturnReceipt = 0;
 +$TooManyRcpts = 0;
 +$CantCreateOutput = 0;
++$OutdatedAliasdb = 0;
++$MaxLoadAvg = 0;
++$LoadAvgReject = 0;
  
  my %relay;
  my %abuse;
-@@ -109,115 +113,118 @@
+@@ -109,115 +115,118 @@
  my $UnknownUsersThreshold = 0;
  
  while (defined($ThisLine = <STDIN>)) {
@@ -242,7 +250,7 @@ diff -u -r1.32 sendmail
     } elsif ( $ThisLine =~ m/X-Scanned-By: MIMEDefang/) {
        $Defang++;
     } elsif (($Size) = ($ThisLine =~ m/message size \(([0-9]+)\) exceeds maximum/)) {
-@@ -230,15 +237,19 @@
+@@ -230,15 +239,19 @@
     } elsif ( ($Domain) = ($ThisLine =~ /Domain of sender address ([^ ]+) does not/)) {
        $UnresolvedDomains{$Domain}++;
     } elsif ($ThisLine =~ /reject=550 5\.7\.1 <[^ ]*@([^ ]*)>\.\.\. Relaying Denied/) {
@@ -265,9 +273,16 @@ diff -u -r1.32 sendmail
     } elsif ( ($Dest,$Relay) = ($ThisLine =~ /^ruleset=check_rcpt, arg1=<([^ ]*)>, relay=([^,]*), reject=550\s*[\d.]*\s*<[^ ]*>\.\.\. Relaying denied/) ) {
        $Temp = "From " . $Relay . " to " . $Dest;
        $RelayDenied{$Temp}++;
-@@ -296,10 +307,12 @@
-    } elsif ( ($Temp)  = ($ThisLine =~ /^.*\[(.*?)\] .*did not issue .*? during connection to MTA/) ) {
-        $DummyConnection{$Temp}++;
+@@ -293,13 +306,17 @@
+ 
+    #NOQUEUE: [66.200.95.123] did not issue MAIL/EXPN/VRFY/ETRN during connection to MTA
+    #NOQUEUE: SMTP1.ADMANMAIL.COM [209.216.124.212] (may be forged) did not issue MAIL/EXPN/VRFY/ETRN during connection to MTA
+-   } elsif ( ($Temp)  = ($ThisLine =~ /^.*\[(.*?)\] .*did not issue .*? during connection to MTA/) ) {
+-       $DummyConnection{$Temp}++;
++   } elsif ( ( $Host ) = ($ThisLine =~ /\[([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\] (\(may be forged\) |)did not issue MAIL\/EXPN\/VRFY\/ETRN during connection to (MTA|Daemon0)/) ) {
++      $DummyConnection{$Host}++;
++   } elsif ( ($Host)  = ($ThisLine =~ /^([^ ]*) did not issue .*? during connection to (MTA|Daemon0)/) ) {
++      $DummyConnection{$Host}++;
  
 -   #hA29V0hK013676: hnexfe06.hetnet.nl [195.121.6.172]: Possible SMTP
 -   #RCPT flood, throttling.
@@ -281,7 +296,43 @@ diff -u -r1.32 sendmail
  
     #h2GKtU001122: DSN: Too many hops 26 (25 max): from <MAILER-DAEMON@atbusiness.com> via localhost, to <vlagrarycf@pacific.net.in>
     #h2GHtSx30926: SYSERR(root): Too many hops 26 (25 max): from <MAILER-DAEMON@atbusiness.com> via localhost, to <superstore@bpsmailer.com>
-@@ -368,15 +381,21 @@
+@@ -319,8 +336,6 @@
+    } elsif ( $ThisLine =~ m/(return to sender|sender notify): Cannot send message for (\d) days/ ) {
+       $NumDays = $2;
+       $DaysReturns++;
+-   } elsif ( ( $NOQUEUE ) = ($ThisLine =~ /\[([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\] (\(may be forged\) |)did not issue MAIL\/EXPN\/VRFY\/ETRN during connection to (MTA|Daemon0)/) ) {
+-      $Noqueuers{$NOQUEUE}++;
+    } elsif ($ThisLine=~ /relay=(\S+)*.*\[(\d+.\d+.\d+.\d+)\], reject=444 4.4.4 \<([^\>]+)\>... Sorry (\S*)/) {
+       chomp($host=$2." ". (defined($1) ? "(".$1.")" : "(unresolved)") );
+       chomp($luser=$3);
+@@ -342,7 +357,7 @@
+       chomp($host=$2." ". (defined($1) ? "(".$1.")" : "(unresolved)") );
+       $luser=$3;
+       $abuse{$host}{$luser}++;
+-   } elsif ( $ThisLine =~ m/(postmaster notify|return to sender): User unknown/ ) {
++   } elsif ( $ThisLine =~ m/(DSN|postmaster notify|return to sender|sender notify): User unknown/ ) {
+       $UserUnknown++;
+    } elsif ( $ThisLine =~ m/timeout waiting for input from (\S+)/ ) {
+       $Timeouts{$1}++;
+@@ -351,15 +366,12 @@
+    } elsif ( $ThisLine =~ /\[([0-9\.]+)]: ETRN (\S+)/ ) {
+       chomp($ETRN=$2." from ".$1);
+       $ETRNs{$ETRN}++;
+-   } elsif ( $ThisLine =~ /rejecting connections on daemon MTA: load average: ([0-9]+)/ ) {
++   } elsif ( $ThisLine =~ /rejecting connections on daemon [^ ]+: load average: ([0-9]+)/ ) {
+       $LoadAvg{$1}++;
++      $LoadAvgReject++;
+    } elsif ($ThisLine=~ /reject=.*MESSAGE NOT ACCEPTED - (.+)/) {
+       chomp($host=$1);
+       $MailRejected{$host}++;
+-   } elsif ($ThisLine=~ /DSN: User unknown/) {
+-      $UserUnknown++;
+-   } elsif ($ThisLine=~ /return to sender: User unknown/) {
+-      $ReturnUserUnknown++;
+    } elsif ($ThisLine=~ /TLS: error: accept failed/) {
+       $TLSAcceptFailed++;
+    } elsif ($ThisLine=~ /savemail panic/) {
+@@ -368,17 +380,27 @@
        $ReturnReceipt++;
     } elsif ($ThisLine=~ /Remote protocol error/) {
        $RemoteProtocolError++;
@@ -302,6 +353,8 @@ diff -u -r1.32 sendmail
 +      $SaslError{$File}{$Error}++;
 +   } elsif ( $ThisLine =~ m/Can\'t create output/ ) {
 +      $CantCreateOutput++;
++   } elsif ( $ThisLine =~ m/alias database [^ ]+ out of date/ ) {
++      $OutdatedAliasdb++;
 +   } else {
 +      $ThisLine =~ s/.*\: (DSN\: .*)/$1/;
 +      $ThisLine =~ s/.*\: (postmaster notify\: .*)/$1/;
@@ -311,28 +364,45 @@ diff -u -r1.32 sendmail
 +   }
  }
  
++#######################################################
++
  if ($MsgsSent > 0) {
-@@ -413,6 +432,10 @@
-    print "\n\n" . $ReturnUserUnknown . " Returned messages due to unknown user";
+    print "\n\nBytes Transferred: $BytesTransferred\n";
+    print "Messages Sent:     $MsgsSent\n";
+@@ -402,15 +424,15 @@
  }
  
+ if($TLSAcceptFailed > 0) {
+-   print "\n\n" . $TLSAcceptFailed . " TLS Accept Fail(s)";
++   print "\n\n$TLSAcceptFailed TLS Accept Fail(s)";
+ }
+ 
+ if($UserUnknown > 0) {
+-   print "\n\n" . $UserUnknown . " DSN User Unknown notifications";
++   print "\n\n$UserUnknown User Unknown notifications";
+ }
+ 
+-if($ReturnUserUnknown > 0) {
+-   print "\n\n" . $ReturnUserUnknown . " Returned messages due to unknown user";
 +if ($TooManyRcpts > 0) {
 +   print "\n\n$TooManyRcpts messages with too many recipients";
-+}
-+
- if($SaveMailPanic > 0) {
-    print "\n\n" . $SaveMailPanic . " Save Mail Panic's";
  }
-@@ -422,18 +445,32 @@
+ 
+ if($SaveMailPanic > 0) {
+@@ -422,18 +444,36 @@
  }
  
  if($ReturnReceipt > 0) {
 -	print "\n\n" . $ReturnReceipt . " Return Receipt's";
-+   print "\n\n" . $ReturnReceipt . " Return Receipt's";
++   print "\n\n$ReturnReceipt Return Receipt's";
 +}
 +
 +if ($CantCreateOutput > 0) {
 +   print "\n\nCan't create output $CantCreateOutput Time(s)";
++}
++
++if ($OutdatedAliasdb > 0) {
++   print "\n\nAliases database out of date $OutdatedAliasdb Time(s)";
  }
  
  if (keys %AttackAttempt) {
@@ -365,3 +435,78 @@ diff -u -r1.32 sendmail
  }
  
  if (($Detail >= 10) and (keys %LocalDomains)) {
+@@ -479,22 +519,29 @@
+ if (keys %LargeMsgs) {
+    print "\n\nLarge Msaages (From \-\> To):\n";
+    foreach $ThisOne (sort keys %LargeMsgs) {
+-      print "    $ThisOne: ${LargeMsgs{$ThisOne}} Times(s)\n";
++      print "    $ThisOne : ${LargeMsgs{$ThisOne}} Times(s)\n";
+    }
+ }
+ 
+ if (keys %ETRNs) {
+    print "\n\nETRNs Received:\n";
+    foreach $ThisOne (sort keys %ETRNs) {
+-      print "    " . $ThisOne . ": " . $ETRNs{$ThisOne} . " Times(s)\n";
++      print "    $ThisOne : $ETRNs{$ThisOne} Times(s)\n";
+    }
+ }
+ 
+ if (keys %LoadAvg) {
+-   print "\n\nConnections Rejected due to load average::\n";
+-   foreach $ThisOne (sort keys %LoadAvg) {
+-      print "    Load Avg " . $ThisOne . ": " . $LoadAvg{$ThisOne} . " Times(s)\n";
++   print "\n\nWarning!!!:\n";
++   print "Connections Rejected due to high load average $LoadAvgReject Times(s)\n";
++   foreach $Load (sort keys %LoadAvg) {
++      if ($Detail >=5) {
++         print "    Load Avg $Load : $LoadAvg{$Load} Times(s)\n";
++      }
++      if ($ThisOne > $MaxLoadAvg) {
++         $MaxLoadAvg = $Load;
++      }
+    }
++   print "   Max. Load Avg reached: $MaxLoadAvg\n";
+ }
+ 
+ if (keys %UnknownUsers) {
+@@ -591,21 +638,21 @@
+ if (keys %TimeoutWaiting) {
+    print "\n\nTimeout waiting:\n";
+    foreach $ThisOne (keys %TimeoutWaiting) {
+-      print "    " . $ThisOne . ": " . $TimeoutWaiting{$ThisOne} . " Times(s)\n";
++      print "    $ThisOne : $TimeoutWaiting{$ThisOne} Times(s)\n";
+    }
+ }
+ 
+ if (keys %DummyConnection) {
+    print "\n\nClient quit before communicating:\n";
+    foreach $ThisOne (sort keys %DummyConnection) {
+-      print "    " . $ThisOne . ": " . $DummyConnection{$ThisOne} . " Times(s)\n";
++      print "    $ThisOne : $DummyConnection{$ThisOne} Times(s)\n";
+    }
+ }
+ 
+ if (keys %BadRcptThrottle) {
+    print "\n\nClient submitted too many bad recipients:\n";
+    foreach $ThisOne (sort keys %BadRcptThrottle) {
+-      print "    " . $ThisOne . ": " . $BadRcptThrottle{$ThisOne} . " Times(s)\n";
++      print "    $ThisOne : $BadRcptThrottle{$ThisOne} Times(s)\n";
+    }
+ }
+ 
+@@ -671,14 +718,6 @@
+    my $count = CountOrder(%ForwardErrors);
+    foreach $ThisOne (sort $count keys %ForwardErrors) {
+       print "    " . $ThisOne . ": " . $ForwardErrors{$ThisOne} . " Times(s)\n";
+-   }
+-}
+-
+-if (keys %Noqueuers) {
+-   print "\n\nDid not issue MAIL/EXPN/VRFY/ETRN during connection to MTA:\n";
+-   my $count = CountOrder(%Noqueuers, \&SortIP);
+-   foreach $ThisOne (sort $count keys %Noqueuers) {
+-      printf "    %-17s : %4i Time(s)\n" , $ThisOne , $Noqueuers{$ThisOne};
+    }
+ }
+ 
