@@ -6,7 +6,7 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	5.2.2
-Release:	9
+Release:	9.1
 License:	MIT
 Group:		Applications/System
 #Path for pre-versions:
@@ -61,7 +61,7 @@ u¿yciu i mo¿e pracowaæ na wiêkszo¶ci systemów.
 %patch8 -p0
 %patch9 -p0
 %patch10 -p0
-%patch11 -p5
+%patch11 -p1
 
 cd scripts
 %patch7 -p0
