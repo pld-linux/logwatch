@@ -1,0 +1,43 @@
+--- pop3.orig	Wed Mar 30 19:30:21 2005
++++ pop3	Wed Mar 30 19:57:02 2005
+@@ -69,20 +69,36 @@
+       ($ThisLine =~ /^sptls: SSL_accept error: (-|)\d+$/) or
+       ($ThisLine =~ /^sptls: do need at least RSA or DSA cert\/key data$/) or
+       ($ThisLine =~ /^tpop3d shutdown  succeeded$/) or
+-      ($ThisLine =~ /tpop3d startup  succeeded$/)
++      ($ThisLine =~ /tpop3d startup  succeeded$/) or
++      ($ThisLine =~ /^disconnected, user=/i) or
++      ($ThisLine =~ /^timeout, user=/i) or
++      ($ThisLine =~ /^connection, ip=/i)
+    ) {
+       # Don't care about these...
+    } elsif (
+       (($User, $Host) = ( $ThisLine =~ /^user (.*?) authenticated - (.*)$/ )) or
+-      (($User, $Host) = ( $ThisLine =~ /^fork_child: \[\d\].*\((.*)\): began session for `(.*)' with .*; child PID is \d+$/ ))
++      (($User, $Host) = ( $ThisLine =~ /^fork_child: \[\d\].*\((.*)\): began session for `(.*)' with .*; child PID is \d+$/ )) or
++      (($User, $Host) = ( $ThisLine =~ /^LOGIN, user=(.*?), ip=\[(.*?)\]$/))
+    ) {
+       $Login{$User}{$Host}++;
+-   } elsif ( ($User,$Downloaded,$DownloadSize,$Left,$LeftSize) = ( $ThisLine =~ /^Stats: (.*?) (.*?) (.*?) (.*?) (.*?)$/) ) {
++   } elsif (
++      (($User, $Host, $Downloaded, $DownloadedSize) = ( $ThisLine =~ /LOGOUT, user=(.*?), ip=\[(.*?)\], top=(\d+), retr=(\d+)$/))
++   ) {
++      $DownloadedMessagesSize{$User} += $DownloadedSize;
++      $DownloadedMessages{$User} += $Downloaded;
++      $Logout{$User}{$Host}++;
++      $Logout2{$User}++;
++      $Connection{$Host}++;
++   } elsif (
++      (($User,$Downloaded,$DownloadSize,$Left,$LeftSize) = ( $ThisLine =~ /^Stats: (.*?) (.*?) (.*?) (.*?) (.*?)$/))
++   ) {
+       $DownloadedMessages{$User} += $Downloaded;
+       $DownloadedMessagesSize{$User} += $DownloadSize;
+       $MessagesLeft{$User} = $Left;
+       $MboxSize{$User} = $LeftSize;
+-   } elsif ( ($User, $Host) = ( $ThisLine =~ /^session ended for user (.*?) - (.*)/) ) {
++   } elsif (
++      (($User, $Host) = ( $ThisLine =~ /^session ended for user (.*?) - (.*)/))
++   ) {
+       $Logout{$User}{$Host}++;
+       $Logout2{$User}++;
+       $Connection{$Host}++;
