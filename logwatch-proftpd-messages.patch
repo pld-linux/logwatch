@@ -1,0 +1,47 @@
+Index: scripts/services/proftpd-messages
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/proftpd-messages,v
+retrieving revision 1.17
+diff -u -r1.17 proftpd-messages
+--- scripts/services/proftpd-messages	29 Oct 2004 21:19:01 -0000	1.17
++++ scripts/services/proftpd-messages	14 Dec 2004 09:52:41 -0000
+@@ -42,8 +42,8 @@
+          ( $ThisLine =~ / - FTP session opened/ ) or
+          ( $ThisLine =~ / - FTP session closed/ ) or
+          ( $ThisLine =~ / - No certificate files found/ ) or
+-         ( $ThisLine =~ /FTP no transfer timeout, disconnected\./ ) or
+-         ( $ThisLine =~ /FTP login timed out, disconnected\./ )
++         ( $ThisLine =~ /FTP no transfer timeout, disconnected/ ) or
++         ( $ThisLine =~ /FTP login timed out, disconnected/ )
+       ) {
+          #We don't care about these
+    } elsif ( ($Host,$IP,$Email,) = ( $ThisLine =~ /^FTP session opened: ftp\/ftp (.*)\[(.*)\] (.*)$/ ) ) {
+@@ -86,6 +86,8 @@
+       $TransferTimeout{$Host}++;
+    } elsif ( $ThisLine =~ m/[^ ]* - Fatal: Transport endpoint is not connected/ ) {
+       $NoEndpoints++;
++   } elsif ( ($Option) = ( $ThisLine =~ /warning: (.*) is deprecated/ ) ) {
++      $DeprecatedOptions{$Option}++;
+    } else {
+       # Report any unmatched entries...
+       push @OtherList,$ThisLine;
+@@ -94,6 +96,13 @@
+ 
+ ##############################################
+ 
++if (keys %DeprecatedOptions) {
++   print "\nDeprecated options in config:\n";
++   foreach $Option (sort {$a cmp $b} keys %DeprecatedOptions) {
++      print "   $Option\n";
++   }
++}
++
+ if ( (keys %AnonLogins) and ($Detail >= 5) ) {
+    print "\nAnonymous FTP Logins:\n";
+    foreach $ThisOne (sort {$a cmp $b} keys %AnonLogins) {
+@@ -193,4 +202,4 @@
+ 
+ exit(0);
+ 
+-# vi: shiftwidth=3 tabstop=3 et
++# vi: shiftwidth=3 tabstop=3 syntax=perl et
