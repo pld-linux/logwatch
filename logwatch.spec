@@ -1,3 +1,4 @@
+%include	/usr/lib/rpm/macros.perl
 Summary:    	Analyzes system logs 
 Summary(pl): 	Logwatch - analizator logów systemowych
 Name:        	logwatch
@@ -7,6 +8,7 @@ License:   	MIT
 Group:       	Applications/System
 Source:      	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
 URL:		http://www.logwatch.org/
+BuildRequires:	rpm-perlprov
 Requires:    	perl
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Buildarch:   	noarch
