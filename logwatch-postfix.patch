@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.4
 diff -u -r1.4 postfix
 --- scripts/services/postfix	26 Nov 2003 14:36:30 -0000	1.4
-+++ scripts/services/postfix	7 Dec 2003 17:46:50 -0000
++++ scripts/services/postfix	7 Dec 2003 22:43:28 -0000
 @@ -55,6 +55,8 @@
  $BytesTransferred = 0;
  $FourHourReturns = 0;
@@ -40,7 +40,7 @@ diff -u -r1.4 postfix
  		# unknown user
  		# $Msg = " hello "
  		# print "bounce message from " . $Dest . " msg : " . $Relay . "\n";
-@@ -92,54 +93,65 @@
+@@ -92,54 +93,66 @@
  			$Temp = "To " . $Dest . " Msg=\"" . $Msg . "\"";
  			$ForeignBounce{$Temp}++;
  		}
@@ -98,7 +98,7 @@ diff -u -r1.4 postfix
 +	} elsif ( ($Host,$Site,$Reason) = ($ThisLine =~ /^reject: RCPT from ([^ ]*\[[^ ]*\]): 554 Service unavailable; \[[^ ]*\] blocked using ([^ ]*), reason: (.*);/)) {
 +		$Temp = "$Host : $Reason";
 +		$RejectRBL{$Site}{$Temp}++;
-+	} elsif ( (undef,undef,$Error) = ($ThisLine =~ /^warning: ([^ ]*): hostname ([^ ]*) verification failed: ([^ ]*)$/)) {
++	} elsif ( (undef,undef,$Error) = ($ThisLine =~ /^warning: ([^ ]*): hostname ([^ ]*) verification failed: (.*)$/)) {
 +		$HostnameVerification{$Error}++;
 +	} elsif ( $ThisLine =~ /^[a-zA-Z0-9]+: removed$/) {
 +		$RemovedFromQueue++;
@@ -110,6 +110,7 @@ diff -u -r1.4 postfix
 +		push @OtherList,$ThisLine;
 +		#
 +		# TODO:
++		#too many errors after RCPT from ta130.internetdsl.tpnet.pl[80.55.104.130]
 +		#warning: Illegal address syntax from f133.ds.univ.gda.pl[153.19.197.133] in MAIL command: <sseeds_pg@teamaffiliate.com onMouseOver=>
 +		#warning: bad size limit "(5120000)" in EHLO reply from relay.hwk-aachen.de[212.117.75.130]
 +		#warning: host 127.0.1.50[127.0.1.50] greeted me with my own hostname jol.task.gda.pl
@@ -135,7 +136,7 @@ diff -u -r1.4 postfix
  	(keys %UnknownUsers) or
  	(keys %RelayDenied) or
  	(keys %$HeaderReject) or
-@@ -148,83 +160,132 @@
+@@ -148,83 +161,132 @@
  	(keys %AuthWarns) or
  	(keys %ForwardErrors) or
  	(keys %SentBy) or
