@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/http,v
 retrieving revision 1.8
 diff -u -r1.8 http
 --- scripts/services/http	15 Dec 2003 19:01:19 -0000	1.8
-+++ scripts/services/http	24 Dec 2003 00:10:56 -0000
++++ scripts/services/http	29 Dec 2003 09:24:23 -0000
 @@ -1,4 +1,19 @@
  #!/usr/bin/perl
 +##########################################################################
@@ -25,7 +25,7 @@ diff -u -r1.8 http
  use strict;
  # use re "debug";
  #
-@@ -8,100 +23,110 @@
+@@ -8,100 +23,116 @@
  #  Build tables of the log format to parse it and determine whats what
  #
  
@@ -132,21 +132,27 @@ diff -u -r1.8 http
 +my $other_count = 0;
 +my $other_bytes = 0;
 +my $total_hack_count = 0;
-+my $wpad_count = 0;
-+my $wpad_bytes = 0;
-+my $image_types = '(\.bmp|\.gif|\.ico|\.jpeg|\.jpg|\.png|\.swf|\.wmf|\.xdm)';
-+my $content_types = '(';
-+   $content_types = $content_types.'\/server-status|\/server-info';
-+   $content_types = $content_types.'|\.htm|\.html|\.phtml|\.shtml|\/';
-+   $content_types = $content_types.'|\.php|\.php3|\.asp|\.pl|\.wml|\/';
-+   $content_types = $content_types.'|\.css|\.js|\.cgi|\.txt|\/';
-+   $content_types = $content_types.'|\.class|\.jsp|\.jar|\.java)';
-+my $docs_types = '(\.doc|\.dvi|\.gnumeric|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.tex|\.xls|\.xml)';
-+my $archive_types = '(\.ace|\.bz2|\.deb|\.gz|\.rar|\.rpm|\.zip)';
-+my $sound_types = '(\.mp3|\.wav|\.wma|\.mid)';
-+my $movie_types = '(\.asf|\.avi|\.mid|\.mpg|\.mpeg|\.mov)';
-+my $winexec_types = '(\.com|\.exe|\.dll)';
-+my $wpad_files = '(wpad\.dat|wspad\.dat|proxy\.pac)';
++my $wpad_count =     0;
++my $wpad_bytes =     0;
++my $src_count =      0;
++my $src_bytes =      0;
++my $images_count =   0;
++my $images_bytes =   0;
++my $image_types =    '(\.bmp|\.gif|\.ico|\.jpeg|\.jpg|\.png|\.swf|\.wmf|\.xdm)';
++my $content_types =  '(';
++   $content_types =  $content_types.'\/server-status|\/server-info';
++   $content_types =  $content_types.'|\.htm|\.html|\.phtml|\.shtml|\/';
++   $content_types =  $content_types.'|\.php|\.php3|\.asp|\.pl|\.wml|\/';
++   $content_types =  $content_types.'|\.css|\.js|\.cgi|\.txt|\/';
++   $content_types =  $content_types.'|\.class|\.jsp|\.jar|\.java)';
++my $docs_types =     '(\.doc|\.dvi|\.gnumeric|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.tex|\.xls|\.xml)';
++my $archive_types =  '(\.ace|\.bz2|\.cab|\.deb|\.gz|\.rar|\.rpm|\.tbz2|\.zip)';
++my $sound_types =    '(\.mp3|\.ram|\.raw|\.rm|\.wav|\.wma|\.mid)';
++my $movie_types =    '(\.asf|\.avi|\.mid|\.mpg|\.mpeg|\.mov)';
++my $winexec_types =  '(\.com|\.exe|\.dll)';
++my $wpad_files =     '(wpad\.dat|wspad\.dat|proxy\.pac)';
++my $program_src =    '(\.c|\.h|\.patch|\.cpp)';
++my $images_types =   '(\.bin|\.cue|\.iso|\.run)';
  
  #
  #   what to look for as an attack  USE LOWER CASE!!!!!!
@@ -211,7 +217,7 @@ diff -u -r1.8 http
  
  #################   print "RE pattern     = $pattern \n";
  
-@@ -110,200 +135,245 @@
+@@ -110,200 +141,253 @@
  #
  
  while (my $line = <STDIN>) {
@@ -387,19 +393,19 @@ diff -u -r1.8 http
 +   if ($field{lc_url} =~ /$image_types$/) {
 +      $image_count += 1;
 +      $image_bytes += $field{bytes_transfered};
-+   } elsif ($field{lc_url} =~ /$docs_types$/) {
++   } elsif ($field{base_url} =~ /$docs_types$/) {
 +      $docs_count += 1;
 +      $docs_bytes += $field{bytes_transfered};
-+   } elsif ($field{lc_url} =~ /$archive_types$/) {
++   } elsif ($field{base_url} =~ /$archive_types$/) {
 +      $archive_count += 1;
 +      $archive_bytes += $field{bytes_transfered};
-+   } elsif ($field{lc_url} =~ /$sound_types$/) {
++   } elsif ($field{base_url} =~ /$sound_types$/) {
 +      $sound_count += 1;
 +      $sound_bytes += $field{bytes_transfered};
-+   } elsif ($field{lc_url} =~ /$movie_types$/) {
++   } elsif ($field{base_url} =~ /$movie_types$/) {
 +      $movie_count += 1;
 +      $movie_bytes += $field{bytes_transfered};
-+   } elsif ($field{lc_url} =~ /$winexec_types$/) {
++   } elsif ($field{base_url} =~ /$winexec_types$/) {
 +      $winexec_count += 1;
 +      $winexec_bytes += $field{bytes_transfered};
 +   } elsif ($field{base_url} =~ /$content_types$/) {
@@ -408,6 +414,12 @@ diff -u -r1.8 http
 +   } elsif ($field{base_url} =~ /$wpad_files$/) {
 +      $wpad_count += 1;
 +      $wpad_bytes += $field{bytes_transfered};
++   } elsif ($field{base_url} =~ /$program_src$/) {
++      $src_count += 1;
++      $src_bytes += $field{bytes_transfered};
++   } elsif ($field{base_url} =~ /$images_types$/) {
++      $images_count += 1;
++      $images_bytes += $field{bytes_transfered};
 +   } elsif ($field{http_rc} =~ /3\d\d/) {
 +      $redirect_count += 1;
 +      $redirect_bytes += $field{bytes_transfered};
@@ -481,16 +493,18 @@ diff -u -r1.8 http
 +   print " responses ";
 +   print " (1xx $a1xx_resp, 2xx $a2xx_resp, 3xx $a3xx_resp,";
 +   print " 4xx $a4xx_resp, 5xx $a5xx_resp) \n";
-+   print	  " ".$image_count." Images (".$image_bytes." bytes),\n";
-+   print   " ".$docs_count." Documents (".$docs_bytes." bytes),\n";
-+   print   " ".$archive_count." Archives (".$archive_bytes." bytes),\n";
-+   print   " ".$sound_count." Sound files (".$sound_bytes." bytes),\n";
-+   print   " ".$movie_count." Movies files (".$movie_bytes." bytes),\n";
-+   print   " ".$winexec_count." Windows executable files (".$winexec_bytes." bytes),\n";
-+   print	  " ".$content_count." Content pages (".$content_bytes." bytes),\n";
-+   print	  " ".$redirect_count." Redirects (".$redirect_bytes." bytes),\n";
-+   print   " ".$wpad_count." Proxy Configuration Files (".$wpad_bytes." bytes),\n";
-+   print	  " ".$other_count." Other (".$other_bytes." bytes) \n";
++   print	  " $image_count Images ($image_bytes bytes),\n";
++   print   " $docs_count Documents ($docs_bytes bytes),\n";
++   print   " $archive_count Archives ($archive_bytes bytes),\n";
++   print   " $sound_count Sound files ($sound_bytes bytes),\n";
++   print   " $movie_count Movies files ($movie_bytes bytes),\n";
++   print   " $winexec_count Windows executable files ($winexec_bytes bytes),\n";
++   print	  " $content_count Content pages ($content_bytes bytes),\n";
++   print	  " $redirect_count Redirects ($redirect_bytes bytes),\n";
++   print   " $wpad_count Proxy Configuration Files ($wpad_bytes bytes),\n";
++   print   " $src_count Program source files ($src_bytes bytes),\n";
++   print   " $images_count CD Images ($images_bytes bytes),\n"; 
++   print	  " $other_count Other ($other_bytes bytes) \n";
 +}
 +
  #
