@@ -43,7 +43,7 @@ u¿yciu i moze pracowaæ na wiêkszo¶ci systemów.
 %patch0 -p1
 %patch1 -p1
 %patch2 -p0
-%patch3 -p1
+%patch3 -p0
 %patch4 -p0
 %patch5 -p1
 %patch6 -p0
