@@ -1,36 +1,22 @@
 Index: scripts/logwatch.pl
 ===================================================================
 RCS file: /var/cvs/logwatch/scripts/logwatch.pl,v
-retrieving revision 1.115
-diff -u -r1.115 logwatch.pl
---- scripts/logwatch.pl	29 Oct 2004 21:22:24 -0000	1.115
-+++ scripts/logwatch.pl	31 Oct 2004 14:33:33 -0000
-@@ -7,6 +7,11 @@
- # ftp://ftp.logwatch.org/pub/redhat/RPMS
- 
- ########################################################
-+# Specify version and build-date:
-+my $Version = 'pre6.0';
-+my $VDate = '10/29/04';
-+
-+########################################################
- # This was written and is maintained by:
- #    Kirk Bauer <kirk@kaybee.org>
- #
-@@ -15,14 +20,11 @@
- #
+retrieving revision 1.119
+diff -u -r1.119 logwatch.pl
+--- scripts/logwatch.pl	24 Feb 2005 17:10:33 -0000	1.119
++++ scripts/logwatch.pl	24 Feb 2005 22:25:19 -0000
+@@ -21,10 +21,11 @@
  ########################################################
  
--my $BaseDir = "/etc/log.d";
+ #To be FHS compliant distro packages might use this
+-#my $BaseDir = "/usr/share/logwatch";
 +my $BaseDir = "/usr/share/logwatch";
- #my $BaseDir = "/home/kirk/cvs-work/logwatch";
--my $ConfigDir = "$BaseDir/conf";
 +my $ConfigDir = "/etc/log.d";
+ #my $ConfigDir = "/etc/log.d/conf";
+-my $BaseDir = "/etc/log.d";
+-my $ConfigDir = "$BaseDir/conf";
++#my $BaseDir = "/etc/log.d";
++#my $ConfigDir = "$BaseDir/conf";
  my $PerlVersion = "/usr/bin/perl";
  
--my $Version = 'pre6.0';
--my $VDate = '10/29/04';
--
  #############################################################################
- 
- use Getopt::Long;
