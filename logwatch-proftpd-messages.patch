@@ -4,14 +4,14 @@ RCS file: /var/cvs/logwatch/scripts/services/proftpd-messages,v
 retrieving revision 1.17
 diff -u -r1.17 proftpd-messages
 --- scripts/services/proftpd-messages	29 Oct 2004 21:19:01 -0000	1.17
-+++ scripts/services/proftpd-messages	14 Dec 2004 09:52:41 -0000
++++ scripts/services/proftpd-messages	14 Dec 2004 09:59:03 -0000
 @@ -42,8 +42,8 @@
           ( $ThisLine =~ / - FTP session opened/ ) or
           ( $ThisLine =~ / - FTP session closed/ ) or
           ( $ThisLine =~ / - No certificate files found/ ) or
 -         ( $ThisLine =~ /FTP no transfer timeout, disconnected\./ ) or
 -         ( $ThisLine =~ /FTP login timed out, disconnected\./ )
-+         ( $ThisLine =~ /FTP no transfer timeout, disconnected/ ) or
++         ( $ThisLine =~ /FTP (no transfer|session idle) timeout, disconnected/ ) or
 +         ( $ThisLine =~ /FTP login timed out, disconnected/ )
        ) {
           #We don't care about these
