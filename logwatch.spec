@@ -5,16 +5,14 @@
 Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
-Version:	6.0
-Release:	0.5
+Version:	6.0.1
+Release:	0.1
 License:	MIT
 Group:		Applications/System
 Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
-# Source0-md5:	4be36d48913c306239a3ba8d061a1000
+# Source0-md5:	47a609d01472935b269f04584d6e9217
 #Path for pre-versions:
 #Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
-Source1:	%{name}-saslauthd
-Source2:	%{name}-saslauthd.conf
 Patch0:		%{name}-config.patch
 Patch1:		%{name}-log_conf.patch
 Patch2:		%{name}-secure.patch
