@@ -1,0 +1,769 @@
+Index: scripts/services/courier
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/courier,v
+retrieving revision 1.6
+diff -u -r1.6 courier
+--- scripts/services/courier	15 Dec 2003 18:09:23 -0000	1.6
++++ scripts/services/courier	31 Dec 2003 14:17:29 -0000
+@@ -1,6 +1,8 @@
+ #!/usr/bin/perl
+ ##########################################################################
+-#
++# $Id$
++##########################################################################
++# $Log$
+ ##########################################################################
+ 
+ ########################################################
+@@ -26,7 +28,7 @@
+ my $Detail = $ENV{'LOGWATCH_DETAIL_LEVEL'};
+ my $overrideDetail = $ENV{'courier_override_detail_level'};
+ if (!($overrideDetail eq "")) {
+-  $Detail = $overrideDetail;
++   $Detail = $overrideDetail;
+ }
+ 
+ my $PrintMailQueue = $ENV{'courier_printmailqueue'};
+@@ -73,7 +75,7 @@
+ 
+ 
+ if ( $Debug >= 5 ) {
+-    print STDERR "\n\nDEBUG: Inside Courier Filter \n\n";
++   print STDERR "\n\nDEBUG: Inside Courier Filter \n\n";
+ }
+ 
+ #List vars here to avoid case-sensitive typos
+@@ -169,217 +171,174 @@
+ 
+ 
+ while (defined($ThisLine = <STDIN>)) {
+-    my $Size2 = 0;
+-    my $Size  = 0;
+-    if ( ($ThisLine =~ /^Initializing */) or
+-         ($ThisLine =~ /^Installing */) or
+-         ($ThisLine =~ /^Installed: */) or
+-         ($ThisLine =~ /^Started .\/courier.*, pid=.*, maxdels=.*, maxhost=.*, maxrcpt=.*1/ ) or
+-         ($ThisLine =~ /^Waiting\.  shutdown time=.*, wakeup time=.*, queuedelivering=.*, inprogress=.*/) or
+-         ($ThisLine =~ /^Loading STATIC transport module libraries./) or
+-         ($ThisLine =~ /^Purging /) or
+-         ($ThisLine =~ /^completed,id=/) or
+-         ($ThisLine =~ /^queuelo=.*, queuehi=.*/) or
+-         # Do we really want to ignore these?
+-         # currently i'm too lazy to include this
+-         ($ThisLine =~ /started,ip=.*/) or
+-#   example line:
+-#   id=00081D7A.3E9E0C51.000037A4,from=<r@rrg.ac.at>,addr=<u.u@u.at>,size=53223,status: success: 1 Time(s)
+-         ($ThisLine =~ /id=.*?,from=<.*?>,addr=<.*?>,size=[0-9]*,status:.*/)
+-         ) {
+-        # Don't care about these...
+-    }
+-    elsif ( ( $ThisLine =~ /^Courier .* Copyright/) )   {
+-        $StartCourier++;
+-    }
+-    elsif ( $ThisLine =~ /^SHUTDOWN: respawnlo limit reached/ ) {
+-        $ShutdownCourier++;
+-    }
+-    elsif ( $ThisLine =~ /^newmsg,id=/ ) {
+-	$newmsg++;
+-    }
+-    # What about addresses with ,?
+-    elsif ( ($MailFrom, $Module, $Host, $Address ) = ( $ThisLine =~ /^started,id=.*?,from=<(.*?)>,module=(.*?),host=(.*?),addr=<(.*?)>/ ) ){ 
+-	$MailDeliveryStarted{$MailFrom}{$Address}{$Host}{$Module}++;
+-    }
+-# example lines: 
+-#error,relay=::ffff:209.214.170.188,from=<kuebabysus@netzero.net>,to=<amber3624@netzero.net>: 513 Relaying denied.
+-#error,relay=::ffff:218.70.112.124,from=<bss@fre.sg.co.nz>: 517 Invalid domain, see <URL:ftp://ftp.isi.edu/in-notes/rfc1035.txt>
+-#error,relay=::ffff:62.67.54.144,msg="502 ESMTP command error",cmd: DATA
+-
+-    elsif  ( ($Host, $From, $To, $Reason) = ( $ThisLine =~ /^error,relay=(.*?),from=<(.*?)>,to=<(.*?)>: (.*)/ ) ) {
+-        $ErrorMsgs{$Reason}{$Host}{$From}{$To}++;
+-        $TblReason = MakeTblReason($Reason);
+-         
+-
+-	$ErrorTbl{$TblReason}{$Host}++;
+-
+-    }
+-    
+-    elsif  ( ($Host, $From, $Reason) = ( $ThisLine =~ /^error,relay=([0-9a-f:.]*?),(?:ident=.*,|)from=<(.*?)>: (.*)/ ) ){
+-        if ( ( ( $LastHost, $LastFrom, $LastReason ) = ($LastLine =~ /^error,relay=(.*?),from=<(.*?)>: (.*)/ ) ) 
+-               && ($LastHost eq $Host) && ($LastFrom eq $From) 
+-               && ( ( $LastReasonNumber ) = ($LastReason =~ /^([0-9]{3})/) )
+-               && ( ( $ReasonNumber ) = ( $Reason =~ /^([0-9]{3})/) )
+-               && ( $ReasonNumber == $LastReasonNumber ))
+-	     { 
+-                 $ReasonNumber = "";
+-                 $LastReasonNumber = ""; 
+-             }
+-	else {
+-        $ErrorMsgs{$Reason}{$Host}{$From}{'-'}++;
+-	$TblReason = MakeTblReason($Reason);
+-	
+-        
+-	$ErrorTbl{$TblReason}{$Host}++;
+-
+-        }
+-    }
+-    elsif  ( ($Host, $Reason) = ( $ThisLine =~ /^error,relay=(.*?),msg=(".*)/ ) ) {
+-        $ErrorMsgs{$Reason}{$Host}{'-'}{'-'}++;
+-        $TblReason = MakeTblReason($Reason);
+-		
+-      
+-	$ErrorTbl{$TblReason}{$Host}++;
+-    }
+-
+-#example line:
+-#id=00081D79.3E9EE416.00003C6E,from=<w@mm.de>,addr=<zz@zz.gv.at>: 250 OK
+-
+-#    elsif  ( ($From, $To, $Status) = ( $ThisLine =~ /^id=.*?,from=<(.*?)>,addr=<(.*?)>: ([0-9]{3})/ ) ) {
+-#        $CommStat{$Status}{$From}{$To}++;
+-#    }
+-
+-#example line:
+-#    id=00081D7A.3E9E0B39.000036E4,from=<u@ttt.at>,addr=<aa@aa.at>,size=35861,success: delivered: ff.ff.at [111.111.111.111]
+-# DeliverSuccess = DeSu !!!!!!!! 
+-   elsif ( ($From, $To, $Size) = ( $ThisLine =~ /^id=.*?,from=<(.*?)>,addr=<(.*?)>,size=([0-9]*),success: .*/ ) ) {
+-        $DeSu{$From}{$To}++;
+-        $DeliverMailSize += $Size;
+-	$DeSuTbl{$To}{$From}++;
+-	$DeSuTblSz{$To}{$From} += $Size;
+-    }
+-#example line pop3, imapd??
+-#Connection, ip=[::ffff:192.168.0.24]
+-
+-    elsif  ( ($Host) = ( $ThisLine =~ /^Connection, ip=\[(.*?)\]/ ) ) {
+-        $Connection{$Host}++;
+-    }
+-#example line
+-#LOGIN, user=xy, ip=[::ffff:192.168.0.12]
+-
+-    elsif  ( ($User, $Host) = ( $ThisLine =~ /^LOGIN, user=(.*?), ip=\[(.*?)\]/ ) ) {
+-        $Login{$User}{$Host}++;
+-    }
+-
+-#example line
+-#LOGOUT, user=xy, ip=[::ffff:192.168.0.24], top=0, retr=0
+-#DISCONNECTED, user=zz@uu.ch, ip=[::ffff:192.168.0.1], headers=0, body=1100
+-#
+-    elsif  ( ( ( $User, $Host, $Dummy, $Dummy2, $Size) = 
+-               ( $ThisLine =~ /^LOGOUT, user=(.*?), ip=\[(.*?)\], (top|headers)=[0-9]*?, (retr|body)=([0-9]*)/ ) ) ||
+-             ( ( $User, $Host, $Size, $Size2) = 
+-	       ( $ThisLine =~ /^DISCONNECTED, user=(.*?), ip=\[(.*?)\], headers=([0-9]*?), body=([0-9]*)/ ) ) ) {
+-        $Logout{$User}{$Host}++;
+-	$Logout2{$User}++;
+-        $LogoutSize{$User} += $Size;
+-	$LogoutSize += $Size2; 
+-    }
+-#example line
+-#LOGIN FAILED, ip=[::ffff:192.168.200.199]
++   my $Size2 = 0;
++   my $Size  = 0;
++   if (
++      ($ThisLine =~ /^Initializing */) or
++      ($ThisLine =~ /^Installing */) or
++      ($ThisLine =~ /^Installed: */) or
++      ($ThisLine =~ /^Started .\/courier.*, pid=.*, maxdels=.*, maxhost=.*, maxrcpt=.*1/ ) or
++      ($ThisLine =~ /^Waiting\.  shutdown time=.*, wakeup time=.*, queuedelivering=.*, inprogress=.*/) or
++      ($ThisLine =~ /^Loading STATIC transport module libraries./) or
++      ($ThisLine =~ /^Purging /) or
++      ($ThisLine =~ /^completed,id=/) or
++      ($ThisLine =~ /^queuelo=.*, queuehi=.*/) or
++      # Do we really want to ignore these?
++      # currently i'm too lazy to include this
++      ($ThisLine =~ /started,ip=.*/) or
++      #   example line:
++      #   id=00081D7A.3E9E0C51.000037A4,from=<r@rrg.ac.at>,addr=<u.u@u.at>,size=53223,status: success: 1 Time(s)
++      
++      ($ThisLine =~ /id=.*?,from=<.*?>,addr=<.*?>,size=[0-9]*,status:.*/)
++   ) {
++      # Don't care about these...
++   } elsif ( ( $ThisLine =~ /^Courier .* Copyright/) ) {
++      $StartCourier++;
++   } elsif ( $ThisLine =~ /^SHUTDOWN: respawnlo limit reached/ ) {
++      $ShutdownCourier++;
++   } elsif ( $ThisLine =~ /^newmsg,id=/ ) {
++      $newmsg++;
++   } elsif ( ($MailFrom, $Module, $Host, $Address ) = ( $ThisLine =~ /^started,id=.*?,from=<(.*?)>,module=(.*?),host=(.*?),addr=<(.*?)>/ ) ){
++      $MailDeliveryStarted{$MailFrom}{$Address}{$Host}{$Module}++;
++   } elsif  ( ($Host, $From, $To, $Reason) = ( $ThisLine =~ /^error,relay=(.*?),from=<(.*?)>,to=<(.*?)>: (.*)/ ) ) {
++      # example lines: 
++      # error,relay=::ffff:209.214.170.188,from=<kuebabysus@netzero.net>,to=<amber3624@netzero.net>: 513 Relaying denied.
++      # error,relay=::ffff:218.70.112.124,from=<bss@fre.sg.co.nz>: 517 Invalid domain, see <URL:ftp://ftp.isi.edu/in-notes/rfc1035.txt>
++      # error,relay=::ffff:62.67.54.144,msg="502 ESMTP command error",cmd: DATA
++      
++      $ErrorMsgs{$Reason}{$Host}{$From}{$To}++;
++      $TblReason = MakeTblReason($Reason);
++      $ErrorTbl{$TblReason}{$Host}++;
++   } elsif  ( ($Host, $From, $Reason) = ( $ThisLine =~ /^error,relay=([0-9a-f:.]*?),(?:ident=.*,|)from=<(.*?)>: (.*)/ ) ){
++      if ( 
++         ( ( $LastHost, $LastFrom, $LastReason ) = ($LastLine =~ /^error,relay=(.*?),from=<(.*?)>: (.*)/ ) ) && 
++         ($LastHost eq $Host) &&
++         ($LastFrom eq $From) && 
++         (( $LastReasonNumber ) = ($LastReason =~ /^([0-9]{3})/)) &&
++         (( $ReasonNumber ) = ($Reason =~ /^([0-9]{3})/)) &&
++         ( $ReasonNumber == $LastReasonNumber )
++      ) { 
++         $ReasonNumber = "";
++         $LastReasonNumber = ""; 
++      } else {
++         $ErrorMsgs{$Reason}{$Host}{$From}{'-'}++;
++         $TblReason = MakeTblReason($Reason);
++         $ErrorTbl{$TblReason}{$Host}++;
++      }
++   } elsif  ( ($Host, $Reason) = ( $ThisLine =~ /^error,relay=(.*?),msg=(".*)/ ) ) {
++      $ErrorMsgs{$Reason}{$Host}{'-'}{'-'}++;
++      $TblReason = MakeTblReason($Reason);
++      $ErrorTbl{$TblReason}{$Host}++;
++#   } elsif  ( ($From, $To, $Status) = ( $ThisLine =~ /^id=.*?,from=<(.*?)>,addr=<(.*?)>: ([0-9]{3})/ ) ) {
++#      #example line:
++#      #id=00081D79.3E9EE416.00003C6E,from=<w@mm.de>,addr=<zz@zz.gv.at>: 250 OK
+ #
+-
+-    elsif  ( ($Host) = ( $ThisLine =~ /^LOGIN FAILED, ip=\[(.*?)\]/ ) ) {
+-            $LoginFailed{$Host}++;
+-	   }
+-		
+-
+-#example line: deferred delivery attempts
+-#id=00081D03.3E850D34.000076BD,from=<oo@oo.at>,addr=<uu@uu.at>,status: deferred
+-    elsif  ( ($ID, $From, $To) = ( $ThisLine =~ /^id=(.*),from=<(.*?)>,addr=<(.*?)>,status: deferred/ ) ) {
+-    $Reason = $FailRe{$ID}{$From}{$To};
+-    if ($Reason eq "")
+-     {
+-       $Reason = "-";
+-     }
+-    $TblReason = MakeTblReason($Reason);
+-    
+-    $Deferred{$From}{$To}{$Reason}++;
+-    $DfrdTbl{$TblReason}{$To}++;
+-    
+-    }
+-
+-#example line: failed delivery attempts
+-#id=00081D7B.3E9167E7.00002B27,from=<bb@bb.at>,addr=<rr@rr.at>,status: failure
+-    elsif  ( ($ID, $From, $To) = ( $ThisLine =~ /^id=(.*?),from=<(.*?)>,addr=<(.*?)>,status: failure/ ) ) {
+-    $Reason = $FailRe{$ID}{$From}{$To};
+-    if ($Reason eq "")
+-    {
+-       $Reason = "-";
+-    }    
+-    $Failed{$From}{$To}{$Reason}++;
+-    $TblReason = MakeTblReason($Reason);
+-	
+-    
+-    $ErrorTbl2{$TblReason}{$To}++;
+-    
+-    }
+-
+-#example line: 
+-#id=00079ED0.3E8A45E7.000042AF,from=<rr@rrr.at>,addr=<aaa@aaa.at>: Connection timed out
+-#id=00079ED0.3E975385.00005B66,from=<zz@zz.at>,addr=<ii@ii.at>: DNS lookup failed.
+-#This is for the following lines to have the reason for failed or deferred.
+-    elsif  ( ($ID, $From, $To, $Reason) = ( $ThisLine =~ /^id=(.*?),from=<(.*?)>,addr=<(.*?)>:(.*)/ ) ) {
+-        $FailRe{$ID}{$From}{$To} = $Reason;
+-    }
+-
+-
+-
+-
+-
+-
+-
+-    else {
+-        # Report any unmatched entries...
+-        # remove PID from named messages
+-        $ThisLine =~ s/^(client [.0-9]+)\S+/$1/;
+-        chomp($ThisLine);
+-        $OtherList{$ThisLine}++;
+-    }
+-	$LastLine = $ThisLine;
++#      $CommStat{$Status}{$From}{$To}++;
++   } elsif ( ($From, $To, $Size) = ( $ThisLine =~ /^id=.*?,from=<(.*?)>,addr=<(.*?)>,size=([0-9]*),success: .*/ ) ) {
++      #example line:
++      #id=00081D7A.3E9E0B39.000036E4,from=<u@ttt.at>,addr=<aa@aa.at>,size=35861,success: delivered: ff.ff.at [111.111.111.111]
++      #DeliverSuccess = DeSu !!!!!!!! 
++      
++      $DeSu{$From}{$To}++;
++      $DeliverMailSize += $Size;
++      $DeSuTbl{$To}{$From}++;
++      $DeSuTblSz{$To}{$From} += $Size;
++   } elsif  ( ($Host) = ( $ThisLine =~ /^Connection, ip=\[(.*?)\]/ ) ) {
++      #example line pop3, imapd??
++      #Connection, ip=[::ffff:192.168.0.24]
++      
++      $Connection{$Host}++;
++   } elsif ( ($User, $Host) = ( $ThisLine =~ /^LOGIN, user=(.*?), ip=\[(.*?)\]/ ) ) {
++      #example line
++      #LOGIN, user=xy, ip=[::ffff:192.168.0.12]
++      
++      $Login{$User}{$Host}++;
++   } elsif (
++      ( ( $User, $Host, $Dummy, $Dummy2, $Size) = ( $ThisLine =~ /^LOGOUT, user=(.*?), ip=\[(.*?)\], (top|headers)=[0-9]*?, (retr|body)=([0-9]*)/ ) ) ||
++      ( ( $User, $Host, $Size, $Size2) = ( $ThisLine =~ /^DISCONNECTED, user=(.*?), ip=\[(.*?)\], headers=([0-9]*?), body=([0-9]*)/ ) )
++   ) {
++      #example line
++      #LOGOUT, user=xy, ip=[::ffff:192.168.0.24], top=0, retr=0
++      #DISCONNECTED, user=zz@uu.ch, ip=[::ffff:192.168.0.1], headers=0, body=1100
++      
++      $Logout{$User}{$Host}++;
++      $Logout2{$User}++;
++      $LogoutSize{$User} += $Size;
++      $LogoutSize += $Size2; 
++   } elsif ( ($Host) = ( $ThisLine =~ /^LOGIN FAILED, ip=\[(.*?)\]/ ) ) {
++      #example line
++      #LOGIN FAILED, ip=[::ffff:192.168.200.199]
++      
++      $LoginFailed{$Host}++;
++   } elsif ( ($ID, $From, $To) = ( $ThisLine =~ /^id=(.*),from=<(.*?)>,addr=<(.*?)>,status: deferred/ ) ) {
++      #example line: deferred delivery attempts
++      #id=00081D03.3E850D34.000076BD,from=<oo@oo.at>,addr=<uu@uu.at>,status: deferred
++      
++      $Reason = $FailRe{$ID}{$From}{$To};
++      if ($Reason eq "") {
++         $Reason = "-";
++      }
++      $TblReason = MakeTblReason($Reason);
++      
++      $Deferred{$From}{$To}{$Reason}++;
++      $DfrdTbl{$TblReason}{$To}++;
++   } elsif ( ($ID, $From, $To) = ( $ThisLine =~ /^id=(.*?),from=<(.*?)>,addr=<(.*?)>,status: failure/ ) ) {
++      #example line: failed delivery attempts
++      #id=00081D7B.3E9167E7.00002B27,from=<bb@bb.at>,addr=<rr@rr.at>,status: failure
++      
++      $Reason = $FailRe{$ID}{$From}{$To};
++      if ($Reason eq "") {
++         $Reason = "-";
++      }
++      $Failed{$From}{$To}{$Reason}++;
++      $TblReason = MakeTblReason($Reason);
++      $ErrorTbl2{$TblReason}{$To}++;
++   } elsif ( ($ID, $From, $To, $Reason) = ( $ThisLine =~ /^id=(.*?),from=<(.*?)>,addr=<(.*?)>:(.*)/ ) ) {
++      #example line: 
++      #id=00079ED0.3E8A45E7.000042AF,from=<rr@rrr.at>,addr=<aaa@aaa.at>: Connection timed out
++      #id=00079ED0.3E975385.00005B66,from=<zz@zz.at>,addr=<ii@ii.at>: DNS lookup failed.
++      #This is for the following lines to have the reason for failed or deferred.
++
++      $FailRe{$ID}{$From}{$To} = $Reason;
++   } else {
++      # Report any unmatched entries...
++      # remove PID from named messages
++
++      $ThisLine =~ s/^(client [.0-9]+)\S+/$1/;
++      chomp($ThisLine);
++      $OtherList{$ThisLine}++;
++   }
++   $LastLine = $ThisLine;
+ }
+ 
+ 
+ if ( ( $Detail >= 5 ) and ($PrintMailQueue ) ) {
+-	print "\n\n\nCurrent State of the Mail Queue:\n".
+-	            "================================\n\n";
+-	my $OutputMailq;
+-	open WHICH, "which mailq|";
+-	while (<WHICH>) 
+-	{
+-		$OutputMailq .= $_;
+-		my $WhichMailq = $_;
+-		open MAILQ, "$WhichMailq|";
+-		while(<MAILQ>) 
+-		{
+-			my $MailqLine = $_;
+-			print $MailqLine;
+-		}
+-		close MAILQ;
+-}
+-	close WHICH;
+-
+-	my $WhichMailq = ($OutputMailq =~ /([A-Za-z0-9\/]*)/);
+-	if (-x $WhichMailq){
+-		open MAILQ, "$WhichMailq|";
+-		while(<MAILQ>) 
+-		{
+-			my $MailqLine = $_;
+-			print $MailqLine;
+-		}
+-		close MAILQ;
+-	}
+-	print "\n\n";
++   print "\n\n\nCurrent State of the Mail Queue:\n".
++   "================================\n\n";
++   my $OutputMailq;
++   open WHICH, "which mailq|";
++   while (<WHICH>) {
++      $OutputMailq .= $_;
++      my $WhichMailq = $_;
++      open MAILQ, "$WhichMailq|";
++      while(<MAILQ>) {
++         my $MailqLine = $_;
++         print $MailqLine;
++      }
++      close MAILQ;
++   }
++   close WHICH;
++   
++   my $WhichMailq = ($OutputMailq =~ /([A-Za-z0-9\/]*)/);
++   if (-x $WhichMailq) {
++      open MAILQ, "$WhichMailq|";
++      while(<MAILQ>) {
++         my $MailqLine = $_;
++         print $MailqLine;
++      }
++      close MAILQ;
++   }
++   print "\n\n";
+ }
+ 
+ 
+@@ -405,13 +364,13 @@
+    $ConnCount = 0;
+    foreach $ThisOne (sort keys %Connection) {
+       if ($DoLookup == 1) {
+-         $HostOut = LookupIP(LookupIPv46($ThisOne)) }
+-      else {
++         $HostOut = LookupIP(LookupIPv46($ThisOne))
++      } else {
+          $HostOut = $ThisOne;
+-	 }
++      }
+       print "   " . $HostOut . ": " . $Connection{$ThisOne} . " Time(s)\n";
+       $ConnCount += $Connection{$ThisOne};
+-
++      
+    }
+    print "Total $ConnCount Connections\n\n\n";
+ }
+@@ -470,36 +429,36 @@
+ if ( ( $Detail >= 5 ) and (keys %Connection) and ($Tables)) {
+    print     "\n[POP3, IMAP] Connections:".
+              "\n=========================".
+-	     "\n                                                         Host | Connections".
++             "\n                                                         Host | Connections".
+              "\n------------------------------------------------------------- | -----------";
+   
+    $ConnCount = 0;
+    foreach $Host (sort keys %Connection) {
+       $Conns = $Connection{$Host};
+       if ($DoLookup == 1) {
+-         $HostOut = LookupIP(LookupIPv46($Host)) }
+-      else {
++         $HostOut = LookupIP(LookupIPv46($Host))
++      } else {
+          $HostOut = $Host;
+-	 }
++      }
+       $HostLength = length($HostOut);
+       $HostSpaceLength = 61 - $HostLength;
+       $CountLength = length("$Conns");
+       $CountSpaceLength = 12 - $CountLength;
+       print "\n" ." " x $HostSpaceLength . $HostOut . " |" . " " x $CountSpaceLength .  $Conns . "";
+       $ConnCount += $Conns;
+-      }
++   }
+    $CountLength = length("$ConnCount");
+    $CountSpaceLength = 75 - $CountLength;
+    print "\n" . "-" x 75;
+    print "\n" . " " x $CountSpaceLength . "$ConnCount\n\n\n";
+-   }
++}
+ 
+ 
+ 
+ if ( ( $Detail >= 5 ) and (keys %Logout2) and ($Tables)) {
+    print     "\n[POP3, IMAP] Logins:".
+              "\n====================".
+-	     "\n                                                User | Logins |        Size".
++             "\n                                                User | Logins |        Size".
+              "\n---------------------------------------------------- | ------ | -----------";
+   
+    $ConnCount = 0;
+@@ -516,7 +475,7 @@
+                   " " x $SizeSpaceLength . $Size;
+       $ConnCount += $Conns;
+       $SizeAll += $Size;
+-      }
++   }
+    $CountLength = length("$ConnCount");
+    $CountSpaceLength = 61 - $CountLength;
+    $SizeLength = length($SizeAll);
+@@ -525,7 +484,7 @@
+    print "\n" . " " x $CountSpaceLength . "$ConnCount" . " |" .
+                 " " x $SpaceSizeLength  .  $SizeAll    .
+                 "\n\n\n";
+-   }
++}
+ 			   
+ 
+ 
+@@ -538,14 +497,14 @@
+       $UserCount = 0;
+       foreach my $Host (keys %{$Login{$User}}) {
+          if ($DoLookup == 1) {
+-            $HostOut = LookupIP(LookupIPv46($Host)) }
+-         else {
++            $HostOut = LookupIP(LookupIPv46($Host))
++         } else {
+             $HostOut = $Host;
+-	 }
++         }
+          $HostCount = $Login{$User}{$Host};
+          print "    From $HostOut: $HostCount Time(s)\n";
+          $UserCount += $HostCount;
+-     }
++      }
+       $LoginCount += $UserCount;
+       print "  Total $UserCount Time(s)\n";
+       print "\n";
+@@ -563,14 +522,14 @@
+       $UserCount = 0;
+       foreach my $Host (keys %{$Logout{$User}}) {
+          if ($DoLookup == 1) {
+-            $HostOut = LookupIP(LookupIPv46($Host)) }
+-         else {
++            $HostOut = LookupIP(LookupIPv46($Host))
++         } else {
+             $HostOut = $Host;
+-	 }
++         }
+          $HostCount = $Logout{$User}{$Host};
+          print "    From $HostOut: $HostCount Time(s)\n";
+          $UserCount += $HostCount;
+-     }
++      }
+       $LogoutCount += $UserCount;
+       print "  Total $UserCount Time(s), transmitted $LogoutSize{$User} Bytes\n";
+       print "\n";
+@@ -585,9 +544,7 @@
+ 
+    $ConnCount = 0;
+    foreach $Reason (sort keys %ErrorTbl) {
+-   
+-   
+-   
++      
+       $output .= "\n                                                         Host |       Count".
+                  "\n------------------------------------------------------------- | -----------";
+    
+@@ -595,23 +552,22 @@
+       foreach $Host (sort keys %{$ErrorTbl{$Reason}}) {
+          $Conns = $ErrorTbl{$Reason}{$Host};
+          if ($DoLookup == 1) {
+-            $HostOut = LookupIP(LookupIPv46($Host)) }
+-         else {
++            $HostOut = LookupIP(LookupIPv46($Host))
++         } else {
+             $HostOut = $Host;
+-            }
++         }
+          $HostLength = length($HostOut);
+          $HostSpaceLength = 61 - $HostLength;
+          $CountLength = length("$Conns");
+          $CountSpaceLength = 12 - $CountLength;
+          $output .= "\n" ." " x $HostSpaceLength . $HostOut . " |" . " " x $CountSpaceLength .  $Conns . "";
+          $ConnHostCount += $Conns;
+-         }
++      }
+       $CountLength = length("$ConnHostCount");
+       $CountSpaceLength = 75 - $CountLength;
+       $output .= "\n" . "-" x 75;
+       $output .= "\n" . " " x $CountSpaceLength . "$ConnHostCount\n\n";
+       
+-      
+       print "$Reason: $ConnHostCount Time(s)".$output;
+       $output = "" ;
+       $ConnCount += $ConnHostCount;
+@@ -638,7 +594,7 @@
+          $CountSpaceLength = 12 - $CountLength;
+          $output .= "\n" ." " x $HostSpaceLength . $HostOut . " |" . " " x $CountSpaceLength .  $Conns . "";
+          $ConnHostCount += $Conns;
+-         }
++      }
+       $CountLength = length("$ConnHostCount");
+       $CountSpaceLength = 75 - $CountLength;
+       $output .= "\n" . "-" x 75;
+@@ -673,7 +629,7 @@
+          $CountSpaceLength = 12 - $CountLength;
+          $output .= "\n" ." " x $HostSpaceLength . $HostOut . " |" . " " x $CountSpaceLength .  $Conns . "";
+          $ConnHostCount += $Conns;
+-         }
++      }
+       $CountLength = length("$ConnHostCount");
+       $CountSpaceLength = 75 - $CountLength;
+       $output .= "\n" . "-" x 75;
+@@ -704,8 +660,7 @@
+          }
+          print "     Total $ToCount Time(s)\n";
+          $FromCount += $ToCount;
+-
+-     }
++      }
+       $DeferredCount += $FromCount;
+       print "  Total $FromCount Time(s)\n";
+       print "\n";
+@@ -730,8 +685,7 @@
+          }
+          print "     Total $ToCount Time(s)\n";
+          $FromCount += $ToCount;
+-     
+-     }
++      }
+       $FailedCount += $FromCount;
+       print "  Total $FromCount Time(s)\n";
+       print "\n";
+@@ -748,28 +702,28 @@
+       $FailreasonCount = 0;
+       foreach my $Host (keys %{$ErrorMsgs{$Failreason}}) {
+          if ($DoLookup == 1) {
+-            $HostOut = LookupIP(LookupIPv46($Host)) }
+-         else {
++            $HostOut = LookupIP(LookupIPv46($Host))
++         } else {
+             $HostOut = $Host;
+-	 }
++         }
+          print "    Host $HostOut\n";
+          $HostCount = 0;
+          foreach my $From (keys %{$ErrorMsgs{$Failreason}{$Host}}) {
+             if (!($From eq "-")) {
+-                print "      From $From\n";
+-              }
++               print "      From $From\n";
++            }
+             $FromCount = 0;
+             foreach my $To (keys %{$ErrorMsgs{$Failreason}{$Host}{$From}}) {
+                $ToCount = $ErrorMsgs{$Failreason}{$Host}{$From}{$To};
+                if (!($To eq "-")) {
+                   print "         To $To: $ToCount Time(s)\n";
+-                  }
++               }
+                $FromCount += $ToCount;
+             }
+             $HostCount += $FromCount;
+             if (!($From eq "-")) {
+-                print "      Total $FromCount Time(s)\n";
+-              }
++               print "      Total $FromCount Time(s)\n";
++            }
+          }
+          $FailreasonCount += $HostCount;
+          print "    Total $HostCount Time(s)\n";
+@@ -797,10 +751,10 @@
+          $AddressCount = 0;
+          foreach my $Host (keys %{$MailDeliveryStarted{$MailFrom}{$Address}}) {
+             if ($DoLookup == 1) {
+-               $HostOut = LookupIP(LookupIPv46($Host)) }
+-            else {
++               $HostOut = LookupIP(LookupIPv46($Host))
++            } else {
+                $HostOut = $Host;
+-	    }
++            }
+             print "\n       By $HostOut\n";
+             $HostCount = 0;
+             foreach my $Module (keys %{$MailDeliveryStarted{$MailFrom}{$Address}{$Host}}) {
+@@ -810,7 +764,7 @@
+             }
+             $AddressCount += $HostCount;
+             print "       Total $HostCount Time(s)\n";
+-	 }
++         }
+          $MailFromCount += $AddressCount;
+          print "     Total $AddressCount Time(s)\n";
+       }
+@@ -860,15 +814,13 @@
+          $ToCount = $DeSu{$From}{$To};
+          print "     To $To: $ToCount Time(s)\n";
+          $FromCount += $ToCount;
+-     }
++      }
+       $MsgCount += $FromCount;
+       print "  Total $FromCount Time(s)\n";
+       print "\n";
+    }
+    print "Total $MsgCount successfully delivered messages\n\n\n";
+-
+-
+-print "Size of all successfully delivered messages: $DeliverMailSize Bytes\n\n\n";
++   print "Size of all successfully delivered messages: $DeliverMailSize Bytes\n\n\n";
+ }
+ 
+ if ( ( $Detail >= 5 ) and (keys %DeSuTbl) and ($Tables)) {
+@@ -884,22 +836,21 @@
+       $ConnsSender = 0;
+       if ($Symbol eq "%") {
+          $Symbol = "#";
+-	 }
+-      else {
++      } else {
+          $Symbol = "%";
+-	 }
++      }
+       $SizeSender = 0;
+       $MostFrqSenderNmb = 0;
+       $MostFrqSender = "";
+       $MostFrqSenderSize = 0;
+       foreach $Sender (keys %{$DeSuTbl{$User}}) {
+          $ConnsSender += $DeSuTbl{$User}{$Sender};
+-	 $ThisSender = $DeSuTbl{$User}{$Sender};
+-	 $SizeSender  += $DeSuTblSz{$User}{$Sender};
+-	 if ($ThisSender > $MostFrqSenderNmb) {
++         $ThisSender = $DeSuTbl{$User}{$Sender};
++         $SizeSender  += $DeSuTblSz{$User}{$Sender};
++         if ($ThisSender > $MostFrqSenderNmb) {
+             $MostFrqSender = $Sender;
+-	    $MostFrqSenderNmb = $DeSuTbl{$User}{$Sender};
+-	 }
++            $MostFrqSenderNmb = $DeSuTbl{$User}{$Sender};
++         }
+       }
+       $MostFrqSenderSize = $DeSuTblSz{$User}{$MostFrqSender};
+ 
+@@ -921,11 +872,11 @@
+          print "\n" ." " x $SenderSpaceLength . "(MstFrqSnd $MostFrqSender)" . " |" . " " x $CountSpaceLength .  
+ 	          $MostFrqSenderNmb . " |" . 
+                   " " x $SizeSpaceLength . $MostFrqSenderSize."\n";
+-#"\nFrom $MostFrqSender: $MostFrqSenderNmb, $MostFrqSenderSize bytes"
++                  #"\nFrom $MostFrqSender: $MostFrqSenderNmb, $MostFrqSenderSize bytes"
+       }
+       $ConnCount += $Conns;
+       $SizeAll += $Size;
+-      }
++   }
+    $CountLength = length("$ConnCount");
+    $CountSpaceLength = 61 - $CountLength;
+    $SizeLength = length($SizeAll);
+@@ -934,7 +885,7 @@
+    print "\n" . " " x $CountSpaceLength . "$ConnCount" . " |" .
+                 " " x $SpaceSizeLength  .  $SizeAll    .
+                 "\n\n\n";
+-   }
++}
+ 
+ if (keys %OtherList) {
+    print "\n**Unmatched Entries**\n";
+@@ -945,16 +896,17 @@
+ 
+ exit(0);
+ 
+-sub MakeTblReason()
+-{
++sub MakeTblReason() {
+    $OrigReason = shift;
+-
+-      if ((!((( $TblReason) = ( $OrigReason =~ /^(".*?").*/ )))  and
+-             (!(( $TblReason) = ( $OrigReason =~ /^(.*?): .*/ )))) or 
+-	     !($RemoveAdditionalInfo)) {
+-         $TblReason = $Reason;
+-      }
+-      return $TblReason;
++   
++   if (
++      (!((( $TblReason) = ( $OrigReason =~ /^(".*?").*/ )))  and
++         (!(( $TblReason) = ( $OrigReason =~ /^(.*?): .*/ )))) or 
++      !($RemoveAdditionalInfo)
++   ) {
++      $TblReason = $Reason;
++   }
++   return $TblReason;
+ }
+ 
+ # vi: shiftwidth=3 tabstop=3 et
