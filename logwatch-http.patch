@@ -1,19 +1,11 @@
 Index: scripts/services/http
 ===================================================================
 RCS file: /var/cvs/logwatch/scripts/services/http,v
-retrieving revision 1.13
-diff -u -r1.13 http
---- scripts/services/http	22 Jun 2004 13:48:26 -0000	1.13
-+++ scripts/services/http	10 Oct 2004 20:40:41 -0000
-@@ -99,33 +99,36 @@
- my $images_bytes =   0;
- my $fonts_count =    0;
- my $fonts_bytes =    0;
-+my $config_count =   0;
-+my $config_bytes =   0;
- my $proxy_count =    0;
- my $proxy_bytes =    0;
- my %proxy_host =     ();
+retrieving revision 1.14
+diff -u -r1.14 http
+--- scripts/services/http	29 Oct 2004 21:19:00 -0000	1.14
++++ scripts/services/http	31 Oct 2004 15:19:03 -0000
+@@ -119,7 +119,7 @@
  my $host =           "";
  
  ######################
@@ -22,74 +14,3 @@ diff -u -r1.13 http
  my $content_types =  '(';
     $content_types =  $content_types.'\/server-status|\/server-info';
     $content_types =  $content_types.'|\.htm|\.html|\.jhtml|\.phtml|\.shtml|\/';
--   $content_types =  $content_types.'|\.inc|\.php|\.php3|\.asp|\.pl|\.wml|\/';
-+   $content_types =  $content_types.'|\.inc|\.php|\.php3|\.asmx|\.asp|\.pl|\.wml|\/';
-    $content_types =  $content_types.'|\.css|\.js|\.cgi|\/';
-    $content_types =  $content_types.'|\.fla|\.swf|\/';
-    $content_types =  $content_types.'|\.class|\.jsp|\.jar|\.java|\/';
-    $content_types =  $content_types.'|COPYRIGHT|readme|README|FAQ|INSTALL|\.txt)';
--my $docs_types =     '(\.asc|\.doc|\.dot|\.dvi|\.gnumeric|\.mcd|\.mso|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.sxi|\.tex|\.text|\.xls|\.xml)';
-+my $docs_types =     '(\.asc|\.djvu|\.doc|\.dot|\.dvi|\.gnumeric|\.mcd|\.mso|\.pdf|\.pps|\.ppt|\.ps|\.rtf|\.sxi|\.tex|\.text|\.tm|\.xls|\.xml)';
- my $archive_types =  '(\.ace|\.bz2|\.cab|\.deb|\.dsc|\.ed2k|\.gz|\.hqx|\.md5|\.rar|\.rpm|\.sig|\.sign|\.tar|\.tbz2|\.tgz|\.Z|\.zip)';
--my $sound_types =    '(\.au|\.mid|\.mp3|\.ram|\.raw|\.rm|\.wav|\.wma|\.wmv|\.xsm)';
-+my $sound_types =    '(\.au|\.mid|\.mp3|\.ogg|\.pls|\.ram|\.raw|\.rm|\.wav|\.wma|\.wmv|\.xsm)';
- my $movie_types =    '(\.asf|\.ass|\.avi|\.idx|\.mid|\.mpg|\.mpeg|\.mov|\.qt|\.psb|\.srt|\.ssa|\.smi|\.sub)';
- my $winexec_types =  '(\.bat|\.com|\.exe|\.dll)';
- my $wpad_files =     '(wpad\.dat|wspad\.dat|proxy\.pac)';
- my $program_src =    '(';
--   $program_src =    $program_src.'\.bas|\.c|\.cfg|\.conf|\.config|\.cpp|\.diff|\.f|\.h|\.init|\.m|\.pas|\.patch|\.spec';
-+   $program_src =    $program_src.'\.bas|\.c|\.cpp|\.diff|\.f|\.h|\.init|\.m|\.pas|\.patch|\.spec';
-    $program_src =    $program_src.'|Makefile|Makefile_c|Makefile_f77)';
- my $images_types =   '(\.bin|\.cue|\.img|\.iso|\.run)';
- my $logs_types =     '(\.log|_log|-log|\.logs|\.out|\.wyniki)';
- my $fonts_types =    '(\.aft|\.ttf)';
-+my $config_types =   '(\.cfg|\.conf|\.config|\.ini)';
- 
- #
- #   what to look for as an attack  USE LOWER CASE!!!!!!
-@@ -143,8 +146,10 @@
-    '\\\xff\\\xff\\\xff\\\xff',
-    '\/c\+dir',
-    '\/c\+dir\+c',
-+   '\.htpasswd',
-    'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-    'author.exe',
-+   'boot.ini',
-    'cmd.exe',
-    'cltreq.asp',
-    'c%20dir%20C',
-@@ -152,6 +157,7 @@
-    'httpodbc.dll',
-    'nsiislog.dll',
-    'owssvr.dll',
-+   'passwd',
-    'phpmyadmin',
-    'root.exe',
-    'shtml.exe',
-@@ -252,7 +258,7 @@
- 
-    ($field{base_url},$field{url_parms}) = split(/\?/,$field{"lc_url"});
-    
--   if ($field{lc_url} =~ /$image_types$/) {
-+   if ($field{base_url} =~ /$image_types$/) {
-       $image_count += 1;
-       $image_bytes += $field{bytes_transfered};
-    } elsif ($field{base_url} =~ /$docs_types$/) {
-@@ -288,6 +294,9 @@
-    } elsif ($field{base_url} =~ /$fonts_types$/) {
-       $fonts_count += 1;
-       $fonts_bytes += $field{bytes_transfered};
-+   } elsif ($field{base_url} =~ /$config_types$/) {
-+      $config_count += 1;
-+      $config_bytes += $field{bytes_transfered};
-    } elsif ($field{http_rc} =~ /3\d\d/) {
-       $redirect_count += 1;
-       $redirect_bytes += $field{bytes_transfered};
-@@ -360,6 +369,7 @@
-    if ($images_count > 0)     { printf " $images_count CD Images (%.2f MB),\n" , $images_bytes/(1024*1024); }
-    if ($logs_count > 0)       { printf " $logs_count various Logs (%.2f MB),\n" , $logs_bytes/(1024*1024); }
-    if ($fonts_count > 0)      { printf " $fonts_count Fonts (%.2f MB),\n" , $fonts_bytes/(1024*1024); }
-+   if ($config_count > 0)     { printf " $config_count Configs (%.2f MB),\n" , $config_bytes/(1024*1024); }
-    if ($proxy_count > 0)      { printf " $proxy_count mod_proxy connection attempts (%.2f MB),\n" , $proxy_bytes/(1024*1024); }
-    if ($other_count > 0)      { printf " $other_count Other (%.2f MB) \n" , $other_bytes/(1024*1024); }
- }
