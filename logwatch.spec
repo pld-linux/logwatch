@@ -3,7 +3,7 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	6.0.1
-Release:	3.5
+Release:	4
 License:	MIT
 Group:		Applications/System
 Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
@@ -12,6 +12,8 @@ Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
 #Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
 Source1:	%{name}.cron
 Source2:	%{name}.sysconfig
+Source3:	http://www.blues.gda.pl/%{name}-zz-network-0.11.tar.gz
+# Source3-md5:	28ed1c7a6d8e6ec07edbe8d7304e87cf
 Patch0:		%{name}-config.patch
 Patch1:		%{name}-log_conf.patch
 Patch2:		%{name}-secure.patch
@@ -20,6 +22,7 @@ Patch4:		%{name}-sendmail.patch
 Patch5:		%{name}-pam_unix.patch
 Patch6:		%{name}-clamav-milter.patch
 Patch7:		%{name}-http.patch
+Patch8:		%{name}-pop3.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	crondaemon
@@ -45,7 +48,7 @@ poczt± elektroniczn± do administratora systemu. Logwatch jest ³atwy w
 u¿yciu i mo¿e pracowaæ na wiêkszo¶ci systemów.
 
 %prep
-%setup -q
+%setup -q -a3
 %patch0 -p0
 %patch1 -p1
 %patch2 -p0
@@ -54,6 +57,9 @@ u¿yciu i mo¿e pracowaæ na wiêkszo¶ci systemów.
 %patch5 -p0
 %patch6 -p0
 %patch7 -p0
+cd scripts/services
+%patch8 -p0
+cd ../../
 
 %install
 rm -rf $RPM_BUILD_ROOT
