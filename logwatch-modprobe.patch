@@ -1,18 +1,28 @@
---- ./scripts/services/modprobe.org	Sat Oct 12 04:08:18 2002
-+++ ./scripts/services/modprobe	Tue Jul  1 09:44:02 2003
-@@ -16,10 +16,11 @@
- while (defined($ThisLine = <STDIN>)) {
-    chomp($ThisLine);
-    if ( $ThisLine =~ s/^modprobe: Can\'t locate module ([\w-]+)\s*$/$1/ ) {
--      $Modules{$ThisLine}++;
--   }
--   else {
--      $OtherList{$ThisLine}++;
-+	   $Modules{$ThisLine}++;
-+   } elsif ( $ThisLine =~ s/^FATAL: Module (.*) not found./$1/) {
-+	   $Modules{$ThisLine}++;
-+   } else {
-+	   $OtherList{$ThisLine}++;
-    }
- }
+Index: scripts/services/modprobe
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/modprobe,v
+retrieving revision 1.9
+diff -u -r1.9 modprobe
+--- scripts/services/modprobe	15 Dec 2003 18:09:23 -0000	1.9
++++ scripts/services/modprobe	23 Dec 2003 22:18:52 -0000
+@@ -2,6 +2,8 @@
+ ##########################################################################
+ # $Id$
+ ##########################################################################
++# $Log$
++##########################################################################
  
+ ########################################################
+ # This was written and is maintained by:
+@@ -19,9 +21,9 @@
+       $Modules{$ThisLine}++;
+    } elsif ( $ThisLine =~ s/^FATAL: Module (.*) not found./$1/) {
+       $Modules{$ThisLine}++;
+-   } elsif ( ($Module,$Reason) = ( $ThisLine =~ /WARNING: Error inserting ([^ ]* \([^ ]*\)): (.*)$/ ) ) {
++   } elsif ( (undef,$Module,$Reason) = ( $ThisLine =~ /(WARNING|FATAL): Error inserting ([^ ]* \([^ ]*\)): (.*)$/ ) ) {
+       $ErrorInsert{$Module}{$Reason}++;
+-   } elsif ( ($Module) = ( $ThisLine =~ /WARNING: Error running install command for scsi_mod$/ ) ) {
++   } elsif ( ($Module) = ( $ThisLine =~ /WARNING: Error running install command for (.*)$/ ) ) {
+       $ErrorInstall{$Module}++;
+    } else {
+       $OtherList{$ThisLine}++;
