@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/samba,v
 retrieving revision 1.17
 diff -u -r1.17 samba
 --- scripts/services/samba	15 Dec 2003 22:03:55 -0000	1.17
-+++ scripts/services/samba	8 Jan 2004 08:51:59 -0000
++++ scripts/services/samba	17 Jan 2004 21:58:44 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -98,6 +98,15 @@ diff -u -r1.17 samba
  	} elsif ( ($Host, $Service, $User) = ( $ThisLine =~ /([^ ]+ \([^ ]+\)) connect to service ([^ ]+) as user ([^ ]+)/ ) ) {
  		$Connect{$Service}{$User}{$Host}++;
  	} elsif ( ($NoService) = ( $ThisLine =~ /couldn't find service (\S+)/ ) ) {
+@@ -65,7 +72,7 @@
+       $Temp = "$Where  ($Ip)";
+       $Denied{$Temp}++;
+       $CantGetGroup{$Browser}++;
+-   } elsif ( ($Where,$Ip,$Name,$Group,$Subnet) = ($ThisLine =~ /(.*)  Denied connection from  \(([^ ]+)\)  Samba name server ([^ ]+) is now a local master browser for workgroup ([^ ]+) on subnet ([^ ]+)/ ) ) {
++   } elsif ( ($Where,$Ip,$Name,$Group,$Subnet) = ($ThisLine =~ /(.*)  Denied connection from  \(([^ ]+)\) [ *]+Samba name server ([^ ]+) is now a local master browser for workgroup ([^ ]+) on subnet ([^ ]+)/ ) ) {
+       $Temp = "$Where  ($Ip)";
+       $Denied{$Temp}++;
+       $BeLocalMaster{$Subnet}{$Group}{$Name}++;
 @@ -75,9 +82,16 @@
  		$NotFoundUser{$User}++;
  	} elsif (($User) = $ThisLine =~ /Rejecting user '([^ ]+)'/) {
@@ -116,7 +125,7 @@ diff -u -r1.17 samba
  	} elsif ( ( $ThisLine =~ /unable to open passdb database.$/ ) ) {
  		$DbOpenFail++;
  	} elsif ( ($Server,$Ip,$Group) = ($ThisLine =~ /Server ([^ ]+) at IP ([^ ]+) is announcing itself as a local master browser for workgroup ([^ ]+) and we think we are master. Forcing election.$/ ) ) {
-@@ -107,16 +121,29 @@
+@@ -107,15 +121,41 @@
  		$RootLoggedIn{$user}++;
  	} elsif ( ($file,$function) = ($ThisLine =~ /([a-zA-Z_\/():\.0-9-]+)  ([a-zA-Z0-9_-]+): Not yet implemented.$/)) {
  		$NotImplemented{$file}{$function}++;
@@ -127,14 +136,24 @@ diff -u -r1.17 samba
 +      $ReloadAfter{$Signal}++;
 +   } elsif ( ($Signal) = ($ThisLine =~ /open_sockets\([0-9]+\)  Got ([^ ]+)/)) {
 +      $ReloadAfter{$Signal}++;
-+   } elsif ( ($Share) = ($ThisLine =~ /cups_printername_ok\([0-9]+\)  Unable to get printer status for ([^ ]+) - client-error-not-found/)) {
-+      $PrinterStatus{$Share}++;
++   } elsif ( ($Share,$Reason) = ($ThisLine =~ /cups_printername_ok\([0-9]+\)  (Unable to get printer status for [^ ]+) - ([^ ]+)/)) {
++      $PrinterStatus{$Share}{$Reason}++;
++   } elsif ( ($Share,$Reason) = ($ThisLine =~ /cups_queue_get\([0-9]+\)  (Unable to get jobs for [^ ]+) - ([^ ]+)/)) {
++      $PrinterStatus{$Share}{$Reason}++;
 +   } elsif ( $ThisLine =~ m/main\([0-9]+\)  ERROR: Failed when creating subnet lists. Exiting./) {
 +      $SubnetFail{"Failed when creating subnet lists"}++;
 +   } elsif ( $ThisLine =~ m/create_subnets\([0-9]+\)  create_subnets: No local interfaces !/) {
 +      $SubnetFail{"No local interfaces"}++;
++   } elsif ( $ThisLine =~ m/reload_interfaces: No subnets to listen to. Shutting down.../) {
++      $SubnetFail{"No subnets to listen to. Shutting down."}++;
 +   } elsif ( $ThisLine =~ s/process_get_backup_list_request\([0-9]+\)  process_get_backup_list_request: (.*)/$1/) {
 +      $GetBacupList{$ThisLine}++;
++   } elsif ( ($Error) = ($ThisLine =~ /brl_init\([0-9]+\)  (Failed to open byte range locking database)$/)) {
++      $LockDbError{$Error}++;
++   } elsif ( ($Error) = ($ThisLine =~ /locking_init\([0-9]+\)  ERROR: (Failed to initialise locking database)$/)) {
++      $LockDbError{$Error}++;
++   } elsif ( ($Location,$Reason) = ($ThisLine =~ /tdb_log\([0-9]+\)  tdb\(([^ ]+)\): tdb_reopen: (open failed \([^ ]+\))/)) {
++      $LockDbError{"$Location - $Reason"}++;
  	} else {
  		# Report any unmatched entries...
  		$OtherList{$ThisLine}++;
@@ -144,14 +163,15 @@ diff -u -r1.17 samba
 -      #lib/util_sock.c:send_smb(704)  Error writing 4 bytes to client. -1. (Broken pipe)
 -      #lib/util_sock.c:write_socket(524)  write_socket: Error writing 4 bytes to socket 5: ERRNO = Broken pipe
 -      #lib/util_sock.c:write_socket_data(499)  write_socket_data: write failure. Error = Broken pipe
--      #lib/util_sock.c:read_data(436)  read_data: read failure for 4. Error = Brak drogi do systemu
 +      #smbd/oplock.c:process_local_message(418)  process_local_message: unknown UDP message command code (424d) - ignoring.
 +      #nmbd/nmbd_incomingdgrams.c:process_local_master_announce(314)
 +      #smbd/process.c:switch_message(662)  Non-SMB packet of length 156. Terminating server
++      #smbd/process.c:switch_message(662)  Non-SMB packet of length 133. Terminating server
++      #libsmb/nmblib.c:send_udp(756)  Packet send failed to 153.19.207.127(138) ERRNO=Invalid argument
+       #lib/util_sock.c:read_data(436)  read_data: read failure for 4. Error = Brak drogi do systemu
  	}
  }
- 
-@@ -131,6 +158,21 @@
+@@ -131,6 +171,21 @@
  	}
  }
  
@@ -173,21 +193,24 @@ diff -u -r1.17 samba
  if (keys %DiscardWins) {
     print "\nDiscarded invalid wins.dat file with version:\n";
     foreach $Version (sort {$a cmp $b} keys %DiscardWins) {
-@@ -169,6 +211,13 @@
+@@ -169,6 +224,16 @@
     }
  }
  
 +if (keys %PrinterStatus) {
-+   print "\nUnable to get printer status for:\n";
++   print "\nPrinter Errors:\n";
 +   foreach $Share (sort {$a cmp $b} keys %PrinterStatus) {
-+      print "   $Share : $PrinterStatus{$Share} Time(s)\n";
++      print "   $Share:\n";
++      foreach $Reason (sort {$a cmp $b} keys %{$PrinterStatus{$Share}}) {
++         print "      $Reason : $PrinterStatus{$Share}{$Reason} Time(s)\n";
++      }
 +   }
 +}
 +
  if (($Detail >= 5) and (keys %RootLoggedIn)) {
     print "\nAdmin logins (root privileges):\n";
     foreach $user (sort {$a cmp $b} keys %RootLoggedIn) {
-@@ -186,13 +235,6 @@
+@@ -186,13 +251,6 @@
  }
       
  
@@ -201,7 +224,7 @@ diff -u -r1.17 samba
  if (keys %ForceElection) {
  	print "\nForced Election:\n";
  	foreach $Group (sort {$a cmp $b} keys %ForceElection) {
-@@ -227,6 +269,13 @@
+@@ -227,6 +285,13 @@
  	print "\nFailed to get Domain Master node name: $GetDomainMasterStatusFail Time(s)\n";
  }
  
@@ -215,12 +238,10 @@ diff -u -r1.17 samba
  if (($Detail >= 5) and (keys %NoServ)) {
     print "\nCouldn't find services:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %NoServ) {
-@@ -291,6 +340,19 @@
-     foreach $User (sort {$a cmp $b} keys %AccountDisabled) {
-         print "   $User : $AccountDisabled{$User} Time(s)\n";
+@@ -293,8 +358,28 @@
      }
-+}
-+
+ }
+ 
 +if (keys %CantChangeDir) {
 +   print "\nCan't change directory while browsing:\n";
 +   foreach $Directory (sort {$a cmp $b} keys %CantChangeDir) {
@@ -232,6 +253,17 @@ diff -u -r1.17 samba
 +         }
 +      }
 +   }
++}
++
+ if ($SocketReadError > 0) {
+ 	print "\nSocket Read Error (Samba bug): $SocketReadError Time(s)\n";
++}
++
++if (keys %LockDbError) {
++   print "\nLocking Database error:\n";
++   foreach $Error (sort {$a cmp $b} keys %LockDbError) {
++      print "   $Error : $LockDbError{$Error} Time(s)\n";
++   }
  }
  
- if ($SocketReadError > 0) {
+ if (keys %OtherList) {
