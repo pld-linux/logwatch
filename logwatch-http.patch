@@ -4,8 +4,8 @@ RCS file: /var/cvs/logwatch/scripts/services/http,v
 retrieving revision 1.9
 diff -u -r1.9 http
 --- scripts/services/http	3 Feb 2004 02:45:26 -0000	1.9
-+++ scripts/services/http	31 Mar 2004 13:15:20 -0000
-@@ -79,39 +79,45 @@
++++ scripts/services/http	1 Apr 2004 11:02:01 -0000
+@@ -79,39 +79,51 @@
  my $wpad_bytes =     0;
  my $src_count =      0;
  my $src_bytes =      0;
@@ -14,6 +14,12 @@ diff -u -r1.9 http
  my $images_count =   0;
  my $images_bytes =   0;
 -my $image_types =    '(\.bmp|\.emz|\.gif|\.ico|\.jpeg|\.jpg|\.png|\.swf|\.tif|\.tiff|\.wmf|\.wmz|\.xdm)';
++my $proxy_count =    0;
++my $proxy_bytes =    0;
++my %proxy_host =     ();
++my $host =           "";
++
++######################
 +my $image_types =    '(\.bmp|\.emz|\.gif|\.ico|\.jpeg|\.jpg|\.png|\.swf|\.sxd|\.tif|\.tiff|\.wmf|\.wmz|\.xdm)';
  my $content_types =  '(';
     $content_types =  $content_types.'\/server-status|\/server-info';
@@ -30,8 +36,9 @@ diff -u -r1.9 http
 +my $movie_types =    '(\.asf|\.ass|\.avi|\.idx|\.mid|\.mpg|\.mpeg|\.mov|\.qt|\.sub)';
  my $winexec_types =  '(\.com|\.exe|\.dll)';
  my $wpad_files =     '(wpad\.dat|wspad\.dat|proxy\.pac)';
- my $program_src =    '(\.bas|\.c|\.diff|\.f|\.h|\.patch|\.cpp)';
+-my $program_src =    '(\.bas|\.c|\.diff|\.f|\.h|\.patch|\.cpp)';
 -my $images_types =   '(\.bin|\.cue|\.iso|\.run)';
++my $program_src =    '(\.bas|\.c|\.cpp|\.diff|\.f|\.h|\.patch|\.spec)';
 +my $images_types =   '(\.bin|\.cue|\.img|\.iso|\.run)';
 +my $logs_types =     '(\.log|\.logs)';
  
@@ -61,7 +68,7 @@ diff -u -r1.9 http
     'win.ini'
  );
  
-@@ -238,6 +244,9 @@
+@@ -238,9 +250,16 @@
     } elsif ($field{base_url} =~ /$images_types$/) {
        $images_count += 1;
        $images_bytes += $field{bytes_transfered};
@@ -71,7 +78,23 @@ diff -u -r1.9 http
     } elsif ($field{http_rc} =~ /3\d\d/) {
        $redirect_count += 1;
        $redirect_bytes += $field{bytes_transfered};
-@@ -293,18 +302,19 @@
++   } elsif ($field{method} =~ /CONNECT/) {
++      $proxy_count += 1;
++      $proxy_bytes += $field{bytes_transfered};
++      $proxy_host{"$field{client_ip} -> $field{base_url}"}++;
+    } else {
+       $other_count += 1;
+       $other_bytes += $field{bytes_transfered};
+@@ -282,7 +301,7 @@
+    
+ } ## End of while loop
+ 
+-##
++#############################################
+ ##   output the results 
+ ##
+ 
+@@ -293,18 +312,20 @@
     print " responses ";
     print " (1xx $a1xx_resp, 2xx $a2xx_resp, 3xx $a3xx_resp,";
     print " 4xx $a4xx_resp, 5xx $a5xx_resp) \n";
@@ -87,19 +110,33 @@ diff -u -r1.9 http
 -   print   " $src_count Program source files ($src_bytes bytes),\n";
 -   print   " $images_count CD Images ($images_bytes bytes),\n"; 
 -   print	  " $other_count Other ($other_bytes bytes) \n";
-+   if ($image_count > 0)      { print " $image_count Images ($image_bytes bytes),\n"; }
-+   if ($docs_count > 0)       { print " $docs_count Documents ($docs_bytes bytes),\n"; }
-+   if ($archive_count > 0)    { print " $archive_count Archives ($archive_bytes bytes),\n"; }
-+   if ($sound_count > 0)      { print " $sound_count Sound files ($sound_bytes bytes),\n"; }
-+   if ($movie_count > 0)      { print " $movie_count Movies files ($movie_bytes bytes),\n"; }
-+   if ($winexec_count > 0)    { print " $winexec_count Windows executable files ($winexec_bytes bytes),\n"; }
-+   if ($content_count > 0)    { print " $content_count Content pages ($content_bytes bytes),\n"; }
-+   if ($redirect_count > 0)   { print " $redirect_count Redirects ($redirect_bytes bytes),\n"; }
-+   if ($wpad_count > 0)       { print " $wpad_count Proxy Configuration Files ($wpad_bytes bytes),\n"; }
-+   if ($src_count > 0)        { print " $src_count Program source files ($src_bytes bytes),\n"; }
-+   if ($images_count > 0)     { print " $images_count CD Images ($images_bytes bytes),\n"; }
-+   if ($logs_count > 0)       { print " $logs_count various Logs ($logs_bytes bytes),\n"; }
-+   if ($other_count > 0)      { print " $other_count Other ($other_bytes bytes) \n"; }
++   if ($image_count > 0)      { printf " $image_count Images (%.2f MB),\n" , $image_bytes/(1024*1024); }
++   if ($docs_count > 0)       { printf " $docs_count Documents (%.2f MB),\n" , $docs_bytes/(1024*1024); }
++   if ($archive_count > 0)    { printf " $archive_count Archives (%.2f MB),\n" , $archive_bytes/(1024*1024); }
++   if ($sound_count > 0)      { printf " $sound_count Sound files (%.2f MB),\n" , $sound_bytes/(1024*1024); }
++   if ($movie_count > 0)      { printf " $movie_count Movies files (%.2f MB),\n" , $movie_bytes/(1024*1024); }
++   if ($winexec_count > 0)    { printf " $winexec_count Windows executable files (%.2f MB),\n" , $winexec_bytes/(1024*1024); }
++   if ($content_count > 0)    { printf " $content_count Content pages (%.2f MB),\n" , $content_bytes/(1024*1024); }
++   if ($redirect_count > 0)   { printf " $redirect_count Redirects (%.2f MB),\n" , $redirect_bytes/(1024*1024); }
++   if ($wpad_count > 0)       { printf " $wpad_count Proxy Configuration Files (%.2f MB),\n" , $wpad_bytes/(1024*1024); }
++   if ($src_count > 0)        { printf " $src_count Program source files (%.2f MB),\n" , $src_bytes/(1024*1024); }
++   if ($images_count > 0)     { printf " $images_count CD Images (%.2f MB),\n" , $images_bytes/(1024*1024); }
++   if ($logs_count > 0)       { printf " $logs_count various Logs (%.2f MB),\n" , $logs_bytes/(1024*1024); }
++   if ($proxy_count > 0)      { printf " $proxy_count mod_proxy connection attempts (%.2f MB),\n" , $proxy_bytes/(1024*1024); }
++   if ($other_count > 0)      { printf " $other_count Other (%.2f MB) \n" , $other_bytes/(1024*1024); }
  }
  
+ #
+@@ -335,6 +356,12 @@
+    }	
+ }
+ 
++if (keys %proxy_host) {
++   print "\nConnection attempts using mod_proxy:\n";
++   foreach $host (sort {$a cmp $b} keys %proxy_host) {
++      print "   $host : $proxy_host{$host} Time(s)\n";
++   }
++}
+ #
+ #  List (wannabe) blackhat sites
  #
