@@ -1,5 +1,10 @@
---- ./scripts/services/secure.org	Tue Feb  3 05:26:36 2004
-+++ ./scripts/services/secure	Thu Feb 19 10:57:06 2004
+Index: scripts/services/secure
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/secure,v
+retrieving revision 1.44
+diff -u -r1.44 secure
+--- scripts/services/secure	3 Feb 2004 04:26:36 -0000	1.44
++++ scripts/services/secure	9 Mar 2004 07:40:35 -0000
 @@ -47,6 +47,7 @@
        ( $ThisLine =~ /^sudo:/) or
        ( $ThisLine =~ /^halt:/) or
@@ -8,7 +13,18 @@
        ( $ThisLine =~ /^passwd\[\d+\]:/) or
        ( $ThisLine =~ /warning: can.t get client address: Connection refused/) or
        ( $ThisLine =~ /^xinetd\[\d+\]: USERID: ([^ ]+) (.+)$/ ) or
-@@ -108,7 +109,7 @@
+@@ -90,6 +91,10 @@
+          $Name = LookupIP($IP);
+          $Connections->{$Service}->{$Name}++;
+       }
++   } elsif ( ($Service,undef,$Name) = ($ThisLine =~ /^([^ ]+)\[\d+\]: warning: ([^ ]+), line \d+: can't verify hostname: getaddrinfo\(([^ ]+), AF_INET\) failed$/) ) {
++      $NameVerifyFail{$Service}{$Name}++;
++   } elsif ( ($Service,undef,$Name,$IP) = ($ThisLine =~ /^([^ ]+)\[\d+\]: warning: ([^ ]+), line \d+: host name\/name mismatch: ([^ ]+) != ([^ ]+)$/) ) {
++      $NameVerifyFail{$Service}{"$Name != $IP"}++;
+    } elsif ( ($Display, $User) = ($ThisLine =~ /^xscreensaver\[\d+\]: FAILED LOGIN \d ON DISPLAY \"([^ ]+)\", FOR \"([^ ]+)\"$/) ) {
+       $FailedSaver{$User}{$Display}++;
+    } elsif ( $ThisLine =~ s/^([^ ]+)\[\d+\]: warning: can\'t get client address: No route to host$/$1/ ) {
+@@ -108,7 +113,7 @@
        $Error{$Service}{$Err}++;
     } elsif ( ($Service,$Err) = ($ThisLine =~ /^([^ ]+): (password mismatch for [^ ]+ in [^ ]+):.*$/ ) ) {
        $Error{$Service}{$Err}++;
@@ -17,16 +33,21 @@
        $RootLoginTTY++
     } elsif ( (undef,$User) = ($ThisLine =~ /^login: LOGIN ON (tty|pts\/)[0-9]+ BY ([^ ]+)/ )) {
        $UserLogin{$User}++;
-@@ -122,7 +123,7 @@
+@@ -122,11 +127,11 @@
        push @DeletedGroups, "   $ThisLine\n";
     } elsif ( $ThisLine =~ s/^(useradd|adduser)\[\d+\]: new group: name=(.+), gid=(\d+).*$/$1 ($2)/ ) {
        push @NewGroups, "   $ThisLine\n";
 -   } elsif ( ($User,$Group) =~ /useradd\[\d+\]: add `([^ ]+)' to group `([^ ]+)'$/ ) {
-+   } elsif ( (undef,$User,$Group) = ($ThisLine =~ /(usermod|useradd)\[\d+\]: add `([^ ]+)' to group `([^ ]+)'/ )) {
++   } elsif ( (undef,$User,,undef,$Group) = ($ThisLine =~ /(usermod|useradd)\[\d+\]: add `([^ ]+)' to (shadow |)group `([^ ]+)'/ )) {
        $AddToGroup{$Group}{$User}++;
     } elsif ( $ThisLine =~ s/^groupadd\[\d+\]: new group: name=(.+), gid=(\d+).*$/$1 ($2)/ ) {
        push @NewGroups, "   $ThisLine\n";
-@@ -141,8 +142,10 @@
+-   } elsif ( $ThisLine =~ /^userdel\[\d+\]: delete `(.*)' from (shadow|group) `(.*)'\s*$/ ) {
++   } elsif ( $ThisLine =~ /^userdel\[\d+\]: delete `(.*)' from (shadow |)group `(.*)'\s*$/ ) {
+       push @RemoveFromGroup, "    user $1 from group $3\n";
+       # This is an inetd lookup... $1 is the service (i.e. ftp), $2 is the response
+       # I don't think these are important to log at this time
+@@ -141,8 +146,14 @@
        $Refused->{$service}->{$from}++;
     } elsif ( ($User) = ($ThisLine =~ /^chage\[\d+\]: changed password expiry for ([^ ]+)/)) {
        $PasswordExpiry{$User}++;
@@ -35,10 +56,24 @@
        $ConsoleLock++;
 +   } elsif ( ($Message) = ($ThisLine =~ /^pam_xauth\[\d+\]: call_xauth: (.+)/)) {
 +      $XauthMessage{$Message}++;
++   } elsif ( ($Group,$NewName) = ($ThisLine =~ /^groupmod\[\d+\]: change group `(.*)' to `(.*)'/)) {
++      $GroupRenamed{"$Group -> $NewName"}++;
++   } elsif ( ($User,$Home,$NewHome) = ($ThisLine =~ /^usermod\[\d+\]: change user `(.*)' home from `(.*)' to `(.*)'/)) {
++      $HomeChange{$User}{"$Home -> $NewHome"}++;
     } else {
        # Unmatched entries...
        push @OtherList, "$ThisLine\n";
-@@ -170,8 +173,8 @@
+@@ -167,11 +178,18 @@
+    print "\nDeleted Groups:\n@DeletedUsers\n";
+ }
+ 
++if (keys %GroupRenamed) {
++   print "\nRenamed groups:\n";
++   foreach $Group (sort {$a cmp $b} keys %Connections) {
++      print "   $Group\n";
++   }
++}
++
  if (keys %AddToGroup) {
     print "\nAdded User to group:\n";
     foreach $Group (sort {$a cmp $b} keys %AddToGroup) {
@@ -49,17 +84,60 @@
           print "      $User\n";
        }
     }
-@@ -264,6 +267,13 @@
+@@ -181,6 +199,16 @@
+    print "\nRemoved From Group:\n@RemoveFromGroup\n";
+ }
+ 
++if (keys %HomeChange) {
++   print "\nChanged users home directory:\n";
++   foreach $User (sort {$a cmp $b} keys %HomeChange) {
++      print "   $User:\n";
++      foreach $Home (sort {$a cmp $b} keys %{$HomeChange{$User}}) {
++         print "      $Home\n";
++      }
++   }
++}
++
+ if (keys %{$Connections}) {
+    print "\nConnections:\n";
+    foreach $ThisOne (keys %{$Connections}) {
+@@ -225,13 +253,23 @@
     }
  }
  
+-if (keys %{$NoIP}) {
++if (keys %NoIP) {
+    print "\nCouldn't get client IPs for connections to:\n";
+-   foreach $ThisOne (sort {$a cmp $b} keys %{$NoIP}) {
++   foreach $ThisOne (sort {$a cmp $b} keys %NoIP) {
+       print "   $ThisOne: $NoIP{$ThisOne} Time(s)\n";
+    }
+ }
+ 
++if (keys %NameVerifyFail) {
++   print "\nHostname verification failed:\n";
++   foreach $Service (sort {$a cmp $b} keys %NameVerifyFail) {
++      print "   Service $Service:\n";
++      foreach $Name (sort {$a cmp $b} keys %{$NameVerifyFail{$Service}}) {
++         print "      $Name$NameVerifyFail{$Service}{$Name} Time(s)\n";
++      }
++   }
++}
++
+ if (keys %Error) {
+    print "\nErrors:\n";
+    foreach $Service (sort {$a cmp $b} keys %Error) {
+@@ -261,6 +299,13 @@
+    print "\nChanged password expiry for users:\n";
+    foreach $User (sort {$a cmp $b} keys %PasswordExpiry) {
+       print "   $User : $PasswordExpiry{$User} Time(s)\n";
++   }
++}
++
 +if (keys %XauthMessage) {
 +   print "\nReported by call_xauth:\n";
 +   foreach $Message (sort {$a cmp $b} keys %XauthMessage) {
 +      print "   $Message : $XauthMessage{$Message} Time(s)\n";
-+   }
-+}
-+
- if ($#SudoList >= 0) {
-    print "\nUnauthorized sudo commands attempted (" . ($#SudoList + 1) . "):\n";
-    print @SudoList;
+    }
+ }
+ 
