@@ -11,17 +11,6 @@ diff -u 5.2.2/samba new/samba
        ($ThisLine =~ /add_domain_logon_names/) or
        ($ThisLine =~ /become_domain_master/) or
        ($ThisLine =~ /become_local_master/) or
-diff -u 5.2.2/secure new/secure
---- 5.2.2/secure	2004-06-25 01:22:09.000000000 -0700
-+++ new/secure	2004-08-30 06:51:52.126770000 -0700
-@@ -52,6 +52,7 @@
-    $temp =~ s/^([^[]+).*/$1/;
-    if ($Ignore =~ /\b\Q$temp\E\b/i) { next; }
-    if (
-+      ( $ThisLine =~ /pam_succeed_if: requirement "uid < 100" not met by user /) or
-       ( $ThisLine =~ m/^[^ ]+\[\d+\]: connect from localhost$/ ) or
-       ( $ThisLine =~ /^\/usr\/bin\/sudo:/) or
-       ( $ThisLine =~ /^sudo:/) or
 diff -u 5.2.2/sshd new/sshd
 --- 5.2.2/sshd	2004-08-30 06:37:05.089330000 -0700
 +++ new/sshd	2004-08-30 06:51:41.541758000 -0700
