@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sendmail,v
 retrieving revision 1.32
 diff -u -r1.32 sendmail
 --- scripts/services/sendmail	15 Dec 2003 18:09:23 -0000	1.32
-+++ scripts/services/sendmail	27 Jan 2004 08:47:08 -0000
++++ scripts/services/sendmail	2 Feb 2004 07:47:42 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -31,7 +31,7 @@ diff -u -r1.32 sendmail
  
  my %relay;
  my %abuse;
-@@ -109,115 +115,118 @@
+@@ -109,115 +115,119 @@
  my $UnknownUsersThreshold = 0;
  
  while (defined($ThisLine = <STDIN>)) {
@@ -122,7 +122,8 @@ diff -u -r1.32 sendmail
 +      ( $ThisLine =~ m/discarded/ ) or
 +      ( $ThisLine =~ m/headers too large/ ) or
 +      ( $ThisLine =~ m/^clone [a-zA-Z0-9]+, owner=/ ) or
-+      ( $ThisLine =~ m/^SYSERR\(root\): collect: I\/O error on connection from / )
++      ( $ThisLine =~ m/^SYSERR\(root\): collect: I\/O error on connection from / ) or
++      ( $ThisLine =~ m/^accepting connections again for daemon / )
 +   ) {
 +      # We don't care about these
 +   } elsif ( ($FromUser, $FromDomain, $Bytes, $NumRcpts, $RelayHost) = ($ThisLine =~ /^from=[\<]?([^@]+)[@]?([^\> ]+).*size=([0-9]+).*nrcpts=([0-9]+).*relay=(\[[0-9\.]+\]|[^ ]* \[[0-9\.]+\]|[^ ]+).*$/) ) {
@@ -250,7 +251,7 @@ diff -u -r1.32 sendmail
     } elsif ( $ThisLine =~ m/X-Scanned-By: MIMEDefang/) {
        $Defang++;
     } elsif (($Size) = ($ThisLine =~ m/message size \(([0-9]+)\) exceeds maximum/)) {
-@@ -230,15 +239,19 @@
+@@ -230,16 +240,20 @@
     } elsif ( ($Domain) = ($ThisLine =~ /Domain of sender address ([^ ]+) does not/)) {
        $UnresolvedDomains{$Domain}++;
     } elsif ($ThisLine =~ /reject=550 5\.7\.1 <[^ ]*@([^ ]*)>\.\.\. Relaying Denied/) {
@@ -269,11 +270,13 @@ diff -u -r1.32 sendmail
     # test for unknown relay users (users we would have relayed elsewhere)
     } elsif ( ($User) = ($ThisLine =~ /^[a-zA-Z0-9]+: ruleset=check_rcpt.*<(.*?)>.*... User unknown$/) ) {
 -       $UnknownUserscheckrcpt{$User}++;
+-   } elsif ( ($Dest,$Relay) = ($ThisLine =~ /^ruleset=check_rcpt, arg1=<([^ ]*)>, relay=([^,]*), reject=550\s*[\d.]*\s*<[^ ]*>\.\.\. Relaying denied/) ) {
 +      $UnknownUserscheckrcpt{$User}++;
-    } elsif ( ($Dest,$Relay) = ($ThisLine =~ /^ruleset=check_rcpt, arg1=<([^ ]*)>, relay=([^,]*), reject=550\s*[\d.]*\s*<[^ ]*>\.\.\. Relaying denied/) ) {
++   } elsif ( ($Dest,$Relay) = ($ThisLine =~ /^ruleset=check_rcpt, arg1=<([^ ]*)>, relay=([^,]*), reject=550\s*[\d.]*\s*[^ ]*\.\.\. Relaying denied/) ) {
        $Temp = "From " . $Relay . " to " . $Dest;
        $RelayDenied{$Temp}++;
-@@ -293,13 +306,17 @@
+    } elsif ($ThisLine =~ /^ruleset=check_relay, arg1=[^,]*, arg2=[^,]*, relay=([^,]*), reject=550\s*[\d.]*\s*(Mail from|Rejected:) [^ ]* (refused by blackhole site|listed at) (.*)/) {
+@@ -293,13 +307,17 @@
  
     #NOQUEUE: [66.200.95.123] did not issue MAIL/EXPN/VRFY/ETRN during connection to MTA
     #NOQUEUE: SMTP1.ADMANMAIL.COM [209.216.124.212] (may be forged) did not issue MAIL/EXPN/VRFY/ETRN during connection to MTA
@@ -296,7 +299,7 @@ diff -u -r1.32 sendmail
  
     #h2GKtU001122: DSN: Too many hops 26 (25 max): from <MAILER-DAEMON@atbusiness.com> via localhost, to <vlagrarycf@pacific.net.in>
     #h2GHtSx30926: SYSERR(root): Too many hops 26 (25 max): from <MAILER-DAEMON@atbusiness.com> via localhost, to <superstore@bpsmailer.com>
-@@ -319,8 +336,6 @@
+@@ -319,8 +337,6 @@
     } elsif ( $ThisLine =~ m/(return to sender|sender notify): Cannot send message for (\d) days/ ) {
        $NumDays = $2;
        $DaysReturns++;
@@ -305,7 +308,7 @@ diff -u -r1.32 sendmail
     } elsif ($ThisLine=~ /relay=(\S+)*.*\[(\d+.\d+.\d+.\d+)\], reject=444 4.4.4 \<([^\>]+)\>... Sorry (\S*)/) {
        chomp($host=$2." ". (defined($1) ? "(".$1.")" : "(unresolved)") );
        chomp($luser=$3);
-@@ -342,7 +357,7 @@
+@@ -342,7 +358,7 @@
        chomp($host=$2." ". (defined($1) ? "(".$1.")" : "(unresolved)") );
        $luser=$3;
        $abuse{$host}{$luser}++;
@@ -314,7 +317,7 @@ diff -u -r1.32 sendmail
        $UserUnknown++;
     } elsif ( $ThisLine =~ m/timeout waiting for input from (\S+)/ ) {
        $Timeouts{$1}++;
-@@ -351,15 +366,12 @@
+@@ -351,15 +367,12 @@
     } elsif ( $ThisLine =~ /\[([0-9\.]+)]: ETRN (\S+)/ ) {
        chomp($ETRN=$2." from ".$1);
        $ETRNs{$ETRN}++;
@@ -332,7 +335,7 @@ diff -u -r1.32 sendmail
     } elsif ($ThisLine=~ /TLS: error: accept failed/) {
        $TLSAcceptFailed++;
     } elsif ($ThisLine=~ /savemail panic/) {
-@@ -368,17 +380,29 @@
+@@ -368,17 +381,33 @@
        $ReturnReceipt++;
     } elsif ($ThisLine=~ /Remote protocol error/) {
        $RemoteProtocolError++;
@@ -355,8 +358,12 @@ diff -u -r1.32 sendmail
 +      $CantCreateOutput++;
 +   } elsif ( $ThisLine =~ m/alias database [^ ]+ out of date/ ) {
 +      $OutdatedAliasdb++;
-+   } elsif ( ($User) = ($ThisLine =~ /SYSERR(\([^ ]+)\): collect: Cannot write [^ ]+ \(bfcommit, uid=\d+, gid=\d+\): Disk quota exceeded/) ) {
-+      $QuotaExceed{$User}++;
++   } elsif ( ($User,$Uid) = ($ThisLine =~ /^SYSERR\(([^ ]+)\): collect: Cannot write [^ ]+ \([^ ]+, uid=(\d+), gid=\d+\): Disk quota exceeded/) ) {
++      $Temp = "$User (uid=$Uid)";
++      $QuotaExceed{$Temp}++;
++   } elsif ( ($User,$Uid) = ($ThisLine =~ /^SYSERR\(([^ ]+)\): queueup: cannot create queue file [^ ]+, euid=(\d+): Disk quota exceeded/) ) {
++      $Temp = "$User (uid=$Uid)";
++      $QuotaExceed{$Temp}++;
 +   } else {
 +      $ThisLine =~ s/.*\: (DSN\: .*)/$1/;
 +      $ThisLine =~ s/.*\: (postmaster notify\: .*)/$1/;
@@ -371,7 +378,7 @@ diff -u -r1.32 sendmail
  if ($MsgsSent > 0) {
     print "\n\nBytes Transferred: $BytesTransferred\n";
     print "Messages Sent:     $MsgsSent\n";
-@@ -402,15 +426,15 @@
+@@ -402,15 +431,15 @@
  }
  
  if($TLSAcceptFailed > 0) {
@@ -391,7 +398,7 @@ diff -u -r1.32 sendmail
  }
  
  if($SaveMailPanic > 0) {
-@@ -422,18 +446,36 @@
+@@ -422,18 +451,36 @@
  }
  
  if($ReturnReceipt > 0) {
@@ -437,7 +444,7 @@ diff -u -r1.32 sendmail
  }
  
  if (($Detail >= 10) and (keys %LocalDomains)) {
-@@ -479,22 +521,29 @@
+@@ -479,22 +526,29 @@
  if (keys %LargeMsgs) {
     print "\n\nLarge Msaages (From \-\> To):\n";
     foreach $ThisOne (sort keys %LargeMsgs) {
@@ -472,7 +479,7 @@ diff -u -r1.32 sendmail
  }
  
  if (keys %UnknownUsers) {
-@@ -523,7 +572,7 @@
+@@ -523,7 +577,7 @@
  if (keys %UnknownUserscheckrcpt) {
     print "\n\nUnknown relay users: (check_rcpt)\n";
     foreach $ThisOne (keys %UnknownUserscheckrcpt) {
@@ -481,7 +488,7 @@ diff -u -r1.32 sendmail
     }
  }
  
-@@ -538,11 +587,18 @@
+@@ -538,11 +592,18 @@
     foreach $Usr (sort keys %SortedUsers) {
        print "\n    $Usr\n";
        foreach $RelayHost (sort keys %{ $SortedUsers{$Usr} }) {
@@ -501,7 +508,7 @@ diff -u -r1.32 sendmail
  $count = 0;
  foreach $ThisOne (sort {$MailBomber{$b}<=>$MailBomber{$a}} keys %MailBomber) {
     if ($MailBomber{$ThisOne} >= 10 and $count < 50) {
-@@ -555,7 +611,7 @@
+@@ -555,7 +616,7 @@
  if (keys %KnownSpammer) {
     print "\n\nRelay attempts from known spammers:\n";
     foreach $ThisOne (sort keys %KnownSpammer) {
@@ -510,7 +517,7 @@ diff -u -r1.32 sendmail
     }
  }
  
-@@ -563,67 +619,67 @@
+@@ -563,67 +624,67 @@
     print "\n\nRelaying denied:\n";
     my $count = CountOrder(%RelayDenied);
     foreach $ThisOne (sort $count keys %RelayDenied) {
@@ -588,7 +595,7 @@ diff -u -r1.32 sendmail
     }
  }
  
-@@ -631,14 +687,14 @@
+@@ -631,14 +692,14 @@
     print "\n\nUnresolveable or non-existent domains:\n";
     my $count = CountOrder(%DomainErrors);
     foreach $ThisOne (sort $count keys %DomainErrors) {
@@ -605,7 +612,7 @@ diff -u -r1.32 sendmail
     }
  }
  
-@@ -646,7 +702,7 @@
+@@ -646,7 +707,7 @@
     print "\n\nUnknown hosts:\n";
     my $count = CountOrder(%UnknownHosts);
     foreach $ThisOne (sort $count keys %UnknownHosts) {
@@ -614,7 +621,7 @@ diff -u -r1.32 sendmail
     }
  }
  
-@@ -654,7 +710,7 @@
+@@ -654,7 +715,7 @@
     print "\n\nUnresolved sender domains:\n";
     my $count = CountOrder(%UnresolvedDomains);
     foreach $ThisOne (sort $count keys %UnresolvedDomains) {
@@ -623,7 +630,7 @@ diff -u -r1.32 sendmail
     }
  }
  
-@@ -662,7 +718,7 @@
+@@ -662,7 +723,7 @@
     print "\n\nTimeouts:\n";
     my $count = CountOrder(%Timeouts);
     foreach $ThisOne (sort $count keys %Timeouts) {
@@ -632,7 +639,7 @@ diff -u -r1.32 sendmail
     }
  }
  
-@@ -670,15 +726,7 @@
+@@ -670,15 +731,7 @@
     print "\n\nForwarding errors:\n";
     my $count = CountOrder(%ForwardErrors);
     foreach $ThisOne (sort $count keys %ForwardErrors) {
