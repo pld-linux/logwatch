@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sendmail,v
 retrieving revision 1.32
 diff -u -r1.32 sendmail
 --- scripts/services/sendmail	15 Dec 2003 18:09:23 -0000	1.32
-+++ scripts/services/sendmail	16 Dec 2003 10:01:24 -0000
++++ scripts/services/sendmail	16 Dec 2003 10:03:48 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -20,7 +20,7 @@ diff -u -r1.32 sendmail
  		( $ThisLine =~ m/headers too large/ ) or
 -		( $ThisLine =~ m/^clone [a-zA-Z0-9]+, owner=/ ) ) {
 +		( $ThisLine =~ m/^clone [a-zA-Z0-9]+, owner=/ ) or
-+      ( $ThisLine =~ m/^DSN: Can't create output/ )
++      ( $ThisLine =~ m/^DSN: Can\'t create output/ )
 +   ) {
  		# We don't care about these
  	} elsif ( ($FromUser, $FromDomain, $Bytes, $NumRcpts, $RelayHost) = ($ThisLine =~ /^from=[\<]?([^@]+)[@]?([^\> ]+).*size=([0-9]+).*nrcpts=([0-9]+).*relay=(\[[0-9\.]+\]|[^ ]* \[[0-9\.]+\]|[^ ]+).*$/) ) {
