@@ -29,6 +29,7 @@ Patch12:	%{name}-scripts-services.diff
 Patch13:	%{name}-postfix_verbosity.patch
 Patch14:	%{name}-cisco.patch
 Patch15:	%{name}-postfix-revDNS.patch
+Patch16:	%{name}-named.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	crondaemon
@@ -74,6 +75,7 @@ cd scripts
 %patch7 -p0
 cd services
 %patch12 -p1
+#%patch16 -p0
 
 %install
 rm -rf $RPM_BUILD_ROOT
