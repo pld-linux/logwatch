@@ -1,26 +1,19 @@
 Index: scripts/services/secure
 ===================================================================
 RCS file: /var/cvs/logwatch/scripts/services/secure,v
-retrieving revision 1.47
-diff -u -r1.47 secure
---- scripts/services/secure	29 Oct 2004 21:19:01 -0000	1.47
-+++ scripts/services/secure	14 Dec 2004 21:16:41 -0000
-@@ -53,9 +53,11 @@
- $DoLookup = $ENV{'secure_ip_lookup'};
- $Ignore = $ENV{'ignore_services'};
- $Summarize = $ENV{'summarize_connections'};
--$ConsoleLock = 0;
--$spop3d_opened=0;
--$spop3d_errors=0;
-+$ConsoleLock   = 0;
-+$spop3d_opened = 0;
-+$spop3d_errors = 0;
+retrieving revision 1.49
+diff -u -r1.49 secure
+--- scripts/services/secure	24 Feb 2005 17:08:05 -0000	1.49
++++ scripts/services/secure	24 Feb 2005 22:42:29 -0000
+@@ -49,6 +49,7 @@
+ $ConsoleLock = 0;
+ $spop3d_opened=0;
+ $spop3d_errors=0;
 +$pwd_file_unknown = 0;
-+
  use Logwatch ':ip';
  
  while (defined($ThisLine = <STDIN>)) {
-@@ -67,17 +69,19 @@
+@@ -60,16 +61,18 @@
     $temp =~ s/^([^[]+).*/$1/;
     if ($Ignore =~ /\b\Q$temp\E\b/i) { next; }
     if (
@@ -38,14 +31,12 @@ diff -u -r1.47 secure
 +      ( $ThisLine =~ /^reboot:/) or
 +      ( $ThisLine =~ /^sudo:/) or
        ( $ThisLine =~ /^xinetd\[\d+\]: USERID: ([^ ]+) (.+)$/ ) or
--      ( $ThisLine =~ /^(xinetd|xinetd-ipv6)\[\d+\]: EXIT: /)
-+      ( $ThisLine =~ /^(xinetd|xinetd-ipv6)\[\d+\]: EXIT: /) or
 +      ( $ThisLine =~ /pam_succeed_if: requirement "uid < 100" not met by user /) or
 +      ( $ThisLine =~ /warning: can.t get client address: Connection refused/)
-    ) {
-       # Ignore these entries
-    } elsif ($ThisLine =~ /^spop3d/) {
-@@ -214,6 +218,12 @@
+       ( $ThisLine =~ /^(xinetd|xinetd-ipv6)\[\d+\]: EXIT: /) or
+       ( $ThisLine =~ /^crond\(\w+\)\[\d+\]: session /) or
+       ( $ThisLine =~ /^sshd\(\w+\)\[\d+\]: authentication failure/) or
+@@ -212,6 +215,12 @@
     } elsif ( ($PID) = ($ThisLine =~ /^checkpassword-pam\[(\d+)\]: Setting PAM credentials succeeded/)) {
     } elsif ( ($PID) = ($ThisLine =~ /^checkpassword-pam\[(\d+)\]: Terminating PAM library/)) {
     } elsif ( ($PID) = ($ThisLine =~ /^checkpassword-pam\[(\d+)\]: Exiting with status 0/)) {
@@ -58,7 +49,7 @@ diff -u -r1.47 secure
     } else {
        # Unmatched entries...
        push @OtherList, "$ThisLine\n";
-@@ -284,6 +294,17 @@
+@@ -282,6 +291,17 @@
     }
  }
  
@@ -76,10 +67,17 @@ diff -u -r1.47 secure
  if (keys %{$Connections}) {
     print "\nConnections:\n";
     foreach $ThisOne (keys %{$Connections}) {
-@@ -446,5 +467,4 @@
- 
+@@ -349,7 +369,7 @@
+    foreach $Service (sort {$a cmp $b} keys %NameVerifyFail) {
+       print "   Service $Service:\n";
+       foreach $Name (sort {$a cmp $b} keys %{$NameVerifyFail{$Service}}) {
+-         print "      $Name$NameVerifyFail{$Service}{$Name} Time(s)\n";
++         print "      $Name$NameVerifyFail{$Service}{$Name} Time(s)\n";
+       }
+    }
+ }
+@@ -445,4 +465,3 @@
  exit(0);
  
--# vi: shiftwidth=3 tabstop=3 et
+ # vi: shiftwidth=3 tabstop=3 syntax=perl et
 -
-+# vi: shiftwidth=3 tabstop=3 syntax=perl et
