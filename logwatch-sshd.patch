@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sshd,v
 retrieving revision 1.33
 diff -u -r1.33 sshd
 --- scripts/services/sshd	15 Dec 2003 19:01:19 -0000	1.33
-+++ scripts/services/sshd	16 Dec 2003 12:37:40 -0000
++++ scripts/services/sshd	16 Dec 2003 13:04:35 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -39,7 +39,7 @@ diff -u -r1.33 sshd
        # Don't care about this...
        if ( $Debug >= 5 ) {
           print STDERR "DEBUG: Found -Generating RSA key- line\n";
-@@ -129,6 +134,10 @@
+@@ -129,6 +134,14 @@
        $sftpRequests++;
     } elsif ( $ThisLine =~ m/refused connect from (.*)$/ ) {
        $RefusedConnections{$1}++;
@@ -47,13 +47,25 @@ diff -u -r1.33 sshd
 +      $RefusedAuthentication{$Reason}++;
 +   } elsif ( ($Host,$Reason) = ($ThisLine =~ /^Received disconnect from ([^ ]*): (.*)$/)) {
 +      $DisconnectReceived{$Reason}{$Host}++;
++   } elsif ( ($Host) = ($ThisLine =~ /^ROOT LOGIN REFUSED FROM ([^ ]*)$/)) {
++      $RootLogin{$Host}++;
++   } elsif ( ($Error) = ($ThisLine =~ /^Cannot release PAM authentication\[\d\]: (.*)$/)) {
++      $PamReleaseFail{$Error}++;
     } elsif ( ($IP) = ($ThisLine =~ /^scanned from ([^ ]*)/) ) {
        push @Scanned, LookupIP($IP);
     } else {
-@@ -149,16 +158,23 @@
+@@ -149,16 +162,31 @@
     print "\nSSHD Started: " . $Starts . " Time(s)\n";
  }
  
++if (keys %RootLogin) {
++   print "\n\nWARNING!!!\n";
++   print "Refused ROOT login attempt from:\n";
++   foreach $Host (sort {$a cmp $b} keys %RootLogin) {
++      print "   $Host : $RootLogin{$Host} Time(s)\n";
++   }
++}
++
 +if (keys %BindFailed) {
 +   print "\nFailed to bind:\n";
 +   foreach $ThisOne (sort {$a cmp $b} keys %BindFailed) {
@@ -76,7 +88,7 @@ diff -u -r1.33 sshd
           print "   " . $ThisOne . ": " . $NoIdent{$ThisOne} . " Time(s)\n";
        }
     }
-@@ -209,6 +225,23 @@
+@@ -209,6 +237,23 @@
     }
  }
  
@@ -100,12 +112,20 @@ diff -u -r1.33 sshd
  if ($#Scanned >= 0) {
     print "\nScanned from these:\n";
     foreach $ThisOne (sort SortIP @Scanned) {
-@@ -218,7 +251,7 @@
+@@ -218,8 +263,15 @@
  
  if (keys %RefusedConnections) {
     print "\nRefused incoming connections:\n";
 -   foreach my $badguy ( keys %RefusedConnections ) {
 +   foreach my $badguy (sort {$a cmp $b} keys %RefusedConnections ) {
        print "      $badguy: " . $RefusedConnections{$badguy} . " Time(s)\n";
++   }
++}
++
++if (keys %PamReleaseFail) {
++   print "\nCannot release PAM authentication:\n";
++   foreach $Error (sort {$a cmp $b} keys %PamReleaseFail) {
++      print "   $Error : $PamReleaseFail{$Error} Time(s)\n";
     }
  }
+ 
