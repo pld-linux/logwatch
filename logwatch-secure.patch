@@ -4,8 +4,23 @@ RCS file: /var/cvs/logwatch/scripts/services/secure,v
 retrieving revision 1.47
 diff -u -r1.47 secure
 --- scripts/services/secure	29 Oct 2004 21:19:01 -0000	1.47
-+++ scripts/services/secure	31 Oct 2004 16:21:30 -0000
-@@ -67,17 +67,18 @@
++++ scripts/services/secure	14 Dec 2004 21:16:41 -0000
+@@ -53,9 +53,11 @@
+ $DoLookup = $ENV{'secure_ip_lookup'};
+ $Ignore = $ENV{'ignore_services'};
+ $Summarize = $ENV{'summarize_connections'};
+-$ConsoleLock = 0;
+-$spop3d_opened=0;
+-$spop3d_errors=0;
++$ConsoleLock   = 0;
++$spop3d_opened = 0;
++$spop3d_errors = 0;
++$pwd_file_unknown = 0;
++
+ use Logwatch ':ip';
+ 
+ while (defined($ThisLine = <STDIN>)) {
+@@ -67,17 +69,19 @@
     $temp =~ s/^([^[]+).*/$1/;
     if ($Ignore =~ /\b\Q$temp\E\b/i) { next; }
     if (
@@ -16,6 +31,7 @@ diff -u -r1.47 secure
 -      ( $ThisLine =~ /^sudo:/) or
        ( $ThisLine =~ /^halt:/) or
 -      ( $ThisLine =~ /^reboot:/) or
++      ( $ThisLine =~ /^last message repeated \d times/) or
        ( $ThisLine =~ /^pam_xauth\[\d+\]: call_xauth: child returned \d/) or
        ( $ThisLine =~ /^passwd\[\d+\]:/) or
 -      ( $ThisLine =~ /warning: can.t get client address: Connection refused/) or
@@ -29,7 +45,47 @@ diff -u -r1.47 secure
     ) {
        # Ignore these entries
     } elsif ($ThisLine =~ /^spop3d/) {
-@@ -446,5 +447,4 @@
+@@ -214,6 +218,12 @@
+    } elsif ( ($PID) = ($ThisLine =~ /^checkpassword-pam\[(\d+)\]: Setting PAM credentials succeeded/)) {
+    } elsif ( ($PID) = ($ThisLine =~ /^checkpassword-pam\[(\d+)\]: Terminating PAM library/)) {
+    } elsif ( ($PID) = ($ThisLine =~ /^checkpassword-pam\[(\d+)\]: Exiting with status 0/)) {
++   } elsif ( ($User) = ($ThisLine =~ /^pam_tally\[\d+\]: pam_tally: pam_get_uid; no such user ([^ ]+)/)) {
++      $UnknownUser{$User}++;
++   } elsif ( ($User) = ($ThisLine =~ /^pam_pwdfile\[\d+\]: user not found in password database/) {
++      $pwd_file_unknown++;
++   } elsif ( ($User) = ($ThisLine =~ /^pam_pwdfile\[\d+\]: wrong password for user ([^ ]+)/)) {
++      $UnknownUser{$User}++;
+    } else {
+       # Unmatched entries...
+       push @OtherList, "$ThisLine\n";
+@@ -284,6 +294,17 @@
+    }
+ }
+ 
++if (keys %UnknownUser) {
++   print "\nUnknown users:\n";
++   foreach $User (sort {$a cmp $b} keys %UnknownUser) {
++      print "   $User : $UnknownUser{$User} Time(s)\n";
++   }
++}
++
++if ($pwd_file_unknown > 0) {
++   print "\nUsers unknown in password database (pwd_file): $pwd_file_unknown\n";
++}
++
+ if (keys %{$Connections}) {
+    print "\nConnections:\n";
+    foreach $ThisOne (keys %{$Connections}) {
+@@ -351,7 +372,7 @@
+    foreach $Service (sort {$a cmp $b} keys %NameVerifyFail) {
+       print "   Service $Service:\n";
+       foreach $Name (sort {$a cmp $b} keys %{$NameVerifyFail{$Service}}) {
+-         print "      $Name$NameVerifyFail{$Service}{$Name} Time(s)\n";
++         print "      $Name$NameVerifyFail{$Service}{$Name} Time(s)\n";
+       }
+    }
+ }
+@@ -446,5 +467,4 @@
  
  exit(0);
  
