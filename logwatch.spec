@@ -3,18 +3,23 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	5.1
-Release:	2
+Release:	3
 License:	MIT
 Group:		Applications/System
+#Path for pre-versions:
+#Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
 Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
 # Source0-md5:	35f96e1002d081620c508216bb9a0170
-#Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
+Source1:	%{name}-pop3.conf
+Source2:	%{name}-pop3
 Patch0:		%{name}-config.patch
 Patch1:		%{name}-log_conf.patch
 Patch2:		%{name}-secure.patch
 Patch3:		%{name}-postfix.patch
 Patch4:		%{name}-oidentd.patch
 Patch5:		%{name}-http.patch
+Patch6:		%{name}-sshd.patch
+Patch7:		%{name}-courier.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	perl-modules
@@ -46,6 +51,8 @@ u¿yciu i moze pracowaæ na wiêkszo¶ci systemów.
 %patch3 -p0
 %patch4 -p0
 %patch5 -p0
+%patch6 -p0
+%patch7 -p0
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -67,6 +74,9 @@ ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT%{_logwatchconf}/logwatch
 ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT/etc/cron.daily/00-logwatch
 
 install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
+
+install %{SOURCE1} $RPM_BUILD_ROOT%{_logwatchconf}/services/pop3.conf
+install %{SOURCE2} $RPM_BUILD_ROOT%{_logwatchdir}/scripts/services/pop3
 
 %clean
 rm -rf $RPM_BUILD_ROOT
