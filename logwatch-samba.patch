@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/samba,v
 retrieving revision 1.12
 diff -u -r1.12 samba
 --- scripts/services/samba	26 Nov 2003 14:36:30 -0000	1.12
-+++ scripts/services/samba	7 Dec 2003 22:47:02 -0000
++++ scripts/services/samba	9 Dec 2003 21:16:52 -0000
 @@ -48,6 +48,7 @@
  		($ThisLine =~ /Got SIGHUP/) or
  		($ThisLine =~ /current master browser/) or
@@ -13,16 +13,31 @@ diff -u -r1.12 samba
  		($ThisLine =~ /===============================================================/)
  	) {
  		#Don't care about these...
-@@ -57,6 +58,8 @@
+@@ -57,6 +58,12 @@
  		$NoServ{$NoService}++;
  	} elsif ($ThisLine =~ s/Denied connection from\s+(\S+)$/$1/) {
  		$Denied{$ThisLine}++;
 +	} elsif ($ThisLine =~ s/ Connection denied from\s+(\S+)$/$1/) {
 +		$Denied{$ThisLine}++;
++	} elsif ( ($Where,$Ip,$Browser) = ($ThisLine =~ /(.*)  Denied connection from  \(([^ ]+)\)  Doing a node status request to the domain master browser at IP ([^ ]+) failed.  Cannot get workgroup name./ ) ) {
++		$Temp = "$Where $Ip";
++		$Denied{$Temp}++;
++		$CantGetGroup{$Browser}++;
  	} elsif ( ($Ip,$Name,$Group,$Subnet) = ($ThisLine =~ /Denied connection from  \(([^ ]+)\)  Samba name server ([^ ]+) is now a local master browser for workgroup ([^ ]+) on subnet ([^ ]+)/ ) ) {
  		$Denied{$Ip}++;
  		$BeLocalMaster{$Subnet}{$Group}{$Name}++;
-@@ -88,9 +91,17 @@
+@@ -74,8 +81,8 @@
+ 	} elsif ( ($Server,$Ip,$Group) = ($ThisLine =~ /Server ([^ ]+) at IP ([^ ]+) is announcing itself as a local master browser for workgroup ([^ ]+) and we think we are master. Forcing election.$/ ) ) {
+ 		$Temp = $Server . "(" . $Ip . ")";
+ 		$ForceElection{$Group}{$Temp}++;
+-	} elsif ( ($Server,$Ip,undef) = ($ThisLine =~ /process_name_refresh_request: unicast name registration request received for name ([^ ]+) from IP ([^ ]+) on subnet ([^ ]+)./ ) ) {
+-		$Temp = "$Server ($Ip)";
++	} elsif ( (undef,$Command,$Server,$Ip,undef) = ($ThisLine =~ /([^ ]+): unicast name ([^ ]+) request received for name ([^ ]+) from IP ([^ ]+) on subnet (.*)\./ ) ) {
++		$Temp = "$Command on subnet $Subnet : $Server ($Ip)";
+ 		$UnicastRegister{$Temp}++;
+ 	} elsif ( ($Group,$Subnet) = ($ThisLine =~ /standard_fail_register: Failed to register\/refresh name ([^ ]+) on subnet ([^ ]+)$/ ) ) {
+ 		$FailedRegister{$Subnet}{$Group}++;
+@@ -88,9 +95,17 @@
  		$Crash{$Temp}++;
  	} elsif ( ( $ThisLine =~ /get_domain_master_name_node_status_fail\(([^ ]+)\)/ ) ) {
  		$GetDomainMasterStatusFail++;
@@ -40,7 +55,7 @@ diff -u -r1.12 samba
  	}
  }
  
-@@ -120,7 +131,7 @@
+@@ -120,7 +135,7 @@
  
  if (keys %Denied) {
     print "\nConnections Denied:\n";
@@ -49,7 +64,16 @@ diff -u -r1.12 samba
        print "   $Line : $Denied{$Line} Time(s)\n";
     }
  }
-@@ -199,23 +210,30 @@
+@@ -167,7 +182,7 @@
+ }
+ 
+ if (($Detail >= 5) and (keys %UnicastRegister)) {
+-	print "\nUnicast name registration requests:\n";
++	print "\nUnicast name requests:\n";
+ 	foreach $ThisOne (sort {$a cmp $b} keys %UnicastRegister) {
+ 		print "   $ThisOne : $UnicastRegister{$ThisOne} Time(s)\n";
+ 	}
+@@ -199,23 +214,30 @@
  
  if (keys %InvalidUser) {
     print "\nInvalid Users:\n";
