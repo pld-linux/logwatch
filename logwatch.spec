@@ -1,12 +1,11 @@
 Summary:    	Analyzes system logs 
 Summary(pl): 	Logwatch - analizator logów systemowych
 Name:        	logwatch
-Version:     	2.9
+Version:     	3.0
 Release:     	1
 License:   	GPL
 Group:       	Applications/System
 Source:      	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
-Patch0:		logwatch-mktemp.patch
 URL:		http://www.logwatch.org/
 Requires:    	perl
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -26,7 +25,6 @@ wiêkszo¶ci systemów.
 
 %prep
 %setup -q
-#%patch0 -p1
 
 %build
 for i in scripts/{shared/{onlycontains,remove},services/zz-fortune}; do
