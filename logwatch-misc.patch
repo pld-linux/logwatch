@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.3
 diff -u -r1.3 postfix
 --- scripts/services/postfix	18 Nov 2003 14:04:05 -0000	1.3
-+++ scripts/services/postfix	25 Nov 2003 10:19:34 -0000
++++ scripts/services/postfix	25 Nov 2003 21:20:55 -0000
 @@ -51,52 +45,70 @@
  $MsgsSent = 0;
  $BytesTransferred = 0;
@@ -244,7 +244,7 @@ RCS file: /var/cvs/logwatch/scripts/services/samba,v
 retrieving revision 1.11
 diff -u -r1.11 samba
 --- scripts/services/samba	3 Nov 2003 05:07:25 -0000	1.11
-+++ scripts/services/samba	25 Nov 2003 10:19:34 -0000
++++ scripts/services/samba	25 Nov 2003 21:20:55 -0000
 @@ -13,59 +13,90 @@
  
  $Debug = $ENV{'LOGWATCH_DEBUG'};
@@ -473,7 +473,7 @@ RCS file: /var/cvs/logwatch/scripts/services/secure,v
 retrieving revision 1.37
 diff -u -r1.37 secure
 --- scripts/services/secure	18 Nov 2003 14:04:06 -0000	1.37
-+++ scripts/services/secure	25 Nov 2003 10:19:35 -0000
++++ scripts/services/secure	25 Nov 2003 21:20:56 -0000
 @@ -19,14 +19,25 @@
  use Logwatch ':ip';
  
@@ -608,7 +608,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sendmail,v
 retrieving revision 1.29
 diff -u -r1.29 sendmail
 --- scripts/services/sendmail	7 Nov 2003 14:26:42 -0000	1.29
-+++ scripts/services/sendmail	25 Nov 2003 10:19:35 -0000
++++ scripts/services/sendmail	25 Nov 2003 21:20:57 -0000
 @@ -109,69 +109,69 @@
  my $UnknownUsersThreshold = 0;
  
@@ -795,7 +795,7 @@ diff -u -r1.29 sendmail
 +	print "\nWARNING!!!!\n";
 +	print "Possible Attack:\n";
 +	foreach $Host (sort {$a cmp $b} keys %AttackAttempt) {
-+		print "   Attempt from $Host with:\n"
++		print "   Attempt from $Host with:\n";
 +		foreach $Attack (sort {$a cmp $b} keys %{$AttackAttempt{$Host}}) {
 +			print "      $Attack : $AttackAttempt{$Host}{$Attack} Time(s)\n";
 +		}
@@ -814,7 +814,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sshd,v
 retrieving revision 1.30
 diff -u -r1.30 sshd
 --- scripts/services/sshd	3 Nov 2003 14:30:40 -0000	1.30
-+++ scripts/services/sshd	25 Nov 2003 10:19:35 -0000
++++ scripts/services/sshd	25 Nov 2003 21:20:57 -0000
 @@ -18,30 +18,30 @@
  
  # Avoid "Use of uninitialized value" warning messages.
@@ -871,13 +871,13 @@ diff -u -r1.30 sshd
 +	  } else {
 +		  $Users{$2}{$3}{"(all)"}++;
 +	  }
-+   } elsif ( $ThisLine =~ m/^Failed (\S+) for (\S+) from ([^ ]+\) port (\d+)/ ) { #openssh
++   } elsif ( $ThisLine =~ m/^Failed (\S+) for (\S+) from ([^ ]+) port (\d+)/ ) { #openssh
        if ( $Debug >= 5 ) {
           print STDERR "DEBUG: Found -Failed login- line\n";
        }
        $BadLogins{"$2/$1 from $3"}++;
 -   } elsif ( $ThisLine =~ m/^Failed (\S+) for illegal user (\S+) from ([\d.]+) port (\d+)/ ) { #openssh
-+   } elsif ( $ThisLine =~ m/^Failed (\S+) for illegal user (\S+) from ([^ ]+\) port (\d+)/ ) { #openssh
++   } elsif ( $ThisLine =~ m/^Failed (\S+) for illegal user (\S+) from ([^ ]+) port (\d+)/ ) { #openssh
        $BadLogins{"$2/$1 from $3"}++;
     } elsif ( $ThisLine =~ m/^Illegal user (\S+) from ([\d.]+)/ ) { #redhat thing
        $IllegalUsers{"$1/none from $2"}++;
