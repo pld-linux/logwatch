@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sendmail,v
 retrieving revision 1.38
 diff -u -r1.38 sendmail
 --- scripts/services/sendmail	3 Feb 2004 18:39:34 -0000	1.38
-+++ scripts/services/sendmail	13 Apr 2004 07:54:04 -0000
++++ scripts/services/sendmail	13 Apr 2004 08:03:00 -0000
 @@ -54,6 +54,7 @@
  $OutdatedAliasdb = 0;
  $MaxLoadAvg = 0;
@@ -42,7 +42,7 @@ diff -u -r1.38 sendmail
        $QuotaExceed{$Temp}++;
 +   } elsif (
 +      ($Address,$Reason) = ($ThisLine =~ /^Syntax error in mailbox address "(.+)" \(([^ ]+)\)/) or
-+      ($Address,$Reason) = ($ThisLine =~ /^<(.+)>... (Colon illegal in host name part)/)
++      ($Address,$Reason) = ($ThisLine =~ /^<(.+)>... (Colon illegal in host name part)/) or
 +      ($Reason,$Address) = ($ThisLine =~ /^(8-bit character in mailbox address) "<(.+)>"/)
 +   ) {
 +      $AddressError{$Reason}{$Address}++;
