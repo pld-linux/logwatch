@@ -3,16 +3,14 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	5.1
-Release:	0.pre.11
+Release:	0.pre.12
 License:	MIT
 Group:		Applications/System
 #Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
 Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
 # Source0-md5:	7939ffc153261984d028bb3e56882412
-Source1:	http://piorun.ds.pg.gda.pl/~blues/patches/clam-update-1.0.tar.gz
-# Source1-md5:	d92959cfa650ccce908721cbbe4fd6ef
-Source2:	shaperd
-Source3:	shaperd.conf
+Source1:	shaperd
+Source2:	shaperd.conf
 Patch0:		%{name}-config.patch
 Patch1:		%{name}-log_conf.patch
 Patch2:		%{name}-sshd.patch
@@ -24,6 +22,8 @@ Patch7:		%{name}-http.patch
 Patch8:		%{name}-pam_unix.patch
 Patch9:		%{name}-modprobe.patch
 Patch10:	%{name}-pureftpd.patch
+Patch11:	%{name}-cron.patch
+Patch12:	%{name}-named.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	perl-modules
@@ -34,6 +34,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define		_logwatchdir	%{_datadir}/logwatch
 %define		_logwatchconf	%{_sysconfdir}/log.d
+
 %description
 LogWatch is a customizable, pluggable log-monitoring system. It will
 go through your logs for a given period of time and make a report in
@@ -47,7 +48,7 @@ poczt± elektroniczn± do administratora systemu. Logwatch jest ³atwy w
 u¿yciu i moze pracowaæ na wiêkszo¶ci systemów.
 
 %prep
-%setup -q -a1 -n %{name}-pre%{version}
+%setup -q -n %{name}-pre%{version}
 %patch0 -p1
 %patch1 -p1
 %patch2 -p0
@@ -59,6 +60,8 @@ u¿yciu i moze pracowaæ na wiêkszo¶ci systemów.
 %patch8 -p0
 %patch9 -p0
 %patch10 -p0
+%patch11 -p0
+%patch12 -p0
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -81,8 +84,8 @@ ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT/etc/cron.daily/00-logwatch
 
 install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
 
-install %{SOURCE2} $RPM_BUILD_ROOT%{_logwatchdir}/scripts/services/
-install %{SOURCE3} $RPM_BUILD_ROOT%{_logwatchconf}/services/
+install %{SOURCE1} $RPM_BUILD_ROOT%{_logwatchdir}/scripts/services/
+install %{SOURCE2} $RPM_BUILD_ROOT%{_logwatchconf}/services/
 
 %clean
 rm -rf $RPM_BUILD_ROOT
