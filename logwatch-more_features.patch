@@ -52,3 +52,15 @@
     } elsif ( $ThisLine =~ /^userdel\[\d+\]: delete `.+' from (shadow )?group `.+'$/ ) {
        # Ignore for now
     } elsif ( $ThisLine =~ /^xinetd\[\d+\]: USERID: ([^ ]+) (.+)$/ ) {
+--- ./scripts/services/samba.org	Mon Jan 13 05:28:06 2003
++++ ./scripts/services/samba	Fri Mar 21 10:26:58 2003
+@@ -40,7 +40,8 @@
+          ($ThisLine =~ /Connection timed out/) or
+          ($ThisLine =~ /closed connection to/) or
+          ($ThisLine =~ /Got SIGHUP/) or
+-         ($ThisLine =~ /current master browser/)
++         ($ThisLine =~ /current master browser/) or
++	 ($ThisLine =~ /debug_message/)
+       ) {
+       # Don't care about these...
+    } elsif ( ($Host, $Service, $User) = ( $ThisLine =~ /([^ ]+ \([^ ]+\)) connect to service ([^ ]+) as user ([^ ]+)/ ) ) {
