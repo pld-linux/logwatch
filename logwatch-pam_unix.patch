@@ -1,0 +1,20 @@
+--- ./scripts/services/pam_unix.org	Mon Nov 17 09:51:44 2003
++++ ./scripts/services/pam_unix	Mon Nov 17 10:26:23 2003
+@@ -84,6 +84,12 @@
+      } elsif ($line =~ /session closed for user/) {
+         # ignore this line
+      }
++ } elsif ($service eq 'xdm') {
++	 if ($line =~ s/^session opened for user (.+) by \(uid=\d+\)/$1/) {
++		 ($Detail >= 5) && $data{$service}{'Sessions Opened'}{$line}++;
++	 } elsif ($line =~ /session closed for user/) {
++		 # ignore this line
++	 }
+    } elsif ($service eq 'imap') {
+       if ($line =~ s/^authentication failure; .*user=(.+)$/$1/) {
+ 		   $data{$service}{'Authentication Failures'}{$line}++;
+@@ -141,3 +147,4 @@
+ 
+ exit(0);
+ 
++# vi: shiftwidth=4 tabstop=4
