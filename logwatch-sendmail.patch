@@ -4,7 +4,7 @@ RCS file: /var/cvs/logwatch/scripts/services/sendmail,v
 retrieving revision 1.32
 diff -u -r1.32 sendmail
 --- scripts/services/sendmail	15 Dec 2003 18:09:23 -0000	1.32
-+++ scripts/services/sendmail	16 Dec 2003 10:03:48 -0000
++++ scripts/services/sendmail	8 Jan 2004 08:12:45 -0000
 @@ -2,6 +2,8 @@
  ##########################################################################
  # $Id$
@@ -14,51 +14,344 @@ diff -u -r1.32 sendmail
  
  ########################################################
  # This was written and is maintained by:
-@@ -130,7 +132,9 @@
- 		( $ThisLine =~ m/AUTH=server, relay=/ ) or
- 		( $ThisLine =~ m/discarded/ ) or
- 		( $ThisLine =~ m/headers too large/ ) or
+@@ -29,6 +31,8 @@
+ $SaveMailPanic = 0;
+ $RemoteProtocolError = 0;
+ $ReturnReceipt = 0;
++$TooManyRcpts = 0;
++$CantCreateOutput = 0;
+ 
+ my %relay;
+ my %abuse;
+@@ -109,115 +113,118 @@
+ my $UnknownUsersThreshold = 0;
+ 
+ while (defined($ThisLine = <STDIN>)) {
+-	($QueueID) = ($ThisLine =~ m/^([a-zA-Z0-9]+): / );
+-	$ThisLine =~ s/^[a-zA-Z0-9]+: //;
+-	if (  ( $ThisLine =~ m/^alias database [^ ]* (auto)?rebuilt by/ ) or
+-		( $ThisLine =~ m/[0-9]* aliases, longest [0-9]* bytes, [0-9]* bytes total/ ) or 
+-		( $ThisLine =~ m/^starting daemon (.*):/ ) or 
+-		( $ThisLine =~ m/premature EOM/ ) or 
+-		( $ThisLine =~ m/unexpected close on connection from/ ) or 
+-		( $ThisLine =~ m/timeout waiting for input from/ ) or 
+-		( $ThisLine =~ m/lost input channel from/ ) or 
+-		( $ThisLine =~ m/DSN: Cannot send message for \d+ day/ ) or 
+-		( $ThisLine =~ m/: Service unavailable$/) or 
+-		( $ThisLine =~ m/Broken pipe|Connection (reset|timed out)/ ) or
+-		( $ThisLine =~ m/X-Spam/ ) or
+-		( $ThisLine =~ m/Milter message: body replaced/ ) or
+-		( $ThisLine =~ m/Milter: data/ ) or
+-		( $ThisLine =~ m/Milter change: header/ ) or
+-		( $ThisLine =~ m/Milter delete: header/ ) or
+-		( $ThisLine =~ m/Milter add: header: X-Virus-Scanned: by amavis/ ) or
+-		( $ThisLine =~ m/AUTH=server, relay=/ ) or
+-		( $ThisLine =~ m/discarded/ ) or
+-		( $ThisLine =~ m/headers too large/ ) or
 -		( $ThisLine =~ m/^clone [a-zA-Z0-9]+, owner=/ ) ) {
-+		( $ThisLine =~ m/^clone [a-zA-Z0-9]+, owner=/ ) or
-+      ( $ThisLine =~ m/^DSN: Can\'t create output/ )
+-		# We don't care about these
+-	} elsif ( ($FromUser, $FromDomain, $Bytes, $NumRcpts, $RelayHost) = ($ThisLine =~ /^from=[\<]?([^@]+)[@]?([^\> ]+).*size=([0-9]+).*nrcpts=([0-9]+).*relay=(\[[0-9\.]+\]|[^ ]* \[[0-9\.]+\]|[^ ]+).*$/) ) {
+-		if ($NumRcpts > 0) {
+-			$MsgsSent++;
+-			$TotalRcpts += $NumRcpts;
+-			$BytesTransferred += $Bytes;
+-			$MailBomber{$RelayHost} += $NumRcpts;
+-			$MailBomberConn{$RelayHost}++;
+-			
+-			if ($Bytes <= 10240) {
+-				$SizeDist[0]{'Num'}++;
+-				$SizeDist[0]{'Bytes'} += $Bytes;
+-			} elsif ($Bytes <= 20480) {
+-				$SizeDist[1]{'Num'}++;
+-				$SizeDist[1]{'Bytes'} += $Bytes;
+-			} elsif ($Bytes <= 51200) {
+-				$SizeDist[2]{'Num'}++;
+-				$SizeDist[2]{'Bytes'} += $Bytes;
+-			} elsif ($Bytes <= 102400) {
+-				$SizeDist[3]{'Num'}++;
+-				$SizeDist[3]{'Bytes'} += $Bytes;
+-			} elsif ($Bytes <= 512000) {
+-				$SizeDist[4]{'Num'}++;
+-				$SizeDist[4]{'Bytes'} += $Bytes;
+-			} elsif ($Bytes <= 1048576) {
+-				$SizeDist[5]{'Num'}++;
+-				$SizeDist[5]{'Bytes'} += $Bytes;
+-			} elsif ($Bytes <= 2097152) {
+-				$SizeDist[6]{'Num'}++;
+-				$SizeDist[6]{'Bytes'} += $Bytes;
+-			} elsif ($Bytes <= 5242880) {
+-				$SizeDist[7]{'Num'}++;
+-				$SizeDist[7]{'Bytes'} += $Bytes;
+-			} elsif ($Bytes <= 10485760) {
+-				$SizeDist[8]{'Num'}++;
+-				$SizeDist[8]{'Bytes'} += $Bytes;
+-			} else {
+-				$SizeDist[9]{'Num'}++;
+-				$SizeDist[9]{'Bytes'} += $Bytes;
+-			}
+-		}
+-
++   ($QueueID) = ($ThisLine =~ m/^([a-zA-Z0-9]+): / );
++   $ThisLine =~ s/^[a-zA-Z0-9]+: //;
++   if (
++      ( $ThisLine =~ m/^alias database [^ ]* (auto)?rebuilt by/ ) or
++      ( $ThisLine =~ m/[0-9]* aliases, longest [0-9]* bytes, [0-9]* bytes total/ ) or
++      ( $ThisLine =~ m/^starting daemon (.*):/ ) or
++      ( $ThisLine =~ m/premature EOM/ ) or
++      ( $ThisLine =~ m/unexpected close on connection from/ ) or
++      ( $ThisLine =~ m/timeout waiting for input from/ ) or
++      ( $ThisLine =~ m/lost input channel from/ ) or
++      ( $ThisLine =~ m/DSN: Cannot send message for \d+ day/ ) or
++      ( $ThisLine =~ m/: Service unavailable$/) or
++      ( $ThisLine =~ m/Broken pipe|Connection (reset|timed out)/ ) or
++      ( $ThisLine =~ m/X-Spam/ ) or
++      ( $ThisLine =~ m/Milter message: body replaced/ ) or
++      ( $ThisLine =~ m/Milter: data/ ) or
++      ( $ThisLine =~ m/Milter change: header/ ) or
++      ( $ThisLine =~ m/Milter delete: header/ ) or
++      ( $ThisLine =~ m/Milter add: header: X-Virus-Scanned: by amavis/ ) or
++      ( $ThisLine =~ m/AUTH=server, relay=/ ) or
++      ( $ThisLine =~ m/discarded/ ) or
++      ( $ThisLine =~ m/headers too large/ ) or
++      ( $ThisLine =~ m/^clone [a-zA-Z0-9]+, owner=/ ) or
++      ( $ThisLine =~ m/^SYSERR\(root\): collect: I\/O error on connection from / )
 +   ) {
- 		# We don't care about these
- 	} elsif ( ($FromUser, $FromDomain, $Bytes, $NumRcpts, $RelayHost) = ($ThisLine =~ /^from=[\<]?([^@]+)[@]?([^\> ]+).*size=([0-9]+).*nrcpts=([0-9]+).*relay=(\[[0-9\.]+\]|[^ ]* \[[0-9\.]+\]|[^ ]+).*$/) ) {
- 		if ($NumRcpts > 0) {
-@@ -234,6 +238,8 @@
-       # following in /etc/mail/access...
++      # We don't care about these
++   } elsif ( ($FromUser, $FromDomain, $Bytes, $NumRcpts, $RelayHost) = ($ThisLine =~ /^from=[\<]?([^@]+)[@]?([^\> ]+).*size=([0-9]+).*nrcpts=([0-9]+).*relay=(\[[0-9\.]+\]|[^ ]* \[[0-9\.]+\]|[^ ]+).*$/) ) {
++      if ($NumRcpts > 0) {
++         $MsgsSent++;
++         $TotalRcpts += $NumRcpts;
++         $BytesTransferred += $Bytes;
++         $MailBomber{$RelayHost} += $NumRcpts;
++         $MailBomberConn{$RelayHost}++;
++         
++         if ($Bytes <= 10240) {
++            $SizeDist[0]{'Num'}++;
++            $SizeDist[0]{'Bytes'} += $Bytes;
++         } elsif ($Bytes <= 20480) {
++            $SizeDist[1]{'Num'}++;
++            $SizeDist[1]{'Bytes'} += $Bytes;
++         } elsif ($Bytes <= 51200) {
++            $SizeDist[2]{'Num'}++;
++            $SizeDist[2]{'Bytes'} += $Bytes;
++         } elsif ($Bytes <= 102400) {
++            $SizeDist[3]{'Num'}++;
++            $SizeDist[3]{'Bytes'} += $Bytes;
++         } elsif ($Bytes <= 512000) {
++            $SizeDist[4]{'Num'}++;
++            $SizeDist[4]{'Bytes'} += $Bytes;
++         } elsif ($Bytes <= 1048576) {
++            $SizeDist[5]{'Num'}++;
++            $SizeDist[5]{'Bytes'} += $Bytes;
++         } elsif ($Bytes <= 2097152) {
++            $SizeDist[6]{'Num'}++;
++            $SizeDist[6]{'Bytes'} += $Bytes;
++         } elsif ($Bytes <= 5242880) {
++            $SizeDist[7]{'Num'}++;
++            $SizeDist[7]{'Bytes'} += $Bytes;
++         } elsif ($Bytes <= 10485760) {
++            $SizeDist[8]{'Num'}++;
++            $SizeDist[8]{'Bytes'} += $Bytes;
++         } else {
++            $SizeDist[9]{'Num'}++;
++            $SizeDist[9]{'Bytes'} += $Bytes;
++         }
++      }
++      
+       # Add The message to a hash for later per-domain analysis.
+       $Msgs{$QueueID}{"Relay"} = $RelayHost;
+       if (($Detail >= 10)) {
+-        $Msgs{$QueueID}{"FromDomain"} = $FromDomain;
+-        $Msgs{$QueueID}{"FromUser"} = $FromUser;
+-        $Msgs{$QueueID}{"Size"} = $Bytes;
+-        $Msgs{$QueueID}{"Internal"} = 0;
+-        $Msgs{$QueueID}{"Outgoing"} = 0;
+-        $Msgs{$QueueID}{"Incomming"} = 0;
++         $Msgs{$QueueID}{"FromDomain"} = $FromDomain;
++         $Msgs{$QueueID}{"FromUser"} = $FromUser;
++         $Msgs{$QueueID}{"Size"} = $Bytes;
++         $Msgs{$QueueID}{"Internal"} = 0;
++         $Msgs{$QueueID}{"Outgoing"} = 0;
++         $Msgs{$QueueID}{"Incomming"} = 0;
+       } # if
+-
++      
+    } elsif ( ($ToUser, $ToDomain) = ($ThisLine =~ m/^to=[\<]?([^@]*)[@]?([^,\>]+).*stat=/ ) ) {
+       #Determine whether the message is local, inbound or outbound and
+       #update the domains hash appropriately.
+       if (($Detail >= 10)) {
+-        $FromDomain = $Msgs{$QueueID}{"FromDomain"};
+-        if (defined($LocalDomains{$FromDomain})) {
+-           if (defined($LocalDomains{$ToDomain})) {
+-              if ($Msgs{$QueueID}{"Internal"} == 0) {
+-                 $Msgs{$QueueID}{"Internal"} = 1;
+-                 $LocalDomains{$FromDomain}{"MsgsInternal"}++;
+-                 $LocalDomains{$FromDomain}{"BytesInternal"} += $Msgs{$QueueID}{"Size"};
+-              } # if
+-           } else {
+-              if ($Msgs{$QueueID}{"Outgoing"} == 0) {
+-                 $Msgs{$QueueID}{"Outgoing"} = 1;
+-                 $LocalDomains{$FromDomain}{"MsgsOut"}++;
+-                 $LocalDomains{$FromDomain}{"BytesOut"} += $Msgs{$QueueID}{"Size"};
+-              } # if
+-           } # else
+-        } else {
+-           if (defined($LocalDomains{$ToDomain})) {
+-              if ($Msgs{$QueueID}{"Incomming"} == 0) {
+-                 $Msgs{$QueueID}{"Incomming"} = 1;
+-                 $LocalDomains{$ToDomain}{"MsgsIn"}++;
+-                 $LocalDomains{$ToDomain}{"BytesIn"} += $Msgs{$QueueID}{"Size"};
+-              } # if
+-           } # if
+-        } # else
+-
+-        if ($Msgs{$QueueID}{"Size"} > 5242880) {  #10485760
+-           $LargeMsgs{$Msgs{$QueueID}{"FromUser"} . "@" . $FromDomain . " \-\> " .$ToUser . "@" .$ToDomain}++;
+-        } # if
++         $FromDomain = $Msgs{$QueueID}{"FromDomain"};
++         if (defined($LocalDomains{$FromDomain})) {
++            if (defined($LocalDomains{$ToDomain})) {
++               if ($Msgs{$QueueID}{"Internal"} == 0) {
++                  $Msgs{$QueueID}{"Internal"} = 1;
++                  $LocalDomains{$FromDomain}{"MsgsInternal"}++;
++                  $LocalDomains{$FromDomain}{"BytesInternal"} += $Msgs{$QueueID}{"Size"};
++               } # if
++            } else {
++               if ($Msgs{$QueueID}{"Outgoing"} == 0) {
++                  $Msgs{$QueueID}{"Outgoing"} = 1;
++                  $LocalDomains{$FromDomain}{"MsgsOut"}++;
++                  $LocalDomains{$FromDomain}{"BytesOut"} += $Msgs{$QueueID}{"Size"};
++               } # if
++            } # else
++         } else {
++            if (defined($LocalDomains{$ToDomain})) {
++               if ($Msgs{$QueueID}{"Incomming"} == 0) {
++                  $Msgs{$QueueID}{"Incomming"} = 1;
++                  $LocalDomains{$ToDomain}{"MsgsIn"}++;
++                  $LocalDomains{$ToDomain}{"BytesIn"} += $Msgs{$QueueID}{"Size"};
++               } # if
++            } # if
++         } # else
++         
++         if ($Msgs{$QueueID}{"Size"} > 5242880) {  #10485760
++            $LargeMsgs{$Msgs{$QueueID}{"FromUser"} . "@" . $FromDomain . " \-\> " .$ToUser . "@" .$ToDomain}++;
++         } # if
+       } # if
+-
++      
+    } elsif ( $ThisLine =~ m/X-Scanned-By: MIMEDefang/) {
+       $Defang++;
+    } elsif (($Size) = ($ThisLine =~ m/message size \(([0-9]+)\) exceeds maximum/)) {
+@@ -230,15 +237,19 @@
+    } elsif ( ($Domain) = ($ThisLine =~ /Domain of sender address ([^ ]+) does not/)) {
+       $UnresolvedDomains{$Domain}++;
+    } elsif ($ThisLine =~ /reject=550 5\.7\.1 <[^ ]*@([^ ]*)>\.\.\. Relaying Denied/) {
+-      # We block some particularly annoying spam domains with the
+-      # following in /etc/mail/access...
++      # We block some particularly annoying spam domains with the following in /etc/mail/access...
        # From:worduphosting.com	ERROR:550 5.7.1 Relaying Denied (Spammer)
        $KnownSpammer{$1}++;
-+   } elsif (($Host) = ($ThisLine =~ /relay=([^ ]+ \[[^ ]+\]), reject=553 5\.3\.0 .*/)) {
++   } elsif (
++      ($Host) = ($ThisLine =~ /relay=([^ ]+ \[[^ ]+\]), reject=553 5\.3\.0 .*/) or
++      ($Host) = ($ThisLine =~ /relay=([^ ]+ \[[^ ]+\] \(may be forged\)), reject=553 5\.3\.0 .*/)
++   ) {
 +      $KnownSpammer{$Host}++;
     } elsif ( ($User) = ($ThisLine =~ /^ruleset=check_rcpt, arg1=<([^ ]*)>, relay=[^,]*, reject=550\s*[\d.]*\s*<[^ ]*>\.\.\. Mailbox disabled for this recipient/) ) {
        $DisabledMailbox{$User}{$QueueID}++;
     # test for unknown relay users (users we would have relayed elsewhere)
-@@ -368,8 +374,10 @@
+    } elsif ( ($User) = ($ThisLine =~ /^[a-zA-Z0-9]+: ruleset=check_rcpt.*<(.*?)>.*... User unknown$/) ) {
+-       $UnknownUserscheckrcpt{$User}++;
++      $UnknownUserscheckrcpt{$User}++;
+    } elsif ( ($Dest,$Relay) = ($ThisLine =~ /^ruleset=check_rcpt, arg1=<([^ ]*)>, relay=([^,]*), reject=550\s*[\d.]*\s*<[^ ]*>\.\.\. Relaying denied/) ) {
+       $Temp = "From " . $Relay . " to " . $Dest;
+       $RelayDenied{$Temp}++;
+@@ -296,10 +307,12 @@
+    } elsif ( ($Temp)  = ($ThisLine =~ /^.*\[(.*?)\] .*did not issue .*? during connection to MTA/) ) {
+        $DummyConnection{$Temp}++;
+ 
+-   #hA29V0hK013676: hnexfe06.hetnet.nl [195.121.6.172]: Possible SMTP
+-   #RCPT flood, throttling.
++   #hA29V0hK013676: hnexfe06.hetnet.nl [195.121.6.172]: Possible SMTP RCPT flood, throttling.
+    } elsif ( ($Temp)  = ($ThisLine =~ /^.*\[(.*?)\]: Possible SMTP RCPT flood, throttling./) ) {
+-       $BadRcptThrottle{$Temp}++;
++      $BadRcptThrottle{$Temp}++;
++
++   } elsif ($ThisLine =~ /^Too many recipients$/) {
++      $TooManyRcpts++;
+ 
+    #h2GKtU001122: DSN: Too many hops 26 (25 max): from <MAILER-DAEMON@atbusiness.com> via localhost, to <vlagrarycf@pacific.net.in>
+    #h2GHtSx30926: SYSERR(root): Too many hops 26 (25 max): from <MAILER-DAEMON@atbusiness.com> via localhost, to <superstore@bpsmailer.com>
+@@ -368,15 +381,21 @@
        $ReturnReceipt++;
     } elsif ($ThisLine=~ /Remote protocol error/) {
        $RemoteProtocolError++;
 -  } elsif ( ($Host,$Attack) = ($ThisLine =~ /POSSIBLE ATTACK from ([^ ]+): ([^ ]+)$/) ) {
-+  } elsif ( ($Host,$Attack) = ($ThisLine =~ /POSSIBLE ATTACK from ([^ ]+): (.*)$/) ) {
- 	  $AttackAttempt{$Host}{$Attack}++;
-+  } elsif ( ($File,$Error) = ($ThisLine =~ /^safesasl\(([^ ]+)\) failed: (.*)$/) ) {
-+     $SaslError{$File}{$Error}++;
-   } else {
- 	  $ThisLine =~ s/.*\: (DSN\: .*)/$1/;
- 	  $ThisLine =~ s/.*\: (postmaster notify\: .*)/$1/;
-@@ -426,7 +434,7 @@
+-	  $AttackAttempt{$Host}{$Attack}++;
+-  } else {
+-	  $ThisLine =~ s/.*\: (DSN\: .*)/$1/;
+-	  $ThisLine =~ s/.*\: (postmaster notify\: .*)/$1/;
+-	  chomp($ThisLine);
+-	  # Report any unmatched entries...
+-	  $OtherList{$ThisLine}++; 
+-  }
++   } elsif ( ($Host,$Attack) = ($ThisLine =~ /POSSIBLE ATTACK from ([^ ]+): (.*)$/) ) {
++      $AttackAttempt{$Host}{$Attack}++;
++   } elsif ( ($Host,$Attack) = ($ThisLine =~ /([^ ]+ \[[^ ]+\]): possible SMTP attack: (.*)$/) ) {
++      $AttackAttempt{$Host}{$Attack}++;
++   } elsif ( ($File,$Error) = ($ThisLine =~ /^safesasl\(([^ ]+)\) failed: (.*)$/) ) {
++      $SaslError{$File}{$Error}++;
++   } elsif ( $ThisLine =~ m/Can\'t create output/ ) {
++      $CantCreateOutput++;
++   } else {
++      $ThisLine =~ s/.*\: (DSN\: .*)/$1/;
++      $ThisLine =~ s/.*\: (postmaster notify\: .*)/$1/;
++      chomp($ThisLine);
++      # Report any unmatched entries...
++      $OtherList{$ThisLine}++; 
++   }
+ }
+ 
+ if ($MsgsSent > 0) {
+@@ -413,6 +432,10 @@
+    print "\n\n" . $ReturnUserUnknown . " Returned messages due to unknown user";
+ }
+ 
++if ($TooManyRcpts > 0) {
++   print "\n\n$TooManyRcpts messages with too many recipients";
++}
++
+ if($SaveMailPanic > 0) {
+    print "\n\n" . $SaveMailPanic . " Save Mail Panic's";
+ }
+@@ -422,18 +445,32 @@
+ }
+ 
+ if($ReturnReceipt > 0) {
+-	print "\n\n" . $ReturnReceipt . " Return Receipt's";
++   print "\n\n" . $ReturnReceipt . " Return Receipt's";
++}
++
++if ($CantCreateOutput > 0) {
++   print "\n\nCan't create output $CantCreateOutput Time(s)";
  }
  
  if (keys %AttackAttempt) {
 -	print "\nWARNING!!!!\n";
-+	print "\n\nWARNING!!!!\n";
- 	print "Possible Attack:\n";
- 	foreach $Host (sort {$a cmp $b} keys %AttackAttempt) {
- 		print "   Attempt from $Host with:\n";
-@@ -434,6 +442,16 @@
- 			print "      $Attack : $AttackAttempt{$Host}{$Attack} Time(s)\n";
- 		}
- 	}
+-	print "Possible Attack:\n";
+-	foreach $Host (sort {$a cmp $b} keys %AttackAttempt) {
+-		print "   Attempt from $Host with:\n";
+-		foreach $Attack (sort {$a cmp $b} keys %{$AttackAttempt{$Host}}) {
+-			print "      $Attack : $AttackAttempt{$Host}{$Attack} Time(s)\n";
+-		}
+-	}
++   print "\n\nWARNING!!!!\n";
++   print "Possible Attack:\n";
++   foreach $Host (sort {$a cmp $b} keys %AttackAttempt) {
++      print "   Attempt from $Host with:\n";
++      foreach $Attack (sort {$a cmp $b} keys %{$AttackAttempt{$Host}}) {
++         print "      $Attack : $AttackAttempt{$Host}{$Attack} Time(s)\n";
++      }
++   }
 +}
 +
 +if (keys %SaslError) {
