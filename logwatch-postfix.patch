@@ -4,8 +4,8 @@ RCS file: /var/cvs/logwatch/scripts/services/postfix,v
 retrieving revision 1.9
 diff -u -r1.9 postfix
 --- scripts/services/postfix	3 Feb 2004 03:25:02 -0000	1.9
-+++ scripts/services/postfix	3 May 2004 20:24:58 -0000
-@@ -82,27 +82,32 @@
++++ scripts/services/postfix	11 May 2004 12:38:32 -0000
+@@ -82,27 +82,33 @@
  $QueueSizeExceeded = 0;
  $RejectedRBL = 0;
  $ErrorRBL = 0;
@@ -39,6 +39,7 @@ diff -u -r1.9 postfix
 +      ( $ThisLine =~ m/^Deleted: \d message$/ ) or
 +      ( $ThisLine =~ m/^connect/ ) or
 +      ( $ThisLine =~ m/^daemon started$/ ) or
++      ( $ThisLine =~ m/^daemon started -- version / ) or
 +      ( $ThisLine =~ m/^disconnect/ ) or
 +      ( $ThisLine =~ m/^dict_eval_action:/ ) or
 +      ( $ThisLine =~ m/^mynetworks:/ ) or
@@ -57,18 +58,22 @@ diff -u -r1.9 postfix
        # We don't care about these
     } elsif ( ($Bytes) = ($ThisLine =~ /^[a-zA-Z0-9]+: from=.*size=([0-9]+).*$/) ) {
        $MsgsSent++;
-@@ -155,7 +160,9 @@
+@@ -154,9 +160,11 @@
+    #} elsif ( ($Host,undef) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <([^ ]*)>: Sender address rejected: Domain not found;/)) {
     #   $RejectDomain{$Host}++;
     # above two lines included in generic reject sender on next condition
-    } elsif ( ($Host,$Sender,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <([^ ]*)>: Sender address rejected: (.*);/)) {
+-   } elsif ( ($Host,$Sender,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <([^ ]*)>: Sender address rejected: (.*);/)) {
 -      $RejectSender{$Host}++;
+-   } elsif ( ($Host,$Recip,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <([^ ]*)>: Recipient address rejected: (.*);/)) {
++   } elsif ( ($Host,$Sender,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <(.*)>: Sender address rejected: (.*);/)) {
 +      $RejectSender{$Reason}{$Host}{$Sender}++;
 +      $RejectSenderHost{$Reason}{$Host}++;
 +      $RejectSenderReason{$Reason}++;
-    } elsif ( ($Host,$Recip,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <([^ ]*)>: Recipient address rejected: (.*);/)) {
++   } elsif ( ($Host,$Recip,$Reason) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): [0-9]+ <(.*)>: Recipient address rejected: (.*);/)) {
        $Temp = "$Host : $Reason";
        $RejectRecip{$Recip}{$Temp}++;
-@@ -186,7 +193,7 @@
+    } elsif ( ($Host,undef) = ($ThisLine =~ /reject: RCPT from ([^ ]*\[[^ ]*\]): 554 <(.*)>: Sender address rejected: Access denied;/)) {
+@@ -186,7 +194,7 @@
     } elsif ( ($Host,$MyName) = ($ThisLine =~ /warning: host ([^ ]*\[[^ ]*\]) replied to HELO\/EHLO with my own hostname ([^ ]*)$/)) {
        $Temp = "$Host : replied to HELO\/EHLO with my own hostname $MyName";
        $HeloError{$Temp}++;
@@ -77,7 +82,7 @@ diff -u -r1.9 postfix
        $Temp = "$Host : Helo command rejected \($Reason\)";
        $HeloError{$Temp}++;
     } elsif ( ($Size,$Host) = ($ThisLine =~ /bad size limit "\(([^ ]*)\)" in EHLO reply from ([^ ]*\[[^ ]*\])$/)) {
-@@ -196,7 +203,7 @@
+@@ -196,7 +204,7 @@
        $IllegalAddressSyntax{$Command}{$Host}++;
     } elsif ( ($Error) = ($ThisLine =~ /warning: mailer loop: (.*)$/)) {
        $MailerLoop{$Error}++;
@@ -86,7 +91,7 @@ diff -u -r1.9 postfix
        $SaslAuthenticationFail{$Host}++;
     } elsif ( ($Domain) = ($ThisLine =~ /warning: malformed domain name in resource data of MX record (.*)$/)) {
        $MxError{$Domain}++;
-@@ -224,45 +231,66 @@
+@@ -224,45 +232,66 @@
        $DatabaseGeneration{$Source}++;
     } elsif ( ($Reason) = ($ThisLine =~ /warning: [a-zA-Z0-9]+: write queue file: (.*)$/)) {
        $QueueWriteError{$Reason}++;
@@ -161,7 +166,7 @@ diff -u -r1.9 postfix
     foreach $Reason (sort {$a cmp $b} keys %QueueWriteError) {
        print "   $Reason : $QueueWriteError{$Reason} Time(s)\n";
     }
-@@ -275,10 +303,6 @@
+@@ -275,10 +304,6 @@
     }
  }
  
@@ -172,7 +177,7 @@ diff -u -r1.9 postfix
  if (keys %DatabaseGeneration) {
     print "\n\nDatabase files are not up-to-date (propably rehash is needed):\n";
     foreach $Source (sort {$a cmp $b} keys %DatabaseGeneration) {
-@@ -286,10 +310,6 @@
+@@ -286,10 +311,6 @@
     }
  }
  
@@ -183,7 +188,7 @@ diff -u -r1.9 postfix
  if (keys %PixWorkaround) {
     print "\n\nEnabled PIX <CRLF>.<CRLF> workaround for:\n";
     foreach $Host (sort {$a cmp $b} keys %PixWorkaround) {
-@@ -353,20 +373,17 @@
+@@ -353,20 +374,17 @@
     }
  }
  
@@ -214,7 +219,7 @@ diff -u -r1.9 postfix
        }
     }
  }
-@@ -376,7 +393,7 @@
+@@ -376,7 +394,7 @@
     foreach $Recip (sort {$a cmp $b} keys %RejectRecip) {
        print "    $Recip:\n";
        foreach $Host (sort {$a cmp $b} keys %{$RejectRecip{$Recip}} ) {
@@ -223,7 +228,7 @@ diff -u -r1.9 postfix
        }
     }
  }
-@@ -508,7 +525,7 @@
+@@ -508,7 +526,7 @@
  if (keys %UnknownWarnings) {
     print "\n\nUnrecognized warning:\n";
     foreach $ThisOne (sort {$a cmp $b} keys %UnknownWarnings) {
