@@ -61,6 +61,8 @@ cd scripts/services
 %patch8 -p0
 cd ../../
 
+find -name '*~' | xargs rm
+
 %install
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT{%{_logwatchconf},/etc/{cron.daily,sysconfig}} \
