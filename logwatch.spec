@@ -20,6 +20,7 @@ Patch0:		%{name}-config.patch
 Patch1:		%{name}-log_conf.patch
 Patch2:		%{name}-secure.patch
 Patch3:		%{name}-http.patch
+Patch4:		%{name}-postfix.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	crondaemon
@@ -50,8 +51,9 @@ u¿yciu i mo¿e pracowaæ na wiêkszo¶ci systemów.
 %patch1 -p1
 %patch2 -p0
 %patch3 -p0
+%patch4 -p0
 
-find -name '*~' | xargs rm
+find -name '*~' | xargs rm || exit 0
 
 %install
 rm -rf $RPM_BUILD_ROOT
