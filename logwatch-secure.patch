@@ -1,105 +1,18 @@
 Index: scripts/services/secure
 ===================================================================
 RCS file: /var/cvs/logwatch/scripts/services/secure,v
-retrieving revision 1.49
-diff -u -r1.49 secure
---- scripts/services/secure	24 Feb 2005 17:08:05 -0000	1.49
-+++ scripts/services/secure	11 Mar 2005 09:08:07 -0000
-@@ -49,6 +49,8 @@
- $ConsoleLock = 0;
- $spop3d_opened=0;
- $spop3d_errors=0;
-+$pwd_file_unknown = 0;
-+$pwd_file_too_short = 0;
- use Logwatch ':ip';
- 
- while (defined($ThisLine = <STDIN>)) {
-@@ -60,16 +62,18 @@
-    $temp =~ s/^([^[]+).*/$1/;
-    if ($Ignore =~ /\b\Q$temp\E\b/i) { next; }
-    if (
--      ( $ThisLine =~ /pam_succeed_if: requirement "uid < 100" not met by user /) or
-+      ( $ThisLine =~ /^(.*)\(pam_unix\)/) or
-       ( $ThisLine =~ m/^[^ ]+\[\d+\]: connect from localhost$/ ) or
-       ( $ThisLine =~ /^\/usr\/bin\/sudo:/) or
--      ( $ThisLine =~ /^sudo:/) or
-       ( $ThisLine =~ /^halt:/) or
--      ( $ThisLine =~ /^reboot:/) or
-+      ( $ThisLine =~ /^last message repeated \d times/) or
-       ( $ThisLine =~ /^pam_xauth\[\d+\]: call_xauth: child returned \d/) or
-       ( $ThisLine =~ /^passwd\[\d+\]:/) or
--      ( $ThisLine =~ /warning: can.t get client address: Connection refused/) or
-+      ( $ThisLine =~ /^reboot:/) or
-+      ( $ThisLine =~ /^sudo:/) or
-       ( $ThisLine =~ /^xinetd\[\d+\]: USERID: ([^ ]+) (.+)$/ ) or
-+      ( $ThisLine =~ /pam_succeed_if: requirement "uid < 100" not met by user /) or
-+      ( $ThisLine =~ /warning: can.t get client address: Connection refused/) or
-       ( $ThisLine =~ /^(xinetd|xinetd-ipv6)\[\d+\]: EXIT: /) or
-       ( $ThisLine =~ /^crond\(\w+\)\[\d+\]: session /) or
-       ( $ThisLine =~ /^sshd\(\w+\)\[\d+\]: authentication failure/) or
-@@ -152,6 +156,8 @@
-       $Error{$Service}{$Err}++;
-    } elsif ( ($Service,$Err) = ($ThisLine =~ /^([^ ]+): (password mismatch for [^ ]+ in [^ ]+):.*$/ ) ) {
-       $Error{$Service}{$Err}++;
-+   } elsif ( ($Service,$Err) = ($ThisLine =~ /^([^ ]+)\[\d+\]: (changed POP3 password for .*)$/ ) ) {
-+      $Error{$Service}{$Err}++;
-    } elsif ( $ThisLine =~ /^login: ROOT LOGIN ON tty[0-9]+/) {
-       $RootLoginTTY++
-    } elsif ( (undef,$User) = ($ThisLine =~ /^login: LOGIN ON (tty|pts\/)[0-9]+ BY ([^ ]+)/ )) {
-@@ -212,6 +218,16 @@
-    } elsif ( ($PID) = ($ThisLine =~ /^checkpassword-pam\[(\d+)\]: Setting PAM credentials succeeded/)) {
-    } elsif ( ($PID) = ($ThisLine =~ /^checkpassword-pam\[(\d+)\]: Terminating PAM library/)) {
-    } elsif ( ($PID) = ($ThisLine =~ /^checkpassword-pam\[(\d+)\]: Exiting with status 0/)) {
-+   } elsif ( ($User) = ($ThisLine =~ /^pam_tally\[\d+\]: pam_tally: pam_get_uid; no such user ([^ ]+)/)) {
-+      $UnknownUser{$User}++;
-+   } elsif ( ($User) = ($ThisLine =~ /^pam_tally\[\d+\]: Tally overflowed for user ([^ ]+)$/)) {
-+      $TallyOverflow{$User}++;
-+   } elsif ( ($User) = ($ThisLine =~ /^pam_pwdfile\[\d+\]: user not found in password database/) ) {
-+      $pwd_file_unknown++;
-+   } elsif ( ($User) = ($ThisLine =~ /^pam_pwdfile\[\d+\]: wrong password for user ([^ ]+)/)) {
-+      $UnknownUser{$User}++;
-+   } elsif ($ThisLine =~ /^pam_pwdfile\[\d+\]: password too short or NULL/) {
-+       $pwd_file_too_short++;
-    } else {
-       # Unmatched entries...
-       push @OtherList, "$ThisLine\n";
-@@ -282,6 +298,20 @@
-    }
- }
- 
-+if (keys %UnknownUser) {
-+   print "\nUnknown users:\n";
-+   foreach $User (sort {$a cmp $b} keys %UnknownUser) {
-+      print "   $User : $UnknownUser{$User} Time(s)\n";
-+   }
-+}
-+
-+if ($pwd_file_unknown > 0) {
-+   print "\nUsers unknown in password database (pwd_file): $pwd_file_unknown\n";
-+}
-+if ($pwd_file_too_short > 0) {
-+   print "\nPassword too short or NULL (pwd_file): $pwd_file_too_short Time(s)\n";
-+}
-+
- if (keys %{$Connections}) {
-    print "\nConnections:\n";
-    foreach $ThisOne (keys %{$Connections}) {
-@@ -437,6 +467,13 @@
-    }
- }
- 
-+if (keys %TallyOverflow) {
-+   print "\nTally overflowed for user:\n";
-+   foreach $User (sort {$a cmp $b} keys %TallyOverflow) {
-+      print "   $User : $TallyOverflow{$User} Time(s)\n";
-+   }
-+}
-+
- if ($#OtherList >= 0) {
-    print "\n**Unmatched Entries**\n";
-    print @OtherList;
-@@ -445,4 +482,3 @@
- exit(0);
- 
- # vi: shiftwidth=3 tabstop=3 syntax=perl et
--
+retrieving revision 1.51
+diff -r1.51 secure
+76d75
+<       ( $ThisLine =~ /^sudo:/) or
+78c77
+<       ( $ThisLine =~ /^reboot:/) or
+---
+>       ( $ThisLine =~ /^last message repeated \d times/) or
+81c80,81
+<       ( $ThisLine =~ /warning: can.t get client address: Connection refused/) or
+---
+>       ( $ThisLine =~ /^reboot:/) or
+>       ( $ThisLine =~ /^sudo:/) or
+82a83
+>       ( $ThisLine =~ /warning: can.t get client address: Connection refused/) or
