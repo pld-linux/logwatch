@@ -3,12 +3,14 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	6.0.1
-Release:	4.1
+Release:	20050422.1
 License:	MIT
 Group:		Applications/System
-Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
-# Source0-md5:	47a609d01472935b269f04584d6e9217
-#Path for pre-versions:
+Source0:	http://mieszkancy.ds.pg.gda.pl/~blues/SOURCES/%{name}-20050422.tar.bz2
+# Source0-md5:	b74d162259d1fe2870d17b977576ef8a
+# Path for stable versions:
+#Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
+# Path for pre-versions:
 #Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
 Source1:	%{name}.cron
 Source2:	%{name}.sysconfig
@@ -17,12 +19,7 @@ Source3:	http://www.blues.gda.pl/%{name}-zz-network-0.12.tar.gz
 Patch0:		%{name}-config.patch
 Patch1:		%{name}-log_conf.patch
 Patch2:		%{name}-secure.patch
-Patch3:		%{name}-sshd.patch
-Patch4:		%{name}-sendmail.patch
-Patch5:		%{name}-pam_unix.patch
-Patch6:		%{name}-clamav-milter.patch
-Patch7:		%{name}-http.patch
-Patch8:		%{name}-pop3.patch
+Patch3:		%{name}-http.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	crondaemon
@@ -48,18 +45,11 @@ poczt± elektroniczn± do administratora systemu. Logwatch jest ³atwy w
 u¿yciu i mo¿e pracowaæ na wiêkszo¶ci systemów.
 
 %prep
-%setup -q -a3
+%setup -q -n %{name} -a3
 %patch0 -p0
 %patch1 -p1
 %patch2 -p0
 %patch3 -p0
-%patch4 -p0
-%patch5 -p0
-%patch6 -p0
-%patch7 -p0
-cd scripts/services
-%patch8 -p0
-cd ../../
 
 find -name '*~' | xargs rm
 
