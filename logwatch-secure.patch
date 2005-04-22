@@ -2,17 +2,24 @@ Index: scripts/services/secure
 ===================================================================
 RCS file: /var/cvs/logwatch/scripts/services/secure,v
 retrieving revision 1.51
-diff -r1.51 secure
-76d75
-<       ( $ThisLine =~ /^sudo:/) or
-78c77
-<       ( $ThisLine =~ /^reboot:/) or
----
->       ( $ThisLine =~ /^last message repeated \d times/) or
-81c80,81
-<       ( $ThisLine =~ /warning: can.t get client address: Connection refused/) or
----
->       ( $ThisLine =~ /^reboot:/) or
->       ( $ThisLine =~ /^sudo:/) or
-82a83
->       ( $ThisLine =~ /warning: can.t get client address: Connection refused/) or
+diff -u -r1.51 secure
+--- scripts/services/secure	21 Apr 2005 17:51:00 -0000	1.51
++++ scripts/services/secure	22 Apr 2005 07:53:43 -0000
+@@ -73,13 +73,14 @@
+       ( $ThisLine =~ /^(.*)\(pam_unix\)/) or
+       ( $ThisLine =~ m/^[^ ]+\[\d+\]: connect from localhost$/ ) or
+       ( $ThisLine =~ /^\/usr\/bin\/sudo:/) or
+-      ( $ThisLine =~ /^sudo:/) or
+       ( $ThisLine =~ /^halt:/) or
+-      ( $ThisLine =~ /^reboot:/) or
++      ( $ThisLine =~ /^last message repeated \d times/) or
+       ( $ThisLine =~ /^pam_xauth\[\d+\]: call_xauth: child returned \d/) or
+       ( $ThisLine =~ /^passwd\[\d+\]:/) or
+-      ( $ThisLine =~ /warning: can.t get client address: Connection refused/) or
++      ( $ThisLine =~ /^reboot:/) or
++      ( $ThisLine =~ /^sudo:/) or
+       ( $ThisLine =~ /^xinetd\[\d+\]: USERID: ([^ ]+) (.+)$/ ) or
++      ( $ThisLine =~ /warning: can.t get client address: Connection refused/) or
+       ( $ThisLine =~ /^(xinetd|xinetd-ipv6)\[\d+\]: EXIT: /) or
+       ( $ThisLine =~ /^crond\(\w+\)\[\d+\]: session /) or
+       ( $ThisLine =~ /^sshd\(\w+\)\[\d+\]: authentication failure/) or
