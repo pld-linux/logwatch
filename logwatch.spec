@@ -3,7 +3,7 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	6.0.1
-Release:	20050422.1
+Release:	20050422.2
 License:	MIT
 Group:		Applications/System
 Source0:	http://mieszkancy.ds.pg.gda.pl/~blues/SOURCES/%{name}-20050422.tar.bz2
@@ -21,6 +21,7 @@ Patch1:		%{name}-log_conf.patch
 Patch2:		%{name}-secure.patch
 Patch3:		%{name}-http.patch
 Patch4:		%{name}-postfix.patch
+Patch5:		%{name}-sendmail.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	crondaemon
@@ -52,6 +53,7 @@ u¿yciu i mo¿e pracowaæ na wiêkszo¶ci systemów.
 %patch2 -p0
 %patch3 -p0
 %patch4 -p0
+%patch5 -p0
 
 find -name '*~' | xargs rm || exit 0
 
