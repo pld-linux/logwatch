@@ -1,0 +1,15 @@
+Index: scripts/services/sendmail
+===================================================================
+RCS file: /var/cvs/logwatch/scripts/services/sendmail,v
+retrieving revision 1.45
+diff -u -r1.45 sendmail
+--- scripts/services/sendmail	17 Apr 2005 19:07:45 -0000	1.45
++++ scripts/services/sendmail	25 Apr 2005 12:26:02 -0000
+@@ -32,7 +32,6 @@
+ #    etc, to logwatch-devel@logwatch.org
+ ########################################################
+ 
+-use diagnostics;
+ use strict;
+ 
+ use Logwatch ':sort';
