@@ -55,7 +55,7 @@ u¿yciu i mo¿e pracowaæ na wiêkszo¶ci systemów.
 %patch4 -p0
 %patch5 -p0
 
-find -name '*~' | xargs rm || exit 0
+find -name '*~' | xargs -r rm
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -95,7 +95,7 @@ fi
 %defattr(644,root,root,755)
 %doc README HOWTO-Make-Filter project/{CHANGES,TODO}
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/sysconfig/%{name}
-%attr(755,root,root) %config(noreplace) %verify(not size mtime md5) /etc/cron.daily/00-%{name}
+%attr(755,root,root) /etc/cron.daily/00-%{name}
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/logwatch.conf
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/services/*.conf
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/logfiles/*.conf
