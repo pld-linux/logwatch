@@ -11,3 +11,6 @@ OUTPUT="unformatted"
 # Where to save file?
 # If commented - simply run logwatch
 #OUTPUT_LOCATION=/srv/logwatch/
+
+# for date +%x display
+LC_TIME=pl_PL
