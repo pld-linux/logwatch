@@ -15,6 +15,7 @@ Source1:	%{name}.cron
 Source2:	%{name}.sysconfig
 Patch0:		%{name}-config.patch
 Patch1:		%{name}-log_conf.patch
+Patch2:		%{name}-broken-html.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	crondaemon
@@ -43,6 +44,7 @@ u¿yciu i mo¿e pracowaæ na wiêkszo¶ci systemów.
 %setup -q
 %patch0 -p0
 %patch1 -p1
+%patch2 -p1
 
 find -name '*~' | xargs -r rm
 
