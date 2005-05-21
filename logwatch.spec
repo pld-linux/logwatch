@@ -2,13 +2,13 @@
 Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
-Version:	6.0.2
-Release:	2
+Version:	6.1
+Release:	1
 License:	MIT
 Group:		Applications/System
 # Path for stable versions:
 Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
-# Source0-md5:	a3048abed19fedfa2d954de7ff6b40cb
+# Source0-md5:	41a0f7ed08cafc6d151e05f7d13bd884
 # Path for pre-versions:
 #Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
 Source1:	%{name}.cron
