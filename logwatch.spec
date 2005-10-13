@@ -2,19 +2,18 @@
 Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
-Version:	6.1.2
+Version:	7.0
 Release:	1
 License:	MIT
 Group:		Applications/System
 # Path for stable versions:
 Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
-# Source0-md5:	a764bf80a31ab04ca788ac1303cba297
+# Source0-md5:	58fc1ea61df69e0e0839e70a289f5b3e
 # Path for pre-versions:
 #Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
 Source1:	%{name}.cron
 Source2:	%{name}.sysconfig
-Patch0:		%{name}-config.patch
-Patch1:		%{name}-log_conf.patch
+Patch0:		%{name}-log_conf.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	crondaemon
@@ -24,8 +23,8 @@ Requires:	smtpdaemon
 BuildArch:	noarch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
-%define		_logwatchdir	%{_datadir}/logwatch
-%define		_logwatchconf	%{_sysconfdir}/log.d
+%define		_logwatchdir	%{_datadir}/%{name}
+%define		_logwatchconf	%{_sysconfdir}/%{name}
 
 %description
 LogWatch is a customizable, pluggable log-monitoring system. It will
@@ -41,28 +40,29 @@ u¿yciu i mo¿e pracowaæ na wiêkszo¶ci systemów.
 
 %prep
 %setup -q
-%patch0 -p0
-%patch1 -p1
+%patch0 -p1
 
 find -name '*~' | xargs -r rm
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT{%{_logwatchconf},/etc/{cron.daily,sysconfig}} \
-	$RPM_BUILD_ROOT{%{_sbindir},%{_mandir}/man8,%{_logwatchdir}/lib}
+install -d $RPM_BUILD_ROOT{%{_logwatchconf}/{conf,scripts},/etc/{cron.daily,sysconfig}} \
+	$RPM_BUILD_ROOT{%{_sbindir},%{_mandir}/man8,%{_logwatchdir}/{lib,default.conf},/var/cache/logwatch}
 
-install conf/logwatch.conf $RPM_BUILD_ROOT%{_logwatchconf}
+install conf/logwatch.conf $RPM_BUILD_ROOT%{_logwatchconf}/conf
+install conf/logwatch.conf $RPM_BUILD_ROOT%{_logwatchdir}/default.conf
 # Where to put it The Right Way(TM)?
 install lib/Logwatch.pm $RPM_BUILD_ROOT%{_logwatchdir}/lib
 
-cp -a conf/services $RPM_BUILD_ROOT%{_logwatchconf}
-cp -a conf/logfiles $RPM_BUILD_ROOT%{_logwatchconf}
+cp -a conf/services $RPM_BUILD_ROOT%{_logwatchconf}/conf
+cp -a conf/services $RPM_BUILD_ROOT%{_logwatchdir}/default.conf
+cp -a conf/logfiles $RPM_BUILD_ROOT%{_logwatchconf}/conf
+cp -a conf/logfiles $RPM_BUILD_ROOT%{_logwatchdir}/default.conf
 cp -a scripts $RPM_BUILD_ROOT%{_logwatchdir}
 
 mv $RPM_BUILD_ROOT%{_logwatchdir}/scripts/logwatch.pl $RPM_BUILD_ROOT%{_sbindir}/logwatch
 
 ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT%{_logwatchdir}/scripts/logwatch.pl
-ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT%{_logwatchconf}/logwatch
 
 install %{SOURCE1} $RPM_BUILD_ROOT/etc/cron.daily/00-%{name}
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/%{name}
@@ -78,19 +78,30 @@ if [ -d /etc/log.d/conf ]; then
 	mv -f /etc/log.d/conf/logwatch.conf* /etc/log.d/
 	mv -f /etc/log.d/conf/services /etc/log.d/
 	mv -f /etc/log.d/conf/logfiles /etc/log.d/
+# needed for smooth upgrade from < 7.0 package:
+elif [ -d /etc/log.d ]; then
+	echo "Moving configuration from /etc/log.d to /etc/logwatch/conf..."
+	mkdir -p /etc/logwatch/conf
+#	mkdir /etc/logwatch/conf/logfiles
+#	mkdir /etc/logwatch/conf/services
+	mv -f /etc/log.d/logwatch.conf* /etc/logwatch/conf/
+	mv -f /etc/log.d/services /etc/logwatch/conf/
+	mv -f /etc/log.d/logfiles /etc/logwatch/conf/
 fi
 
 %files
 %defattr(644,root,root,755)
-%doc README HOWTO-Make-Filter project/{CHANGES,TODO}
+%doc README HOWTO-* project/{CHANGES,TODO}
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/sysconfig/%{name}
 %attr(755,root,root) /etc/cron.daily/00-%{name}
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/logwatch.conf
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/services/*.conf
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/logfiles/*.conf
+%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/conf/logwatch.conf
+%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/conf/logfiles/*.conf
+%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/conf/services/*.conf
 %attr(750,root,root) %dir %{_logwatchconf}
-%attr(750,root,root) %dir %{_logwatchconf}/logfiles
-%attr(750,root,root) %dir %{_logwatchconf}/services
+%attr(750,root,root) %dir %{_logwatchconf}/conf/logfiles
+%attr(750,root,root) %dir %{_logwatchconf}/conf/services
+%attr(750,root,root) %dir %{_logwatchconf}/scripts
 %attr(755,root,root) %{_logwatchdir}
 %attr(755,root,root) %{_sbindir}/logwatch
+%attr(750,root,root) %dir /var/cache/logwatch
 %{_mandir}/man8/*
