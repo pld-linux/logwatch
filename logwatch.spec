@@ -98,6 +98,7 @@ fi
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/conf/logfiles/*.conf
 %attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/conf/services/*.conf
 %attr(750,root,root) %dir %{_logwatchconf}
+%attr(750,root,root) %dir %{_logwatchconf}/conf
 %attr(750,root,root) %dir %{_logwatchconf}/conf/logfiles
 %attr(750,root,root) %dir %{_logwatchconf}/conf/services
 %attr(750,root,root) %dir %{_logwatchconf}/scripts
