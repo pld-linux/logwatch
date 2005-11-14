@@ -1,5 +1,5 @@
 # Set priority when cleating report:
-NICE_LEVEL="0"
+SERVICE_RUN_NICE_LEVEL="0"
 
 # Select output.
 #  - unformatted - traditional text form (default)

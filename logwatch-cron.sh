@@ -1,7 +1,7 @@
 #!/bin/sh
 #########
 #---{ Initial values: }---#
-NICE_LEVEL="0"
+SERVICE_RUN_NICE_LEVEL="0"
 OUTPUT="unformated"
 DATE=`/bin/date +%F`
 
