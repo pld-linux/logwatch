@@ -1,0 +1,11 @@
+--- ./scripts/services/zz-disk_space.orig	2005-11-02 14:26:11.000000000 +0000
++++ ./scripts/services/zz-disk_space	2005-11-14 08:39:57.000000000 +0000
+@@ -110,7 +110,7 @@
+ 	if ($OSname eq "Linux") {
+ 		my $awkprog='{printf("%-35s %6s %6s %6s %4s  %s\n", $1, $2, $3, $4, $5, $6); }';
+ 		system("echo 'Filesystem:Size:Used:Avail:Use%:Mounted on' | awk -F: '$awkprog' ");
+-      system("df -P -h | awk '/^[/ ]/ $awkprog' | sort -b -r -n -k 5 ");
++      system("df -P -h | gawk '/^[/ ]/ $awkprog' | sort -b -r -n -k 5 ");
+ 	} elsif ($OSname eq "SunOS") {
+ 		if ( ($release eq "5.10") || ($release eq "5.9") ) {
+ 			system("/usr/xpg4/bin/df -P -h | grep '^/dev/'");
