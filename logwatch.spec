@@ -2,18 +2,19 @@
 Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
-Version:	7.0
+Version:	7.1
 Release:	1
 License:	MIT
 Group:		Applications/System
 # Path for stable versions:
 Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
-# Source0-md5:	58fc1ea61df69e0e0839e70a289f5b3e
+# Source0-md5:	6abe774abb10f45472c387f5e646a251
 # Path for pre-versions:
 #Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
 Source1:	%{name}.cron
 Source2:	%{name}.sysconfig
 Patch0:		%{name}-log_conf.patch
+Patch1:		%{name}-gawk.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	crondaemon
@@ -41,6 +42,7 @@ u¿yciu i mo¿e pracowaæ na wiêkszo¶ci systemów.
 %prep
 %setup -q
 %patch0 -p1
+%patch1 -p1
 
 find -name '*~' | xargs -r rm
 
@@ -68,6 +70,10 @@ install %{SOURCE1} $RPM_BUILD_ROOT/etc/cron.daily/00-%{name}
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/%{name}
 
 install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
+
+# Cleanup junk:
+rm -f $RPM_BUILD_ROOT%{_logwatchdir}/default.conf/services/pureftpd.conf.orig
+rm -f $RPM_BUILD_ROOT%{_logwatchconf}/conf/services/pureftpd.conf.orig
 
 %clean
 rm -rf $RPM_BUILD_ROOT
