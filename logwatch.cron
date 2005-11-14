@@ -3,7 +3,7 @@
 #---{ Initial values: }---#
 NICE_LEVEL="0"
 OUTPUT="unformated"
-DATA=`/bin/date +%x`
+DATA=`/bin/date +%F`
 
 #---{ Fetch configuration: }---#
 if [ -f /etc/sysconfig/logwatch ]; then
