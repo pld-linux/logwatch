@@ -3,7 +3,7 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	7.1
-Release:	1
+Release:	1.1
 License:	MIT
 Group:		Applications/System
 # Path for stable versions:
@@ -81,18 +81,20 @@ rm -rf $RPM_BUILD_ROOT
 %pre
 # needed for smooth upgrade from < 4.3.2 package
 if [ -d /etc/log.d/conf ]; then
-	mv -f /etc/log.d/conf/logwatch.conf* /etc/log.d/
-	mv -f /etc/log.d/conf/services /etc/log.d/
-	mv -f /etc/log.d/conf/logfiles /etc/log.d/
+	mv -f /etc/log.d/conf/logwatch.conf* /etc/log.d/ || :
+	mv -f /etc/log.d/conf/services /etc/log.d/ || :
+	mv -f /etc/log.d/conf/logfiles /etc/log.d/ || :
 # needed for smooth upgrade from < 7.0 package:
 elif [ -d /etc/log.d ]; then
 	echo "Moving configuration from /etc/log.d to /etc/logwatch/conf..."
-	mkdir -p /etc/logwatch/conf
+	if [ ! -d /etc/logwatch/conf ]; then
+		mkdir -p /etc/logwatch/conf
+	fi
 #	mkdir /etc/logwatch/conf/logfiles
 #	mkdir /etc/logwatch/conf/services
-	mv -f /etc/log.d/logwatch.conf* /etc/logwatch/conf/
-	mv -f /etc/log.d/services /etc/logwatch/conf/
-	mv -f /etc/log.d/logfiles /etc/logwatch/conf/
+	mv -f /etc/log.d/logwatch.conf* /etc/logwatch/conf/ || :
+	mv -f /etc/log.d/services /etc/logwatch/conf/ || :
+	mv -f /etc/log.d/logfiles /etc/logwatch/conf/ || :
 fi
 
 %files
