@@ -13,7 +13,7 @@ fi
 #---{ main part }---#
 if [ "${OUTPUT_LOCATION}" ]; then
 	umask 0022
-	nice -n ${NICE_LEVEL} /usr/sbin/logwatch --output=${OUTPUT} --save="${OUTPUT_LOCATION}/${DATE}.html"
+	nice -n ${SERVICE_RUN_NICE_LEVEL} /usr/sbin/logwatch --output=${OUTPUT} --save="${OUTPUT_LOCATION}/${DATE}.html"
 else
-	nice -n ${NICE_LEVEL} /usr/sbin/logwatch --output=${OUTPUT}
+	nice -n ${SERVICE_RUN_NICE_LEVEL} /usr/sbin/logwatch --output=${OUTPUT}
 fi
