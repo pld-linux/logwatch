@@ -100,11 +100,11 @@ fi
 %files
 %defattr(644,root,root,755)
 %doc README HOWTO-* project/{CHANGES,TODO}
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) /etc/sysconfig/%{name}
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/%{name}
 %attr(755,root,root) /etc/cron.daily/00-%{name}
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/conf/logwatch.conf
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/conf/logfiles/*.conf
-%attr(640,root,root) %config(noreplace) %verify(not size mtime md5) %{_logwatchconf}/conf/services/*.conf
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_logwatchconf}/conf/logwatch.conf
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_logwatchconf}/conf/logfiles/*.conf
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_logwatchconf}/conf/services/*.conf
 %attr(750,root,root) %dir %{_logwatchconf}
 %attr(750,root,root) %dir %{_logwatchconf}/conf
 %attr(750,root,root) %dir %{_logwatchconf}/conf/logfiles
