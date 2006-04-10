@@ -13,6 +13,7 @@ Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
 #Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
 Source1:	%{name}.cron
 Source2:	%{name}.sysconfig
+Source3:	%{name}.tmpwatch
 Patch0:		%{name}-log_conf.patch
 Patch1:		%{name}-gawk.patch
 URL:		http://www.logwatch.org/
@@ -48,7 +49,7 @@ find -name '*~' | xargs -r rm
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT{%{_logwatchconf}/{conf,scripts},/etc/{cron.daily,sysconfig}} \
+install -d $RPM_BUILD_ROOT{%{_logwatchconf}/{conf,scripts},/etc/{cron.daily,sysconfig,tmpwatch}} \
 	$RPM_BUILD_ROOT{%{_sbindir},%{_mandir}/man8,%{_logwatchdir}/{lib,default.conf},/var/cache/logwatch}
 
 install conf/logwatch.conf $RPM_BUILD_ROOT%{_logwatchconf}/conf
@@ -70,6 +71,7 @@ ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT%{_logwatchdir}/scripts/logwatch.pl
 
 install %{SOURCE1} $RPM_BUILD_ROOT/etc/cron.daily/00-%{name}
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/%{name}
+install %{SOURCE3} $RPM_BUILD_ROOT/etc/tmpwatch/%{name}.conf
 
 install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
 
@@ -103,6 +105,7 @@ fi
 %defattr(644,root,root,755)
 %doc README HOWTO-* project/{CHANGES,TODO}
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/%{name}
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/tmpwatch/%{name}.conf
 %attr(755,root,root) /etc/cron.daily/00-%{name}
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_logwatchconf}/conf/logwatch.conf
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_logwatchconf}/conf/html/*.html
