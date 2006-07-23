@@ -3,7 +3,7 @@ Summary:	Analyzes system logs
 Summary(pl):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	7.2.1
-Release:	2
+Release:	3
 License:	MIT
 Group:		Applications/System
 # Path for stable versions:
@@ -69,7 +69,7 @@ mv $RPM_BUILD_ROOT%{_logwatchdir}/scripts/logwatch.pl $RPM_BUILD_ROOT%{_sbindir}
 
 ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT%{_logwatchdir}/scripts/logwatch.pl
 
-install %{SOURCE1} $RPM_BUILD_ROOT/etc/cron.daily/00-%{name}
+install %{SOURCE1} $RPM_BUILD_ROOT/etc/cron.daily/0%{name}
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/%{name}
 install %{SOURCE3} $RPM_BUILD_ROOT/etc/tmpwatch/%{name}.conf
 
@@ -106,7 +106,7 @@ fi
 %doc README HOWTO-* project/{CHANGES,TODO}
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/%{name}
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/tmpwatch/%{name}.conf
-%attr(755,root,root) /etc/cron.daily/00-%{name}
+%attr(755,root,root) /etc/cron.daily/0%{name}
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_logwatchconf}/conf/logwatch.conf
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_logwatchconf}/conf/html/*.html
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_logwatchconf}/conf/logfiles/*.conf
