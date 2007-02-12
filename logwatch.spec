@@ -1,6 +1,6 @@
 %include	/usr/lib/rpm/macros.perl
 Summary:	Analyzes system logs
-Summary(pl):	Logwatch - analizator logów systemowych
+Summary(pl.UTF-8):   Logwatch - analizator logÃ³w systemowych
 Name:		logwatch
 Version:	7.3.2
 Release:	1
@@ -33,11 +33,11 @@ go through your logs for a given period of time and make a report in
 the areas that you wish with the detail that you wish. Easy to use -
 works right out of the package on almost all systems.
 
-%description -l pl
+%description -l pl.UTF-8
 Pakiet zawiera logwatch - program przeznaczony do automatycznego
-analizowania logów systemowych i przesy³aniu ich po wstêpnej obróbce
-poczt± elektroniczn± do administratora systemu. Logwatch jest ³atwy w
-u¿yciu i mo¿e pracowaæ na wiêkszo¶ci systemów.
+analizowania logÃ³w systemowych i przesyÅ‚aniu ich po wstÄ™pnej obrÃ³bce
+pocztÄ… elektronicznÄ… do administratora systemu. Logwatch jest Å‚atwy w
+uÅ¼yciu i moÅ¼e pracowaÄ‡ na wiÄ™kszoÅ›ci systemÃ³w.
 
 %prep
 %setup -q
