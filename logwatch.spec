@@ -1,6 +1,6 @@
 %include	/usr/lib/rpm/macros.perl
 Summary:	Analyzes system logs
-Summary(pl.UTF-8):   Logwatch - analizator logów systemowych
+Summary(pl.UTF-8):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	7.3.2
 Release:	1
