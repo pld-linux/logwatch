@@ -3,7 +3,7 @@ Summary:	Analyzes system logs
 Summary(pl.UTF-8):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	7.3.6
-Release:	1
+Release:	2
 License:	MIT
 Group:		Applications/System
 # Path for stable versions:
@@ -14,6 +14,9 @@ Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
 Source1:	%{name}.cron
 Source2:	%{name}.sysconfig
 Source3:	%{name}.tmpwatch
+# https://po2.uni-stuttgart.de/~rusjako/logwatch/default.html
+Source4:	https://po2.uni-stuttgart.de/~rusjako/logwatch/logwatch-syslog-ng.tar.gz
+# Source4-md5:	491e353044e93d8c31484cff8f252a68
 Patch0:		%{name}-log_conf.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
@@ -40,7 +43,7 @@ pocztą elektroniczną do administratora systemu. Logwatch jest łatwy w
 użyciu i może pracować na większości systemów.
 
 %prep
-%setup -q
+%setup -q -a4
 %patch0 -p1
 
 find -name '*~' | xargs -r rm
@@ -62,6 +65,8 @@ cp -a conf/services $RPM_BUILD_ROOT%{_logwatchdir}/default.conf
 cp -a conf/logfiles $RPM_BUILD_ROOT%{_logwatchconf}/conf
 cp -a conf/logfiles $RPM_BUILD_ROOT%{_logwatchdir}/default.conf
 cp -a scripts $RPM_BUILD_ROOT%{_logwatchdir}
+install syslog-ng.conf $RPM_BUILD_ROOT%{_logwatchconf}/conf/services
+install syslog-ng $RPM_BUILD_ROOT%{_logwatchdir}/scripts/services
 
 mv $RPM_BUILD_ROOT%{_logwatchdir}/scripts/logwatch.pl $RPM_BUILD_ROOT%{_sbindir}/logwatch
 
