@@ -19,6 +19,7 @@ Source4:	https://po2.uni-stuttgart.de/~rusjako/logwatch/%{name}-syslog-ng.tar.gz
 # Source4-md5:	491e353044e93d8c31484cff8f252a68
 Patch0:		%{name}-log_conf.patch
 Patch1:		%{name}-archives.patch
+Patch2:		%{name}-syslog-ng.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	crondaemon
@@ -47,6 +48,7 @@ użyciu i może pracować na większości systemów.
 %setup -q -a4
 %patch0 -p1
 %patch1 -p1
+%patch2 -p1
 
 # cleanup backups after patching
 find '(' -name '*~' -o -name '*.orig' ')' -print0 | xargs -0 -r -l512 rm -f
