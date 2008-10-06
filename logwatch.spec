@@ -81,10 +81,6 @@ install %{SOURCE3} $RPM_BUILD_ROOT/etc/tmpwatch/%{name}.conf
 
 install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
 
-# Cleanup junk:
-rm $RPM_BUILD_ROOT%{_logwatchdir}/default.conf/services/pureftpd.conf.orig
-rm $RPM_BUILD_ROOT%{_logwatchconf}/conf/services/pureftpd.conf.orig
-
 %clean
 rm -rf $RPM_BUILD_ROOT
 
