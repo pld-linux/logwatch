@@ -3,7 +3,7 @@ Summary:	Analyzes system logs
 Summary(pl.UTF-8):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	7.3.6
-Release:	2
+Release:	3
 License:	MIT
 Group:		Applications/System
 # Path for stable versions:
@@ -15,9 +15,10 @@ Source1:	%{name}.cron
 Source2:	%{name}.sysconfig
 Source3:	%{name}.tmpwatch
 # https://po2.uni-stuttgart.de/~rusjako/logwatch/default.html
-Source4:	https://po2.uni-stuttgart.de/~rusjako/logwatch/logwatch-syslog-ng.tar.gz
+Source4:	https://po2.uni-stuttgart.de/~rusjako/logwatch/%{name}-syslog-ng.tar.gz
 # Source4-md5:	491e353044e93d8c31484cff8f252a68
 Patch0:		%{name}-log_conf.patch
+Patch1:		%{name}-archives.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	crondaemon
@@ -45,8 +46,10 @@ użyciu i może pracować na większości systemów.
 %prep
 %setup -q -a4
 %patch0 -p1
+%patch1 -p1
 
-find -name '*~' | xargs -r rm
+# cleanup backups after patching
+find '(' -name '*~' -o -name '*.orig' ')' -print0 | xargs -0 -r -l512 rm -f
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -79,8 +82,8 @@ install %{SOURCE3} $RPM_BUILD_ROOT/etc/tmpwatch/%{name}.conf
 install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
 
 # Cleanup junk:
-rm -f $RPM_BUILD_ROOT%{_logwatchdir}/default.conf/services/pureftpd.conf.orig
-rm -f $RPM_BUILD_ROOT%{_logwatchconf}/conf/services/pureftpd.conf.orig
+rm $RPM_BUILD_ROOT%{_logwatchdir}/default.conf/services/pureftpd.conf.orig
+rm $RPM_BUILD_ROOT%{_logwatchconf}/conf/services/pureftpd.conf.orig
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -97,8 +100,6 @@ elif [ -d /etc/log.d ]; then
 	if [ ! -d /etc/logwatch/conf ]; then
 		mkdir -p /etc/logwatch/conf
 	fi
-#	mkdir /etc/logwatch/conf/logfiles
-#	mkdir /etc/logwatch/conf/services
 	mv -f /etc/log.d/logwatch.conf* /etc/logwatch/conf/ || :
 	mv -f /etc/log.d/services /etc/logwatch/conf/ || :
 	mv -f /etc/log.d/logfiles /etc/logwatch/conf/ || :

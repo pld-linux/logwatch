@@ -1,0 +1,123 @@
+--- logwatch-7.3.6/conf/logfiles/clam-update.conf	2005-10-31 18:21:20.000000000 +0200
++++ logwatch-7.3.6-archives/conf/logfiles/clam-update.conf	2008-10-06 09:24:48.974677526 +0300
+@@ -51,7 +51,9 @@
+ Archive = clam-update.*
+ Archive = freshclam.log.*
+ Archive = clamav/freshclam.log.*
+-Archive = archiv/clam-update.*
+-Archive = archiv/freshclam.log.*
++Archive = archive/clam-update.*
++Archive = archive/clam-update-*
++Archive = archive/freshclam.log.*
++Archive = archive/freshclam.log-*
+ 
+ # vi: shiftwidth=3 tabstop=3 et
+--- logwatch-7.3.6/conf/logfiles/cron.conf	2005-02-24 19:05:18.000000000 +0200
++++ logwatch-7.3.6-archives/conf/logfiles/cron.conf	2008-10-06 09:26:33.184698880 +0300
+@@ -18,7 +18,8 @@
+ # If the archives are searched, here is one or more line
+ # (optionally containing wildcards) that tell where they are...
+ Archive = cron.*
+-Archive = archiv/cron.*
++Archive = archive/cron.*
++Archive = archive/cron-*
+ 
+ *OnlyHost
+ *RemoveService = anacron
+--- logwatch-7.3.6/conf/logfiles/exim.conf	2006-03-21 03:47:28.000000000 +0200
++++ logwatch-7.3.6-archives/conf/logfiles/exim.conf	2008-10-06 09:26:20.831985126 +0300
+@@ -17,7 +17,8 @@
+ LogFile = exim/mainlog
+ LogFile = exim4/mainlog
+ Archive = exim/main.log.*
+-Archive = archiv/exim/main.log.*
++Archive = archive/exim/main.log.*
++Archive = archive/exim/main.log-*
+ Archive = exim/mainlog.*
+ Archive = exim4/mainlog.*
+ 
+--- logwatch-7.3.6/conf/logfiles/http.conf	2007-04-16 00:56:53.000000000 +0300
++++ logwatch-7.3.6-archives/conf/logfiles/http.conf	2008-10-06 09:23:41.714791213 +0300
+@@ -16,7 +16,10 @@
+ # If the archives are searched, here is one or more line
+ # (optionally containing wildcards) that tell where they are...
+ #If you use a "-" in naming add that as well -mgt
+-Archive = archiv/httpd/*access_log.*
++Archive = archive/apache/*access_log.*
++Archive = archive/apache/*access_log-*
++Archive = archive/httpd/*access_log.*
++Archive = archive/httpd/*access_log-*
+ Archive = httpd/*access_log.*
+ Archive = apache/*access.log.*.gz
+ Archive = apache2/*access.log.*.gz
+--- logwatch-7.3.6/conf/logfiles/maillog.conf	2006-03-21 03:47:28.000000000 +0200
++++ logwatch-7.3.6-archives/conf/logfiles/maillog.conf	2008-10-06 09:26:40.765136887 +0300
+@@ -22,7 +22,8 @@
+ #If you use a "-" in naming add that as well -mgt
+ Archive = maillog.*
+ Archive = syslog.*
+-Archive = archiv/maillog.*
++Archive = archive/maillog.*
++Archive = archive/maillog-*
+ Archive = mail.log.*.gz
+ 
+ 
+--- logwatch-7.3.6/conf/logfiles/messages.conf	2006-03-21 03:47:28.000000000 +0200
++++ logwatch-7.3.6-archives/conf/logfiles/messages.conf	2008-10-06 09:26:45.961437136 +0300
+@@ -17,7 +17,8 @@
+ # (optionally containing wildcards) that tell where they are...
+ #If you use a "-" in naming add that as well -mgt
+ Archive = messages.*
+-Archive = archiv/messages.*
++Archive = archive/messages.*
++Archive = archive/messages-*
+ 
+ # Expand the repeats (actually just removes them now)
+ *ExpandRepeats
+--- logwatch-7.3.6/conf/logfiles/secure.conf	2006-03-21 03:47:28.000000000 +0200
++++ logwatch-7.3.6-archives/conf/logfiles/secure.conf	2008-10-06 09:25:28.088937578 +0300
+@@ -20,7 +20,8 @@
+ # (optionally containing wildcards) that tell where they are...
+ #If you use a "-" in naming add that as well -mgt
+ Archive = secure.*
+-Archive = archiv/secure.*
++Archive = archive/secure.*
++Archive = archive/secure-*
+ Archive = authlog.*
+ Archive = auth.log.*.gz
+ 
+--- logwatch-7.3.6/conf/logfiles/sonicwall.conf	2006-03-21 03:47:28.000000000 +0200
++++ logwatch-7.3.6-archives/conf/logfiles/sonicwall.conf	2008-10-06 09:26:26.876334376 +0300
+@@ -19,7 +19,8 @@
+ # (optionally containing wildcards) that tell where they are...
+ #If you use a "-" in naming add that as well -mgt
+ Archive = sonicwall.log.*
+-Archive = archiv/sonicwall.log.*
++Archive = archive/sonicwall.log.*
++Archive = archive/sonicwall.log-*
+ 
+ # Keep only the lines in the proper date range...
+ *OnlyHost
+--- logwatch-7.3.6/conf/logfiles/vsftpd.conf	2006-03-21 03:47:28.000000000 +0200
++++ logwatch-7.3.6-archives/conf/logfiles/vsftpd.conf	2008-10-06 09:26:08.739286395 +0300
+@@ -18,7 +18,8 @@
+ # (optionally containing wildcards) that tell where they are...
+ #If you use a "-" in naming add that as well -mgt
+ Archive = vsftpd.log.*
+-Archive = archiv/vsftpd.log.*
++Archive = archive/vsftpd.log.*
++Archive = archive/vsftpd.log-*
+ 
+ *ApplyStdDate = 
+ # vi: shiftwidth=3 tabstop=3 et
+--- logwatch-7.3.6/conf/logfiles/xferlog.conf	2006-03-21 03:47:28.000000000 +0200
++++ logwatch-7.3.6-archives/conf/logfiles/xferlog.conf	2008-10-06 09:25:34.761323115 +0300
+@@ -17,6 +17,7 @@
+ # (optionally containing wildcards) that tell where they are...
+ #If you use a "-" in naming add that as well -mgt
+ Archive = xferlog.*
+-Archive = archiv/xferlog.*
++Archive = archive/xferlog.*
++Archive = archive/xferlog-*
+ 
+ # vi: shiftwidth=3 tabstop=3 et
