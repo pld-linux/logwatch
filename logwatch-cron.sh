@@ -1,19 +1,5 @@
-#!/bin/sh
-#########
-#---{ Initial values: }---#
-SERVICE_RUN_NICE_LEVEL="0"
-OUTPUT="unformated"
-DATE=`/bin/date +%F`
+MAILTO=root
 
-#---{ Fetch configuration: }---#
-if [ -f /etc/sysconfig/logwatch ]; then
-	. /etc/sysconfig/logwatch
-fi
+04 1 * * *  root    /usr/sbin/logwatch-cron
 
-#---{ main part }---#
-if [ "${OUTPUT_LOCATION}" ]; then
-	umask 0022
-	nice -n ${SERVICE_RUN_NICE_LEVEL} /usr/sbin/logwatch --output=${OUTPUT} --save="${OUTPUT_LOCATION}/${DATE}.html"
-else
-	nice -n ${SERVICE_RUN_NICE_LEVEL} /usr/sbin/logwatch --output=${OUTPUT}
-fi
+# vim:syn=crontab
