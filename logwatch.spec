@@ -3,7 +3,7 @@ Summary:	Analyzes system logs
 Summary(pl.UTF-8):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	7.3.6
-Release:	3
+Release:	4
 License:	MIT
 Group:		Applications/System
 # Path for stable versions:
@@ -11,12 +11,13 @@ Source0:	ftp://ftp.logwatch.org/pub/linux/%{name}-%{version}.tar.gz
 # Source0-md5:	937d982006b2a76a83edfcfd2e5a9d7d
 # Path for pre-versions:
 #Source0:	ftp://ftp.kaybee.org/pub/beta/linux/%{name}-pre%{version}.tar.gz
-Source1:	%{name}.cron
-Source2:	%{name}.sysconfig
-Source3:	%{name}.tmpwatch
 # https://po2.uni-stuttgart.de/~rusjako/logwatch/default.html
-Source4:	https://po2.uni-stuttgart.de/~rusjako/logwatch/%{name}-syslog-ng.tar.gz
-# Source4-md5:	491e353044e93d8c31484cff8f252a68
+Source1:	https://po2.uni-stuttgart.de/~rusjako/logwatch/%{name}-syslog-ng.tar.gz
+# Source1-md5:	491e353044e93d8c31484cff8f252a68
+Source2:	%{name}.sysconfig
+Source3:	%{name}-cron.sh
+Source4:	%{name}.cron
+Source5:	%{name}.tmpwatch
 Patch0:		%{name}-log_conf.patch
 Patch1:		%{name}-archives.patch
 Patch2:		%{name}-syslog-ng.patch
@@ -45,7 +46,7 @@ pocztą elektroniczną do administratora systemu. Logwatch jest łatwy w
 użyciu i może pracować na większości systemów.
 
 %prep
-%setup -q -a4
+%setup -q -a1
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
@@ -55,7 +56,7 @@ find '(' -name '*~' -o -name '*.orig' ')' -print0 | xargs -0 -r -l512 rm -f
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT{%{_logwatchconf}/{conf,scripts},/etc/{cron.daily,sysconfig,tmpwatch}} \
+install -d $RPM_BUILD_ROOT{%{_logwatchconf}/{conf,scripts},/etc/{cron.d,sysconfig,tmpwatch}} \
 	$RPM_BUILD_ROOT{%{_sbindir},%{_mandir}/man8,%{_logwatchdir}/{lib,default.conf},/var/cache/logwatch}
 
 install conf/logwatch.conf $RPM_BUILD_ROOT%{_logwatchconf}/conf
@@ -77,10 +78,10 @@ mv $RPM_BUILD_ROOT%{_logwatchdir}/scripts/logwatch.pl $RPM_BUILD_ROOT%{_sbindir}
 
 ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT%{_logwatchdir}/scripts/logwatch.pl
 
-install %{SOURCE1} $RPM_BUILD_ROOT/etc/cron.daily/0%{name}
 install %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/%{name}
-install %{SOURCE3} $RPM_BUILD_ROOT/etc/tmpwatch/%{name}.conf
-
+install %{SOURCE3} $RPM_BUILD_ROOT%{_sbindir}/logwatch-cron
+install %{SOURCE4} $RPM_BUILD_ROOT/etc/cron.d/logwatch
+install %{SOURCE5} $RPM_BUILD_ROOT/etc/tmpwatch/%{name}.conf
 install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
 
 %clean
@@ -108,7 +109,7 @@ fi
 %doc README HOWTO-* project/{CHANGES,TODO}
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/%{name}
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/tmpwatch/%{name}.conf
-%attr(755,root,root) /etc/cron.daily/0%{name}
+%attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/cron.d/logwatch
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_logwatchconf}/conf/logwatch.conf
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_logwatchconf}/conf/html/*.html
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) %{_logwatchconf}/conf/logfiles/*.conf
@@ -121,5 +122,6 @@ fi
 %attr(750,root,root) %dir %{_logwatchconf}/scripts
 %attr(755,root,root) %{_logwatchdir}
 %attr(755,root,root) %{_sbindir}/logwatch
+%attr(755,root,root) %{_sbindir}/logwatch-cron
 %attr(750,root,root) %dir /var/cache/logwatch
 %{_mandir}/man8/*
