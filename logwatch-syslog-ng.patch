@@ -27,3 +27,17 @@
     #TD syslog-ng[4833]: STATS: dropped 0
     elsif ($ThisLine =~ /^STATS: dropped ([0-9]*)$/) {
        if ($1 != 0) { $Drops = $Drops + $1; }
+--- logwatch-7.3.6/syslog-ng	2008-10-27 10:15:07.818460828 +0200
++++ logwatch-7.3.6/syslog-ng	2008-10-27 10:18:37.748827803 +0200
+@@ -58,6 +58,11 @@
+       } else { $Starts++; }
+    }
+ 
++   #TD syslog-ng[4027]: Configuration reload request received, reloading configuration;
++   elsif ($ThisLine =~ /^Configuration reload request received, reloading configuration;/) {
++      $Reloads++;
++   }
++
+    #TD syslog-ng[9754]: syslog-ng version 1.6.2 starting
+    #TD syslog-ng[3956]: syslog-ng starting up; version='2.0.9'
+    elsif ($ThisLine =~ /^syslog-ng version [\d.]+ starting$/ ||
