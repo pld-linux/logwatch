@@ -1,0 +1,12 @@
+diff -uNr logwatch-7.2.1.orig/scripts/services/zz-disk_space logwatch-7.2.1/scripts/services/zz-disk_space
+--- logwatch-7.2.1.orig/scripts/services/zz-disk_space	2005-11-14 19:19:50.000000000 +0100
++++ logwatch-7.2.1/scripts/services/zz-disk_space	2006-01-23 10:00:45.000000000 +0100
+@@ -110,7 +110,7 @@
+ 	if ($OSname eq "Linux") {
+ 		my $awkprog='{printf("%-35s %6s %6s %6s %4s  %s\n", $1, $2, $3, $4, $5, $6); }';
+ 		system("echo 'Filesystem:Size:Used:Avail:Use%:Mounted on' | awk -F: '$awkprog' ");
+-      system("df -P -h | grep '^[/ ]' | awk '$awkprog' | sort -b -r -n -k 5 ");
++      system("df -P -h | grep '^[/ ]' | gawk '$awkprog' | sort -b -r -n -k 5 ");
+ 	} elsif ($OSname eq "SunOS") {
+ 		if ( ($release eq "5.10") || ($release eq "5.9") ) {
+ 			system("/usr/xpg4/bin/df -P -h | grep '^/dev/'");
