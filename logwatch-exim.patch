@@ -1,0 +1,18 @@
+handle "date time [pid] msgid message" format
+--- logwatch-7.4.0/scripts/services/exim~	2011-12-07 19:08:04.552916551 +0100
++++ logwatch-7.4.0/scripts/services/exim	2011-12-07 19:23:53.546225395 +0100
+@@ -276,6 +277,14 @@
+       # Count of individual Message Lines, used for sort
+     $licze++;         # Dodaje taki licznik aby potem przy wypisaniu posortowac po nim, bo wypisywal nie po kolei
+     $mmsg{$mid}{$licze.$mrest} = "$mdate $mtime";
++
++   }
++   elsif ( $ThisLine =~ /^\d+\-\d+\-\d+\s\d+\:\d+\:\d+\s(\[\d+\])?\s(\+\d+\s)?\w+\-\w+\-\w+\s/ ) { # inne wiadomosci przesylane przez EXIMA
++    # Collect Message ID specific notes...
++    ($mdate,$mtime,$mpid,$mid,$mrest) = ($ThisLine =~ /^(\d+\-\d+\-\d+)\s(\d+\:\d+\:\d+)\s(\[\d+\])?\s(?:\+\d+\s)?(\w+\-\w+\-\w+)(.+)/);
++      # Count of individual Message Lines, used for sort
++    $licze++;         # Dodaje taki licznik aby potem przy wypisaniu posortowac po nim, bo wypisywal nie po kolei
++    $mmsg{$mid}{$licze.$mrest} = "$mdate $mtime";
+ 
+    }
+    else
