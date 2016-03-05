@@ -6,7 +6,7 @@ Version:	7.4.1
 Release:	2
 License:	MIT
 Group:		Applications/System
-Source0:	http://sourceforge.net/projects/logwatch/files/logwatch-7.4.1/logwatch-7.4.1.tar.gz/download
+Source0:	http://downloads.sourceforge.net/logwatch/%{name}-%{version}.tar.gz
 # Source0-md5:	a0c3d8721f877bdcd4a9089eb1b4691b
 # https://po2.uni-stuttgart.de/~rusjako/logwatch/default.html
 Source1:	https://po2.uni-stuttgart.de/~rusjako/logwatch/%{name}-syslog-ng.tar.gz
@@ -18,7 +18,7 @@ Source5:	%{name}.tmpwatch
 Patch0:		%{name}-log_conf.patch
 Patch1:		%{name}-archives.patch
 Patch2:		%{name}-exim.patch
-Patch3:		logwatch-escape-braces-in-regexps.patch
+Patch3:		%{name}-escape-braces-in-regexps.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	crondaemon
@@ -58,13 +58,13 @@ rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT{%{_logwatchconf}/{conf,scripts},/etc/{cron.d,sysconfig,tmpwatch}} \
 	$RPM_BUILD_ROOT{%{_sbindir},%{_mandir}/man{5,8},%{_logwatchdir}/{lib,default.conf},/var/cache/logwatch}
 
-install conf/logwatch.conf $RPM_BUILD_ROOT%{_logwatchconf}/conf
-install conf/logwatch.conf $RPM_BUILD_ROOT%{_logwatchdir}/default.conf
-install conf/ignore.conf $RPM_BUILD_ROOT%{_logwatchconf}/conf
-install conf/ignore.conf $RPM_BUILD_ROOT%{_logwatchdir}/default.conf
+cp -p conf/logwatch.conf $RPM_BUILD_ROOT%{_logwatchconf}/conf
+cp -p conf/logwatch.conf $RPM_BUILD_ROOT%{_logwatchdir}/default.conf
+cp -p conf/ignore.conf $RPM_BUILD_ROOT%{_logwatchconf}/conf
+cp -p conf/ignore.conf $RPM_BUILD_ROOT%{_logwatchdir}/default.conf
 touch $RPM_BUILD_ROOT%{_logwatchconf}/conf/override.conf
 # Where to put it The Right Way(TM)?
-install lib/Logwatch.pm $RPM_BUILD_ROOT%{_logwatchdir}/lib
+cp -p lib/Logwatch.pm $RPM_BUILD_ROOT%{_logwatchdir}/lib
 
 cp -a conf/html $RPM_BUILD_ROOT%{_logwatchconf}/conf
 cp -a conf/html $RPM_BUILD_ROOT%{_logwatchdir}/default.conf
@@ -73,21 +73,21 @@ cp -a conf/services $RPM_BUILD_ROOT%{_logwatchdir}/default.conf
 cp -a conf/logfiles $RPM_BUILD_ROOT%{_logwatchconf}/conf
 cp -a conf/logfiles $RPM_BUILD_ROOT%{_logwatchdir}/default.conf
 cp -a scripts $RPM_BUILD_ROOT%{_logwatchdir}
-install logwatch-syslog-ng/syslog-ng.conf $RPM_BUILD_ROOT%{_logwatchconf}/conf/services
-install logwatch-syslog-ng/syslog-ng $RPM_BUILD_ROOT%{_logwatchdir}/scripts/services
+cp -p logwatch-syslog-ng/syslog-ng.conf $RPM_BUILD_ROOT%{_logwatchconf}/conf/services
+cp -p logwatch-syslog-ng/syslog-ng $RPM_BUILD_ROOT%{_logwatchdir}/scripts/services
 
 mv $RPM_BUILD_ROOT%{_logwatchdir}/scripts/logwatch.pl $RPM_BUILD_ROOT%{_sbindir}/logwatch
 
 ln -sf %{_sbindir}/logwatch $RPM_BUILD_ROOT%{_logwatchdir}/scripts/logwatch.pl
 
-install %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/%{name}
-install %{SOURCE3} $RPM_BUILD_ROOT%{_sbindir}/logwatch-cron
-install %{SOURCE4} $RPM_BUILD_ROOT/etc/cron.d/logwatch
-install %{SOURCE5} $RPM_BUILD_ROOT/etc/tmpwatch/%{name}.conf
-install logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
-install logwatch.conf.5 $RPM_BUILD_ROOT%{_mandir}/man5
-install override.conf.5 $RPM_BUILD_ROOT%{_mandir}/man5
-install ignore.conf.5 $RPM_BUILD_ROOT%{_mandir}/man5
+install -p %{SOURCE3} $RPM_BUILD_ROOT%{_sbindir}/logwatch-cron
+cp -p %{SOURCE2} $RPM_BUILD_ROOT/etc/sysconfig/%{name}
+cp -p %{SOURCE4} $RPM_BUILD_ROOT/etc/cron.d/logwatch
+cp -p %{SOURCE5} $RPM_BUILD_ROOT/etc/tmpwatch/%{name}.conf
+cp -p logwatch.8 $RPM_BUILD_ROOT%{_mandir}/man8
+cp -p logwatch.conf.5 $RPM_BUILD_ROOT%{_mandir}/man5
+cp -p override.conf.5 $RPM_BUILD_ROOT%{_mandir}/man5
+cp -p ignore.conf.5 $RPM_BUILD_ROOT%{_mandir}/man5
 
 %clean
 rm -rf $RPM_BUILD_ROOT
