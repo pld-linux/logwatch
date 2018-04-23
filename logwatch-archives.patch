@@ -59,16 +59,17 @@
  Archive = apache2/*access.log.*.gz
 --- logwatch-7.3.6/conf/logfiles/maillog.conf	2006-03-21 03:47:28.000000000 +0200
 +++ logwatch-7.3.6-archives/conf/logfiles/maillog.conf	2008-10-06 09:26:40.765136887 +0300
-@@ -22,7 +22,8 @@
- #If you use a "-" in naming add that as well -mgt
- Archive = maillog.*
+@@ -25,8 +25,8 @@ Archive = maillog.*
+ Archive = maillog-*
  Archive = syslog.*
+ Archive = syslog-*
 -Archive = archiv/maillog.*
+-Archive = archiv/maillog-*
 +Archive = archive/maillog.*
 +Archive = archive/maillog-*
  Archive = mail.log.*.gz
- 
- 
+ Archive = mail.log-*.gz
+ Archive = mail-*
 --- logwatch-7.3.6/conf/logfiles/messages.conf	2006-03-21 03:47:28.000000000 +0200
 +++ logwatch-7.3.6-archives/conf/logfiles/messages.conf	2008-10-06 09:26:45.961437136 +0300
 @@ -17,9 +17,9 @@
