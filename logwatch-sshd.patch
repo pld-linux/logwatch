@@ -1,0 +1,26 @@
+From 256829aeb864a25a3542aaacfb2a7ff62b77e7f4 Mon Sep 17 00:00:00 2001
+From: Jan Synacek <jsynacek@redhat.com>
+Date: Tue, 15 Mar 2016 10:29:17 +0100
+Subject: [PATCH] sshd: fix unmatched entries because of the output change in
+ openssh-7.2p2
+
+---
+ scripts/services/sshd | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/scripts/services/sshd b/scripts/services/sshd
+index e238863..b94ea5a 100755
+--- a/scripts/services/sshd
++++ b/scripts/services/sshd
+@@ -387,7 +387,7 @@ while (defined(my $ThisLine = <STDIN>)) {
+       $RefusedConnections{$1}++;
+    } elsif ( my ($Reason) = ($ThisLine =~ /^Authentication refused: (.*)$/ ) ) {
+       $RefusedAuthentication{$Reason}++;
+-   } elsif ( my ($Host,$Reason) = ($ThisLine =~ /^Received disconnect from ([^ ]*): (.*)$/)) {
++   } elsif ( my ($Host,$Reason) = ($ThisLine =~ /^Received disconnect from ([^ ]*) port [^ ]*: (.*)$/)) {
+       # Reason 11 (SSH_DISCONNECT_BY_APPLICATION) is expected, and logged at severity level INFO
+       if ($Reason != 11) {$DisconnectReceived{$Reason}{$Host}++;}
+    } elsif ( my ($Host) = ($ThisLine =~ /^ROOT LOGIN REFUSED FROM ([^ ]*)$/)) {
+-- 
+2.7.2
+

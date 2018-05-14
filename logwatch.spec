@@ -3,7 +3,7 @@ Summary:	Analyzes system logs
 Summary(pl.UTF-8):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	7.4.3
-Release:	1
+Release:	2
 License:	MIT
 Group:		Applications/System
 Source0:	http://downloads.sourceforge.net/logwatch/%{name}-%{version}.tar.gz
@@ -18,6 +18,13 @@ Source5:	%{name}.tmpwatch
 Patch0:		%{name}-log_conf.patch
 Patch1:		%{name}-archives.patch
 Patch2:		%{name}-exim.patch
+Patch3:		logwatch-journald-source.patch
+Patch4:		logwatch-journal.patch
+Patch5:		logwatch-postfix.patch
+Patch6:		logwatch-secure-userhelper.patch
+Patch7:		logwatch-sshd.patch
+Patch8:		logwatch-sshd-2.patch
+Patch9:		logwatch-vsftpd.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	crondaemon
@@ -47,6 +54,13 @@ użyciu i może pracować na większości systemów.
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
+%patch3 -p1
+%patch4 -p1
+%patch5 -p1
+%patch6 -p1
+%patch7 -p1
+%patch8 -p1
+%patch9 -p1
 
 # cleanup backups after patching
 find '(' -name '*~' -o -name '*.orig' ')' -print0 | xargs -0 -r -l512 rm -f
