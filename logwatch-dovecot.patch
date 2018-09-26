@@ -1,0 +1,14 @@
+recognize dovecot's imap logged-out lines:
+
+dovecot: imap(login)<10065><i/h0D7F2gKh/AAAB>: Logged out in=355 out=1202 deleted=0 expunged=0 trashed=0 hdr_count=0 hdr_bytes=0 body_count=0 body_bytes=0: 1 Time(s)
+
+--- logwatch-7.4.3/scripts/services/dovecot~	2016-04-27 22:14:01.000000000 +0200
++++ logwatch-7.4.3/scripts/services/dovecot	2018-09-25 18:58:07.433333108 +0200
+@@ -141,6 +141,7 @@
+           ($ThisLine =~ /auth-worker/) or
+           ($ThisLine =~ /auth:.*: Connected to/) or
+           ($ThisLine =~ /Connection closed/) or
++          ($ThisLine =~ /Logged out/) or
+           ($ThisLine =~ /IMAP.*: Connection closed bytes/) or
+           ($ThisLine =~ /IMAP.* failed with mbox file/) or
+ 	  ($ThisLine =~ /discarded duplicate forward to/) or 
