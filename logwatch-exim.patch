@@ -1,12 +1,151 @@
 diff -burN logwatch-7.4.3.orig/scripts/services/exim logwatch-7.4.3/scripts/services/exim
---- logwatch-7.4.3.orig/scripts/services/exim	2018-10-01 06:55:12.916237999 +0200
+--- logwatch-7.4.3.orig/scripts/services/exim	2018-10-01 07:05:22.024890778 +0200
 +++ logwatch-7.4.3/scripts/services/exim	2018-10-01 06:54:35.467605334 +0200
-@@ -93,7 +93,7 @@
-       }
+@@ -50,8 +50,8 @@
+ $LvlBadFormat    = $ENV{'exim_misformat'}     || 0;
+ $LvlRestarts     = $ENV{'exim_restart'}       || 5;
+ $LvlVirus        = $ENV{'exim_virus'}         || 0;
+-$LvlProtocl      = $ENV{'exim_protocol'}      || 0;
+-$LvlProtoclLines = $ENV{'exim_protocol_lines'}|| 5;
++$LvlProtocol      = $ENV{'exim_protocol'}      || 0;
++$LvlProtocolLines = $ENV{'exim_protocol_lines'}|| 5;
+ $LvlDontAccept   = $ENV{'exim_dontaccept'}    || 0;
+ $LvlDontAcceptLines = $ENV{'exim_dontaccept_lines'}    || 0;
+ $LvlVerify       = $ENV{'exim_verify'}        || 0;
+@@ -80,16 +80,26 @@
+ # IPv6 part could be made more strict
+ my $IPAddress = qr/\d+\.\d+\.\d+\.\d+|[a-fA-F0-9]*:[a-fA-F0-9:]+/;
+ 
++my $MatchedDate = 0;
++
+ while (defined($ThisLine = <STDIN>)) {
+    chomp($ThisLine);
+     # pobierz dzisiejsza date z 2002-03-31 22:13:48 ...
+     # Collect this line's date, e.g. 2002-03-31 22:13:48 ...
+    do {
++      if ( $ThisLine =~ /^ Suggested action: use keep_environment./ ) {
++         $KeepEnv++ if $MatchedDate;
++         next;
++      }
        $BadFormat{$ThisLine}++;
        next;
 -   } unless ($year1,$month1,$day1,$h1,$m1,$s1) = ($ThisLine =~ /^(\d+)\-(\d+)\-(\d+)\s(\d+):(\d+):(\d+)\s.+/);
 +   } unless ($year1,$month1,$day1,$h1,$m1,$s1,$ms1) = ($ThisLine =~ /^(\d+)\-(\d+)\-(\d+)\s(\d+):(\d+):(\d+)(\.\d+)?\s.+/);
  
-    unless ($ThisLine =~ /^$SearchDate /o) {
-       $MatchedDate = 0;
+-   next unless $ThisLine =~ /^$SearchDate /o;
++   unless ($ThisLine =~ /^$SearchDate /o) {
++      $MatchedDate = 0;
++      next;
++   }
++   $MatchedDate = 1;
+ 
+    if ( $ThisLine =~ /End queue run\:/ ) {
+       $EndQueue++;
+@@ -115,6 +125,9 @@
+    elsif ( $ThisLine =~ /[Ss]ender verify fail/ ) {
+       $SendVerify{$ThisLine}++;
+    }
++   elsif ( $ThisLine =~ /Warning: purging the environment./ ) {
++      $Purging++;
++   }
+    elsif ( $ThisLine =~ /fragments administratively prohib/ ) {
+       $DontAccept{$ThisLine}++;
+    }
+@@ -206,6 +219,12 @@
+       # Some hosts ask for TLS even when not offered (generalised to all cmds)
+       $Proto{$ThisLine}++;
+    }
++   elsif ( $ThisLine =~ /TLS error on connection from (\S+) \(([^)]*)\) \[(\S+)\]:(\d+) I=\[(\S+)\]:(\d+) \(send\): Error in the push function\./ ) {
++      # Ignore this, office 365 connector early disconnect.
++   }
++   elsif ( $ThisLine =~ /authenticator failed for/ ) {
++      $Proto{$ThisLine}++;
++   }
+    elsif ( $ThisLine =~ /Connection from .* too many connections from that IP address/ ) {
+       # Some hosts make lots of simultaneous connections
+ 	  # this is an extra error message when logging is high
+@@ -252,6 +271,14 @@
+     $mmsg{$mid}{$licze.$mrest} = "$mdate $mtime";
+ 
+    }
++   elsif ( $ThisLine =~ /^\d+\-\d+\-\d+\s\d+\:\d+\:\d+\s(\[\d+\])?\s(\+\d+\s)?\w+\-\w+\-\w+\s/ ) { # inne wiadomosci przesylane przez EXIMA
++    # Collect Message ID specific notes...
++    ($mdate,$mtime,$mpid,$mid,$mrest) = ($ThisLine =~ /^(\d+\-\d+\-\d+)\s(\d+\:\d+\:\d+)\s(\[\d+\])?\s(?:\+\d+\s)?(\w+\-\w+\-\w+)(.+)/);
++      # Count of individual Message Lines, used for sort
++    $licze++;         # Dodaje taki licznik aby potem przy wypisaniu posortowac po nim, bo wypisywal nie po kolei
++    $mmsg{$mid}{$licze.$mrest} = "$mdate $mtime";
++
++   }
+    else
+    {
+       $OtherList{$ThisLine}++;
+@@ -278,6 +305,13 @@
+    }
+ }
+ 
++if ($Purging) {
++   print "    Warning: purging the environment. : $Purging Time(s)\n";
++}
++if ($KeepEnv) {
++   print "    ... Suggested action: use keep_environment. : $KeepEnv Time(s)\n";
++}
++
+ if ($Detail >= $LvlRuns) {
+    if (($StartQueue >0 ) or ($EndQueue > 0)) {
+       print "\n--- Queue Runners ---\n";
+@@ -356,7 +390,7 @@
+          # Link date and time (looks cleaner)...
+          $aa = "$mdate $mtime";
+          # Extract the REAL IP address...
+-         ($bb) = ($ThisOne =~ m/\s\[($IPAddress)\]\s/);
++         ($bb) = ($ThisOne =~ m/\s\[($IPAddress)\][\s:]/);
+             # Exim >= 4.50 compiled with, WITH_CONTENT_SCAN=yes
+          # Default warning looks like this...
+             # rejected after DATA: This message contains a [vV]irus (%s).
+@@ -508,7 +542,7 @@
+    }
+ }
+ 
+-if ($Detail >= $LvlProtocl) {
++if ($Detail >= $LvlProtocol) {
+ # Print Protocol Violations
+    if (%Proto) {
+       my (%spam);
+@@ -582,6 +616,10 @@
+             $bb = $1;
+             $SmtpConnection{$bb}++;
+          }
++         elsif ( $ThisOne =~ /authenticator failed for \([^)]*\) \[($IPAddress)\]:\d+ I=\[$IPAddress\]:\d+: (.*) \(/ ) {
++            $bb = $1;
++            $SmtpConnection{$bb}++;
++         }
+          elsif ( $ThisOne =~ /SMTP connection from/ ) {
+             if ( $ThisOne =~ /lost while reading message data/ ) {
+                $bb = "SMTP connection lost while reading message data";
+@@ -623,7 +661,7 @@
+          }
+       }
+       foreach $ThisOne (sort(keys %spam)) {
+-         if ($Detail >= $LvlProtoclLines) {
++         if ($Detail >= $LvlProtocolLines) {
+             print " $ThisOne:\n";
+             foreach $aa ( sort( split /,/, $spam{$ThisOne} )) {
+                print "    $aa\n";
+@@ -647,7 +685,7 @@
+          print "\n--- Failed Reverse Lookups \n";
+          print "--- $ReverseLookup  Time(s)\n\n";
+ 
+-         if ($Detail >= $LvlProtoclLines) {
++         if ($Detail >= $LvlProtocolLines) {
+             foreach $ThisOne (@ReverseLookupH) {
+                print "   $ThisOne\n";
+             }
+@@ -658,7 +696,7 @@
+          print "\n--- Failed Reverse Lookups \n";
+          print "--- (eg. spam try): $Lookup  Time(s)\n\n";
+ 
+-         if ($Detail >= $LvlProtoclLines) {
++         if ($Detail >= $LvlProtocolLines) {
+             foreach $ThisOne (@LookupH) {
+                print "$ThisOne\n";
+             }
