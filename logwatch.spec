@@ -3,7 +3,7 @@ Summary:	Analyzes system logs
 Summary(pl.UTF-8):	Logwatch - analizator logów systemowych
 Name:		logwatch
 Version:	7.5.1
-Release:	1
+Release:	2
 License:	MIT
 Group:		Applications/System
 Source0:	http://downloads.sourceforge.net/logwatch/%{name}-%{version}.tar.gz
@@ -17,8 +17,8 @@ Source4:	%{name}.cron
 Source5:	%{name}.tmpwatch
 Patch0:		%{name}-log_conf.patch
 Patch1:		%{name}-archives.patch
-
-Patch9:		%{name}-vsftpd.patch
+Patch2:		%{name}-vsftpd.patch
+Patch3:		%{name}-exim.patch
 URL:		http://www.logwatch.org/
 BuildRequires:	rpm-perlprov
 Requires:	crondaemon
@@ -47,8 +47,8 @@ użyciu i może pracować na większości systemów.
 %setup -q -a1
 %patch0 -p1
 %patch1 -p1
-
-%patch9 -p1
+%patch2 -p1
+%patch3 -p1
 
 # cleanup backups after patching
 find '(' -name '*~' -o -name '*.orig' ')' -print0 | xargs -0 -r -l512 rm -f

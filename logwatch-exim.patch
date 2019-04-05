@@ -1,0 +1,11 @@
+--- logwatch-7.5.1/scripts/services/exim~	2019-01-19 00:10:41.000000000 +0100
++++ logwatch-7.5.1/scripts/services/exim	2019-04-04 13:20:02.025395061 +0200
+@@ -95,7 +95,7 @@
+       }
+       $BadFormat{$ThisLine}++;
+       next;
+-   } unless ($year1,$month1,$day1,$h1,$m1,$s1) = ($ThisLine =~ /^(\d+)\-(\d+)\-(\d+)\s(\d+):(\d+):(\d+)\s.+/);
++   } unless ($year1,$month1,$day1,$h1,$m1,$s1,$ms1) = ($ThisLine =~ /^(\d+)\-(\d+)\-(\d+)\s(\d+):(\d+):(\d+)(\.\d+)\s.+/);
+ 
+    unless ($ThisLine =~ /^$SearchDate /o) {
+       $MatchedDate = 0;
