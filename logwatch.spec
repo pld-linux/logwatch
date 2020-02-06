@@ -1,12 +1,12 @@
 Summary:	Analyzes system logs
 Summary(pl.UTF-8):	Logwatch - analizator logów systemowych
 Name:		logwatch
-Version:	7.5.1
-Release:	2
+Version:	7.5.3
+Release:	1
 License:	MIT
 Group:		Applications/System
 Source0:	http://downloads.sourceforge.net/logwatch/%{name}-%{version}.tar.gz
-# Source0-md5:	3d14fa6e0fb56f890d2b3fd9cbc3162f
+# Source0-md5:	8bcf3edc5a4687c8aad1b9c01e2be54b
 # https://po2.uni-stuttgart.de/~rusjako/logwatch/default.html
 Source1:	https://po2.uni-stuttgart.de/~rusjako/logwatch/%{name}-syslog-ng.tar.gz
 # Source1-md5:	2f834407b85080e8e6556d6182d245aa
