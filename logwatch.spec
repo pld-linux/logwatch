@@ -18,7 +18,7 @@ Patch0:		%{name}-log_conf.patch
 Patch1:		%{name}-archives.patch
 Patch2:		%{name}-vsftpd.patch
 Patch3:		%{name}-exim.patch
-URL:		http://www.logwatch.org/
+URL:		https://sourceforge.net/projects/logwatch
 BuildRequires:	rpm-perlprov
 Requires:	crondaemon
 Requires:	gawk
